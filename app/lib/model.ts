@@ -82,11 +82,11 @@ export function totals(p:Portfolio,m:Market) {
   for(const r of rows)byGroup[r.group]+=r.value??0;
   const value=Object.values(byGroup).reduce((a,b)=>a+b,0),cost=sumNullable([...rows.map(r=>r.cost),...p.fixedIncome.map(r=>r.cost)]);
   const result=cost!==null?value-cost:null;
-  const regional=(currency:Currency)=>{
-    const owned=rows.filter(r=>r.ticker!=='BTC'&&r.currency===currency&&r.quantity>0);
+  const regional=(currency:Currency,segment?:'stocks'|'etfs')=>{
+    const owned=rows.filter(r=>r.ticker!=='BTC'&&r.currency===currency&&r.quantity>0&&(!segment||(segment==='stocks'?r.group==='br':r.group!=='br')));
     return {value:owned.reduce((s,r)=>s+(r.nativeValue??0),0),cost:sumNullable(owned.map(r=>r.primaryCost)),income:sumNullable(owned.map(r=>r.nativeIncome)),result:sumNullable(owned.map(r=>r.result)),missing:owned.some(r=>r.nativeValue===null),count:owned.length};
   };
-  return {rows,missing,byGroup,value,cost,result,brazil:regional('BRL'),international:regional('USD'),incomes:{BRL:(p.incomes??[]).filter(i=>i.currency==='BRL').reduce((s,i)=>s+i.amount,0),USD:(p.incomes??[]).filter(i=>i.currency==='USD').reduce((s,i)=>s+i.amount,0)}};
+  return {rows,missing,byGroup,value,cost,result,brazil:regional('BRL'),brazilStocks:regional('BRL','stocks'),brazilEtfs:regional('BRL','etfs'),international:regional('USD'),incomes:{BRL:(p.incomes??[]).filter(i=>i.currency==='BRL').reduce((s,i)=>s+i.amount,0),USD:(p.incomes??[]).filter(i=>i.currency==='USD').reduce((s,i)=>s+i.amount,0)}};
 }
 export function allocationPlan(p:Portfolio,m:Market,budget:number) {
   const t=totals(p,m);
