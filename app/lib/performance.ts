@@ -60,30 +60,38 @@ export function recordedChart(data:PerformanceData|undefined,days:number,rates:C
 export function cdiFactor(rates:CdiRate[],start:string,end:string,ratePercent=100){
  return rates.filter(r=>r.date>start&&r.date<=end).reduce((f,r)=>f*(1+r.rate/100*ratePercent/100),1);
 }
-type Simulation={points:ChartPoint[];warnings:string[];coverage:number;start:string|null;end:string|null;heldCount:number;excluded:string[]};
+export type Simulation={points:ChartPoint[];warnings:string[];coverage:number;start:string|null;end:string|null;heldCount:number;excluded:string[];unavailable:BenchmarkKey[]};
 export function simulateComposition(p:Portfolio,m:Market,rates:CdiRate[],days:number,selected:BenchmarkKey[],now=Date.now()):Simulation{
- const t=totals(p,m),warnings:string[]=[],excluded:string[]=[];
- const empty:Simulation={points:[],warnings,coverage:0,start:null,end:null,heldCount:0,excluded};
+ const t=totals(p,m),warnings:string[]=[],excluded:string[]=[],unavailable:BenchmarkKey[]=[];
+ const empty:Simulation={points:[],warnings,coverage:0,start:null,end:null,heldCount:0,excluded,unavailable};
  if(t.missing.length){warnings.push('Aguarde as cotações atuais para definir os pesos da simulação.');return empty;}
  if(!(t.value>0))return empty;
- const held=t.rows.filter(a=>a.quantity>0&&a.value!==null);
- const usable=held.filter(a=>{if((a.quote?.history.length??0)>=2)return true;excluded.push(a.ticker);return false;});
- const modeledFixed=p.fixedIncome.filter(r=>r.index?.toUpperCase()==='CDI'&&r.ratePercent!==undefined&&rates.length>1);
+ const hasHistory=(key:string)=>(m.quotes[key]?.history.length??0)>=2,hasFX=hasHistory('USD'),hasCDI=rates.length>=2;
+ const usable=t.rows.filter(a=>a.quantity>0&&a.value!==null).filter(a=>{if(hasHistory(a.ticker)&&(a.currency!=='USD'||hasFX))return true;excluded.push(a.ticker);return false;});
+ let modeledFixed=p.fixedIncome.filter(r=>r.index?.toUpperCase()==='CDI'&&r.ratePercent!==undefined&&hasCDI);
  for(const r of p.fixedIncome)if(!modeledFixed.some(x=>x.id===r.id))excluded.push(r.name);
- const needFX=usable.some(a=>a.currency==='USD')||selected.some(k=>k==='sp500'||k==='bitcoin');
- const required=usable.map(a=>a.ticker);
- if(needFX)required.push('USD');
- for(const key of selected)if(key!=='cdi')required.push(key==='ibov'?'IBOV':key==='sp500'?'SP500':'BTC');
  const series=new Map<string,Map<string,number>>();
  let start=new Date(now-days*86400000).toISOString().slice(0,10),end=new Date(now).toISOString().slice(0,10);
- for(const key of new Set(required)){
-  const h=m.quotes[key]?.history??[];if(h.length<2){warnings.push('Histórico indisponível: '+key+'. Desmarque esta referência ou aguarde a fonte.');return empty;}
-  series.set(key,new Map(h.map(x=>[x.date,x.close])));start=start>h[0].date?start:h[0].date;end=end<h.at(-1)!.date?end:h.at(-1)!.date;
+ const include=(key:string)=>{const h=m.quotes[key]!.history;series.set(key,new Map(h.map(x=>[x.date,x.close])));start=start>h[0].date?start:h[0].date;end=end<h.at(-1)!.date?end:h.at(-1)!.date;};
+ for(const key of new Set([...usable.map(a=>a.ticker),...(usable.some(a=>a.currency==='USD')?['USD']:[])]))include(key);
+ if(modeledFixed.length&&(rates[0].date>=end||rates.at(-1)!.date<=start)){excluded.push(...modeledFixed.map(r=>r.name));modeledFixed=[];}
+ let needCDI=modeledFixed.length>0;
+ if(needCDI){start=start>rates[0].date?start:rates[0].date;end=end<rates.at(-1)!.date?end:rates.at(-1)!.date;}
+ const available:BenchmarkKey[]=[];
+ for(const key of selected){
+  if(key==='cdi'){
+   if(!hasCDI||rates[0].date>=end||rates.at(-1)!.date<=start){unavailable.push(key);continue;}
+   available.push(key);needCDI=true;start=start>rates[0].date?start:rates[0].date;end=end<rates.at(-1)!.date?end:rates.at(-1)!.date;continue;
+  }
+  const ticker=key==='ibov'?'IBOV':key==='sp500'?'SP500':'BTC',fx=key!=='ibov';
+  if(!hasHistory(ticker)||(fx&&!hasFX)){unavailable.push(key);continue;}
+  const histories=[m.quotes[ticker]!.history,...(fx?[m.quotes.USD.history]:[])];
+  const commonStart=histories.reduce((d,h)=>d>h[0].date?d:h[0].date,start),commonEnd=histories.reduce((d,h)=>d<h.at(-1)!.date?d:h.at(-1)!.date,end);
+  if(commonStart>=commonEnd){unavailable.push(key);continue;}
+  include(ticker);if(fx&&!series.has('USD'))include('USD');available.push(key);
  }
- const needCDI=modeledFixed.length>0||selected.includes('cdi');
- if(needCDI){if(rates.length<2){warnings.push('CDI indisponível para o período solicitado.');return empty;}start=start>rates[0].date?start:rates[0].date;end=end<rates.at(-1)!.date?end:rates.at(-1)!.date;}
- if(start>=end){warnings.push('Ainda não há histórico comum suficiente entre os ativos e as referências.');return empty;}
- // Only common market dates are compared. No extrapolation before an asset's inception.
+ if(unavailable.length)warnings.push('Referências indisponíveis: '+unavailable.map(k=>({ibov:'Ibovespa',sp500:'S&P 500',bitcoin:'Bitcoin',cdi:'CDI'}[k])).join(', ')+'. As demais séries continuam disponíveis.');
+ if(start>=end){warnings.push('Ainda não há histórico comum suficiente entre os ativos.');return empty;}
  const dates=Array.from(new Set([...usable.flatMap(a=>a.quote!.history.map(x=>x.date)),...(needCDI?rates.map(r=>r.date):[])])).filter(d=>d>=start&&d<=end).sort();
  const carried=new Map<string,number>();
  for(const [key,map] of series)for(const [date,value] of map)if(date<start)carried.set(key,value);
@@ -97,12 +105,12 @@ export function simulateComposition(p:Portfolio,m:Market,rates:CdiRate[],days:nu
   let factor=usable.reduce((s,a)=>s+(a.value??0)/covered*brlLevel(row.levels,a.ticker,a.currency)/brlLevel(base,a.ticker,a.currency),0);
   for(const r of modeledFixed)factor+=r.value/covered*cdiFactor(rates,initial.date,row.date,r.ratePercent);
   const b:Partial<Record<BenchmarkKey,number>>={};
-  for(const k of selected){if(k==='cdi')b.cdi=(cdiFactor(rates,initial.date,row.date)-1)*100;else{const ticker=k==='ibov'?'IBOV':k==='sp500'?'SP500':'BTC',currency=k==='ibov'?'BRL':'USD';b[k]=pct(brlLevel(row.levels,ticker,currency),brlLevel(base,ticker,currency));}}
+  for(const k of available){if(k==='cdi')b.cdi=(cdiFactor(rates,initial.date,row.date)-1)*100;else{const ticker=k==='ibov'?'IBOV':k==='sp500'?'SP500':'BTC',currency=k==='ibov'?'BRL':'USD';b[k]=pct(brlLevel(row.levels,ticker,currency),brlLevel(base,ticker,currency));}}
   return {time:Date.parse(row.date+'T12:00:00Z'),date:row.date,portfolio:(factor-1)*100,...b};
  });
  if(excluded.length)warnings.push('Fora da simulação por falta de histórico ou taxa: '+excluded.join(', ')+'.');
- const requested=new Date(now-days*86400000).toISOString().slice(0,10);if(initial.date>requested)warnings.push('O período começa em '+initial.date.split('-').reverse().join('/')+' para respeitar o histórico disponível de todos os ativos.');
+ const requested=new Date(now-days*86400000).toISOString().slice(0,10);if(initial.date>requested)warnings.push('O período começa em '+initial.date.split('-').reverse().join('/')+' para respeitar o histórico disponível dos ativos incluídos.');
  if(needCDI)warnings.push('CDBs são simulados pelo percentual informado do CDI, com juros brutos e sem impostos. A comparação termina na última data comum com o CDI ('+last.date.split('-').reverse().join('/')+').');
  warnings.push('Pesos atuais no início do período, sem novos aportes ou rebalanceamento. Preços ajustados pelo provedor quando disponíveis; os proventos acumulados do extrato não são somados novamente.');
- return {points,warnings,coverage:covered/t.value*100,start:initial.date,end:last.date,heldCount:usable.length,excluded};
+ return {points,warnings,coverage:covered/t.value*100,start:initial.date,end:last.date,heldCount:usable.length,excluded,unavailable};
 }

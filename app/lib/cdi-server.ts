@@ -1,8 +1,8 @@
 export type CdiPoint={date:string;rate:number};
 export type CdiResponse={points:CdiPoint[];source:string;updatedAt:string;stale?:boolean;error?:string};
 let cached:CdiResponse|undefined,checked=0,pending:Promise<CdiResponse>|undefined;
-export async function loadCdi():Promise<CdiResponse>{
- if(cached&&Date.now()-checked<(cached.error?60000:3600000))return cached;
+export async function loadCdi(force=false):Promise<CdiResponse>{
+ if(!force&&cached&&Date.now()-checked<(cached.error?60000:3600000))return cached;
  if(pending)return pending;
  pending=(async()=>{
   try{

@@ -33,3 +33,13 @@ const unsupported={...withFixed,fixedIncome:[{...withFixed.fixedIncome[0],index:
 const hist={points:[c.point,next.point],startedAt:c.point.time,updatedAt:next.point.time,warnings:[]};const plotted=recordedChart(hist,30,[],Date.parse('2026-10-28T18:00:00Z'));close(plotted[0].portfolio,0);close(plotted.at(-1).portfolio,10);
 const br={...EMPTY,transactions:[tx('WEGE3',10,10),tx('ABTC11',2,10),tx('AUPO11',3,10)]};const bm={...market(),quotes:{...market().quotes,ABTC11:quote('ABTC11',10),AUPO11:quote('AUPO11',10)}};const bt=totals(br,bm);close(bt.brazilStocks.value,100);close(bt.brazilEtfs.value,50);close(bt.brazil.value,150);close(bt.byGroup.crypto,20);close(bt.byGroup.rf,30);
 console.log('Performance: contributions neutral, linked price/FX returns, income once, manual fixed income, CDI, common dates, coverage and B3 segments passed.');
+// A missing reference must not erase independently available portfolio history.
+const noCdi=simulateComposition(withFixed,hm,[],30,['ibov','sp500','cdi'],Date.parse('2026-10-28T18:00:00Z'));
+assert.ok(noCdi.points.length>=2);close(noCdi.coverage,50);assert.ok(noCdi.unavailable.includes('cdi'));assert.ok(noCdi.excluded.includes('CDB'));assert.notEqual(noCdi.points.at(-1).ibov,undefined);
+const noSp={...hm,quotes:{...hm.quotes,SP500:{...hm.quotes.SP500,history:[]}}};
+const isolated=simulateComposition(p,noSp,rates,30,['sp500','ibov'],Date.parse('2026-10-28T18:00:00Z'));assert.ok(isolated.points.length>=2);assert.ok(isolated.unavailable.includes('sp500'));assert.notEqual(isolated.points.at(-1).ibov,undefined);
+const onlyFixed={...EMPTY,fixedIncome:[{...fixed.fixedIncome[0],value:100,ratePercent:120,index:'CDI'}]};
+const rfSimulation=simulateComposition(onlyFixed,hm,rates,30,['cdi'],Date.parse('2026-10-28T18:00:00Z'));close(rfSimulation.coverage,100);close(rfSimulation.points.at(-1).portfolio,(1.0006**2-1)*100);
+console.log('Resilience passed: missing CDI, isolated benchmark failure, explicit partial coverage and fixed-income-only history.');
+const outdatedCdi=simulateComposition(withFixed,hm,[{date:'2026-01-01',rate:.05},{date:'2026-01-02',rate:.05}],30,['cdi','ibov'],Date.parse('2026-10-28T18:00:00Z'));assert.ok(outdatedCdi.points.length>=2);assert.ok(outdatedCdi.unavailable.includes('cdi'));close(outdatedCdi.coverage,50);
+console.log('Outdated CDI does not block available portfolio and index history.');
