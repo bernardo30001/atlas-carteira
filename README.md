@@ -19,7 +19,7 @@ Painel privado de investimentos em português, com posições e estratégia vinc
 
 A interface consulta o Yahoo Finance a cada 60 segundos enquanto a aba está visível. A fonte pode fornecer dados atrasados, ser bloqueada ou ficar indisponível; não há garantia de tempo real de bolsa. A interface usada não é uma API pública documentada do Yahoo. Para uma operação com garantias e disponibilidade contratual, substitua por um provedor licenciado. Nunca configure chaves no navegador.
 
-Notícias via Google Notícias RSS, com cache de 5 minutos e links para a publicação. Renda fixa exige atualização manual pelo extrato. O resultado não inclui vendas, dividendos, impostos ou lucro realizado. O gráfico de referências não representa a rentabilidade da carteira.
+Notícias via Google Notícias RSS, com Bing Notícias e Yahoo Finance como alternativas, com cache de 5 minutos e links para a publicação. Renda fixa exige atualização manual pelo extrato. O resultado não inclui vendas, dividendos, impostos ou lucro realizado. O gráfico de referências não representa a rentabilidade da carteira.
 
 As sugestões não usam análise de fundamentos, valor justo, risco de crédito ou perfil pessoal, não executam ordens e não garantem retorno. A fórmula e as fontes estão disponíveis na própria interface.
 
