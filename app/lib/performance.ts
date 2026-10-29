@@ -1,10 +1,24 @@
 import {ASSETS,totals,type Portfolio,type Market} from './model.ts';
+export const PERFORMANCE_SCOPES=[
+ {key:'all',name:'Tudo agregado',description:'Toda a carteira, incluindo renda fixa e ETFs na B3.'},
+ {key:'us',name:'Ações/ETFs americanos',description:'Ativos negociados em dólar, convertidos para reais com o câmbio de cada observação.'},
+ {key:'br',name:'Ações na B3',description:'Somente ações brasileiras; ETFs na B3 ficam no consolidado.'},
+ {key:'btc',name:'Bitcoin',description:'Somente Bitcoin direto (BTC). ABTC11 permanece no consolidado.'},
+] as const;
+export type PerformanceScope=typeof PERFORMANCE_SCOPES[number]['key'];
+type Segment=Exclude<PerformanceScope,'all'>;
+export function performancePortfolio(p:Portfolio,scope:PerformanceScope):Portfolio{
+ if(scope==='all')return p;
+ const matches=(ticker:string)=>{const asset=ASSETS.find(a=>a.ticker===ticker);return scope==='btc'?ticker==='BTC':scope==='br'?asset?.group==='br':asset?.currency==='USD'&&ticker!=='BTC';};
+ return {...p,transactions:p.transactions.filter(t=>matches(t.ticker)),incomes:(p.incomes??[]).filter(i=>matches(i.ticker)),fixedIncome:[]};
+}
 export type BenchmarkKey='ibov'|'sp500'|'bitcoin'|'cdi';
 export type Benchmarks=Partial<Record<Exclude<BenchmarkKey,'cdi'>,number>>;
 export type TrackedHolding={ticker:string;quantity:number};
 export type TrackedFixed={id:string;value:number;cost:number|null};
-export type PerformanceState={startedAt:string;capturedAt:string;unitIndex:number;value:number;totalFlow:number;holdings:TrackedHolding[];fixed:TrackedFixed[];incomeIds:string[];portfolioRevision:number};
-export type RecordedPoint={time:string;value:number;index:number;flow:number;income:number;benchmarks:Benchmarks;baseline:boolean};
+export type PerformanceState={startedAt:string;capturedAt:string;unitIndex:number;value:number;totalFlow:number;holdings:TrackedHolding[];fixed:TrackedFixed[];incomeIds:string[];portfolioRevision:number;segments?:Partial<Record<Segment,PerformanceState>>};
+export type SegmentPoint={startedAt:string;value:number;index:number;flow:number;income:number;baseline:boolean};
+export type RecordedPoint={time:string;value:number;index:number;flow:number;income:number;benchmarks:Benchmarks;baseline:boolean;segments?:Partial<Record<Segment,SegmentPoint>>};
 export type PerformanceData={points:RecordedPoint[];startedAt:string;updatedAt:string;warnings:string[];error?:string};
 export type ChartPoint={time:number;date:string;portfolio:number;ibov?:number;sp500?:number;bitcoin?:number;cdi?:number;value?:number;flow?:number};
 export type CdiRate={date:string;rate:number};
@@ -23,7 +37,7 @@ export function benchmarkLevels(m:Market):Benchmarks{
 }
 // Link observed holding returns; position changes are neutralized at observation prices.
 // This measures the registered portfolio, not trades before registration or intraday broker cash flows.
-export function capturePerformance(p:Portfolio,m:Market,previous:PerformanceState|undefined,revision:number,at:string){
+function captureSnapshot(p:Portfolio,m:Market,previous:PerformanceState|undefined,revision:number,at:string){
  const t=totals(p,m);if(t.missing.length)throw new Error('Aguarde as cotações da carteira e o câmbio para registrar o histórico.');
  if(!previous&&!(t.value>0))throw new Error('Cadastre posições para iniciar o acompanhamento.');
  let unitIndex=previous?.unitIndex??100,flow=0,income=0;const warnings:string[]=[];
@@ -50,9 +64,25 @@ export function capturePerformance(p:Portfolio,m:Market,previous:PerformanceStat
  const point:RecordedPoint={time:at,value:t.value,index:unitIndex,flow:state.totalFlow,income,benchmarks:benchmarkLevels(m),baseline:!previous};
  return {state,point,warnings};
 }
+export function capturePerformance(p:Portfolio,m:Market,previous:PerformanceState|undefined,revision:number,at:string){
+ const captured=captureSnapshot(p,m,previous,revision,at);
+ captured.state.segments={};captured.point.segments={};
+ for(const scope of ['us','br','btc'] as const){
+  const subset=performancePortfolio(p,scope),prior=previous?.segments?.[scope];
+  if(!prior&&!subset.transactions.some(t=>t.quantity>0))continue;
+  const segment=captureSnapshot(subset,m,prior,revision,at);
+  captured.state.segments[scope]=segment.state;
+  const {value,index,flow,income,baseline}=segment.point;
+  captured.point.segments[scope]={startedAt:segment.state.startedAt,value,index,flow,income,baseline};
+ }
+ return captured;
+}
 const pct=(v:number,b:number)=>(v/b-1)*100;
-export function recordedChart(data:PerformanceData|undefined,days:number,rates:CdiRate[],now=Date.now()):ChartPoint[]{
- const points=(data?.points??[]).filter(p=>Date.parse(p.time)>=now-days*86400000).sort((a,b)=>a.time.localeCompare(b.time));
+export function recordedChart(data:PerformanceData|undefined,days:number,rates:CdiRate[],now=Date.now(),scope:PerformanceScope='all'):ChartPoint[]{
+ const points=(data?.points??[]).flatMap(p=>{
+  if(scope==='all')return [p];
+  const segment=p.segments?.[scope];return segment?[{...p,...segment}]:[];
+ }).filter(p=>Date.parse(p.time)>=now-days*86400000).sort((a,b)=>a.time.localeCompare(b.time));
  const first=points[0];if(!first||first.index<=0)return [];
  const start=brDate(new Date(first.time));
  return points.map(p=>({time:Date.parse(p.time),date:brDate(new Date(p.time)),portfolio:pct(p.index,first.index),value:p.value,flow:p.flow-first.flow,...Object.fromEntries((['ibov','sp500','bitcoin'] as const).filter(k=>first.benchmarks[k]&&p.benchmarks[k]).map(k=>[k,pct(p.benchmarks[k]!,first.benchmarks[k]!)])),...(rates.length&&start>=rates[0].date&&brDate(new Date(p.time))<=rates.at(-1)!.date?{cdi:(cdiFactor(rates,start,brDate(new Date(p.time)))-1)*100}:{})}));
@@ -61,7 +91,8 @@ export function cdiFactor(rates:CdiRate[],start:string,end:string,ratePercent=10
  return rates.filter(r=>r.date>start&&r.date<=end).reduce((f,r)=>f*(1+r.rate/100*ratePercent/100),1);
 }
 export type Simulation={points:ChartPoint[];warnings:string[];coverage:number;start:string|null;end:string|null;heldCount:number;excluded:string[];unavailable:BenchmarkKey[]};
-export function simulateComposition(p:Portfolio,m:Market,rates:CdiRate[],days:number,selected:BenchmarkKey[],now=Date.now()):Simulation{
+export function simulateComposition(p:Portfolio,m:Market,rates:CdiRate[],days:number,selected:BenchmarkKey[],now=Date.now(),scope:PerformanceScope='all'):Simulation{
+ p=performancePortfolio(p,scope);
  const t=totals(p,m),warnings:string[]=[],excluded:string[]=[],unavailable:BenchmarkKey[]=[];
  const empty:Simulation={points:[],warnings,coverage:0,start:null,end:null,heldCount:0,excluded,unavailable};
  if(t.missing.length){warnings.push('Aguarde as cotações atuais para definir os pesos da simulação.');return empty;}

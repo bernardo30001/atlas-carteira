@@ -1,0 +1,1 @@
+ALTER TABLE `performance_points` ADD `segments` text;

@@ -11,6 +11,8 @@ Painel privado de investimentos em português, com posições e estratégia vinc
 - Proventos acumulados ou novos pagamentos por ativo, sem duplicar o patrimônio.
 - Extratos de referência preservados com os valores recebidos e observações de reconciliação.
 - S&P 500, Ibovespa, USD/BRL como referências.
+- Filtro de rendimento: tudo agregado, ações/ETFs americanos, ações na B3 e Bitcoin direto, no histórico real e na simulação. Retornos do gráfico em BRL, com aportes e proventos isolados por grupo. Histórico anterior ao registro por grupo continua no consolidado.
+- Notícias por mercado (incluindo Bolsa brasileira) e por ativo, com buscas alternativas pelo nome ou ticker. Filtro Bolsa brasileira também na tabela de ativos, incluindo ações e ETFs negociados na B3.
 - Metas iniciais: Brasil 35%, renda fixa 35%, exterior 22%, Bitcoin 8%.
 - Registro de posição inicial e compra com quantidade, preço, câmbio e taxas.
 - Cadastro e atualização manual de títulos de renda fixa.
@@ -35,6 +37,8 @@ As posições reais são registros privados no banco de dados e não são inclu�
 - `npx tsc --noEmit`
 - `node --experimental-strip-types tests/finance.mjs`
 - `node --experimental-strip-types tests/currencies.mjs`
+- `node --experimental-strip-types tests/performance.mjs`
+- `node --experimental-strip-types tests/news.mjs`
 - `node tests/api.mjs` (prévia local ativa; usa identidade de desenvolvimento e restaura o estado anterior)
 
 A migração `drizzle/0000_simple_gladiator.sql` é aplicada pela publicação do Sites. A prévia local tem banco próprio. A configuração de publicação fica em `.openai/hosting.json`.

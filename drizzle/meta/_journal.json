@@ -15,6 +15,13 @@
       "when": 1793077211581,
       "tag": "0001_dark_jackal",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1793245709204,
+      "tag": "0002_thankful_overlord",
+      "breakpoints": true
     }
   ]
 }

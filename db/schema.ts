@@ -7,5 +7,5 @@ export const performanceStates=sqliteTable('performance_states',{
 });
 
 export const performancePoints=sqliteTable('performance_points',{
- id:text('id').primaryKey(),userId:text('user_id').notNull(),capturedAt:text('captured_at').notNull(),value:real('value_brl').notNull(),unitIndex:real('unit_index').notNull(),netFlow:real('net_flow').notNull(),income:real('income_brl').notNull(),benchmarks:text('benchmarks').notNull(),baseline:integer('baseline').notNull().default(0),
+ id:text('id').primaryKey(),userId:text('user_id').notNull(),capturedAt:text('captured_at').notNull(),value:real('value_brl').notNull(),unitIndex:real('unit_index').notNull(),netFlow:real('net_flow').notNull(),income:real('income_brl').notNull(),benchmarks:text('benchmarks').notNull(),baseline:integer('baseline').notNull().default(0),segments:text('segments'),
 },table=>[index('performance_points_user_time').on(table.userId,table.capturedAt)]);
