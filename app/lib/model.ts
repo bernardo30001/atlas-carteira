@@ -40,7 +40,7 @@ export type Statement = {id:string;date:string;label:string;rows:StatementRow[];
 export type Portfolio = {transactions:Transaction[];fixedIncome:FixedIncome[];targets:Record<Group,number>;weights:Record<string,number>;incomes?:Income[];statements?:Statement[]};
 export const EMPTY:Portfolio = {transactions:[],fixedIncome:[],targets:{br:35,rf:35,etf:22,crypto:8},weights:{},incomes:[],statements:[]};
 export type Point = {date:string;close:number};
-export type Quote = {ticker:string;price:number;previous:number;change:number;currency:string;time:number;source:string;delay:number|null;history:Point[];volatility:number|null;momentum:number|null;drawdown:number|null;stale?:boolean};
+export type Quote = {ticker:string;price:number;previous:number;change:number;currency:string;time:number;source:string;delay:number|null;history:Point[];priceHistory?:Point[];volatility:number|null;momentum:number|null;drawdown:number|null;stale?:boolean};
 export type Market = {quotes:Record<string,Quote>;errors:string[];fetchedAt:string};
 export const today = ()=>new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
 export function metrics(history:Point[],annual=252) {

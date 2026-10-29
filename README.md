@@ -11,7 +11,10 @@ Painel privado de investimentos em português, com posições e estratégia vinc
 - Proventos acumulados ou novos pagamentos por ativo, sem duplicar o patrimônio.
 - Extratos de referência preservados com os valores recebidos e observações de reconciliação.
 - S&P 500, Ibovespa, USD/BRL como referências.
-- Filtro de rendimento: tudo agregado, ações/ETFs americanos, ações na B3 e Bitcoin direto, no histórico real e na simulação. Retornos do gráfico em BRL, com aportes e proventos isolados por grupo. Histórico anterior ao registro por grupo continua no consolidado.
+- Filtro de rendimento: tudo agregado, ações/ETFs americanos, ações na B3 e Bitcoin direto. O modo padrão Desde o preço médio inclui o resultado acumulado anterior ao cadastro: (saldo − custo + proventos) / custo, ponderado pelo capital investido. Custos exatos do extrato e taxas são preservados.
+- Curva retroativa pelo preço médio com cotações históricas sem ajuste por dividendos, quando disponíveis. Posições iniciais são reconstruídas pelas quantidades cadastradas; compras com datas conhecidas entram na data informada. Proventos acumulados entram na data de referência. A janela do gráfico não zera o acumulado. A curva é uma estimativa, separada das observações reais.
+- No modo pelo preço médio, o grupo americano usa USD, B3 e Bitcoin usam BRL. O consolidado preserva o câmbio registrado; conversões sem câmbio de compra/recebimento usam o dólar da data avaliada e aparecem como estimativa, sem ganho cambial histórico. Renda fixa sem capital inicial fica fora do percentual, com cobertura indicada; saldos manuais conhecidos entram apenas no acumulado, sem curva diária inventada.
+- Acompanhamento real e simulação permanecem disponíveis em BRL, com aportes e proventos isolados por grupo. O histórico real anterior ao registro por grupo continua no consolidado.
 - Notícias por mercado (incluindo Bolsa brasileira) e por ativo, com buscas alternativas pelo nome ou ticker. Filtro Bolsa brasileira também na tabela de ativos, incluindo ações e ETFs negociados na B3.
 - Metas iniciais: Brasil 35%, renda fixa 35%, exterior 22%, Bitcoin 8%.
 - Registro de posição inicial e compra com quantidade, preço, câmbio e taxas.
@@ -38,6 +41,7 @@ As posições reais são registros privados no banco de dados e não são inclu�
 - `node --experimental-strip-types tests/finance.mjs`
 - `node --experimental-strip-types tests/currencies.mjs`
 - `node --experimental-strip-types tests/performance.mjs`
+- `node --experimental-strip-types tests/cost-performance.mjs`
 - `node --experimental-strip-types tests/news.mjs`
 - `node tests/api.mjs` (prévia local ativa; usa identidade de desenvolvimento e restaura o estado anterior)
 

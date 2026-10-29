@@ -1,4 +1,4 @@
-import { ASSETS, metrics, type Quote, type Market } from './model';
+import { ASSETS, metrics, type Quote, type Market, type Point } from './model';
 let memory:Market|undefined;
 let pending:Promise<Market>|undefined;
 const SYMBOLS=[...ASSETS.map(a=>({ticker:a.ticker,symbol:a.symbol})),{ticker:'USD',symbol:'BRL=X'},{ticker:'SP500',symbol:'^GSPC'},{ticker:'IBOV',symbol:'^BVSP'}];
@@ -18,7 +18,8 @@ async function quote(ticker:string,symbol:string):Promise<Quote>{
       const prior=valid.filter((p:any)=>new Date(p.t*1000).toISOString().slice(0,10)<sessionDay).at(-1)?.c;
       const stated=Number.isFinite(meta.regularMarketChangePercent)?meta.regularMarketChangePercent:undefined;
       const prev=stated!==undefined&&stated>-100?meta.regularMarketPrice/(1+stated/100):(prior??meta.previousClose??0);
-      return {ticker,price:meta.regularMarketPrice,previous:prev,change:stated??(prev?(meta.regularMarketPrice/prev-1)*100:0),currency:meta.currency,time:meta.regularMarketTime,source:'Yahoo Finance',delay:meta.exchangeDataDelayedBy??null,history,...metrics(history,ticker==='BTC'?365:252)};
+      const priceHistory=(result.timestamp??[]).map((t:number,i:number)=>({date:new Date(t*1000).toISOString().slice(0,10),close:raw[i]})).filter((p:Point)=>Number.isFinite(p.close)&&p.close>0);
+      return {ticker,price:meta.regularMarketPrice,previous:prev,change:stated??(prev?(meta.regularMarketPrice/prev-1)*100:0),currency:meta.currency,time:meta.regularMarketTime,source:'Yahoo Finance',delay:meta.exchangeDataDelayedBy??null,history,priceHistory,...metrics(history,ticker==='BTC'?365:252)};
     }catch(e){last=e;}
   }
   throw last;
