@@ -12,6 +12,7 @@ export const ASSETS: Asset[] = ([
   ['WEGE3','WEG','Indústria','#377fc1','WEG WEGE3'],
   ['ITUB4','Itaú Unibanco','Bancos','#d67e2f','Itaú ITUB4'],
   ['KLBN4','Klabin','Papel e celulose','#5a8c64','Klabin KLBN4'],
+  ['KLBN11','Klabin Units','Papel e celulose','#5a8c64','Klabin KLBN11'],
   ['EGIE3','Engie Brasil','Energia','#1e8ba8','Engie EGIE3'],
   ['BPAC11','BTG Pactual','Bancos','#344c7c','BTG Pactual BPAC11'],
   ['BBSE3','BB Seguridade','Seguros','#b6a143','BB Seguridade BBSE3'],
@@ -33,11 +34,12 @@ export const ASSETS: Asset[] = ([
   {ticker:'BTC',symbol:'BTC-USD',name:'Bitcoin',sector:'Criptomoeda',color:'#d69c48',query:'Bitcoin BTC',group:'crypto',currency:'USD'},
 ] as Asset[]);
 export type Transaction = {id:string;ticker:string;kind:'opening'|'buy';quantity:number;price:number;fx:number|null;fees:number;date:string;note:string;currency?:Currency;costNative?:number};
+export type TradeEvent={id:string;ticker:string;kind:'buy'|'sell';quantity:number;price:number;total:number;currency:Currency;fx:number|null;fees:number;date:string;source?:string};
 export type FixedIncome = {id:string;name:string;cost:number|null;value:number;date:string;updatedAt:string;ratePercent?:number;index?:string;note?:string};
 export type Income = {id:string;ticker:string;amount:number;currency:Currency;date:string;kind:'opening'|'payment';fx?:number|null;note:string};
 export type StatementRow = {ticker:string;quantity:number;average:number;price:number;balance:number;cost:number;dividends:number;reportedResult:number};
 export type Statement = {id:string;date:string;label:string;rows:StatementRow[];reportedTotals:{BRL:{balance:number;cost:number;dividends:number;result:number};USD:{balance:number;cost:number;dividends:number;result:number}};bitcoin?:{quantity:number;balance:number;cost:number;reportedProfit:number;reportedPercent:number;twelveMonthProfit:number};notes:string[]};
-export type Portfolio = {transactions:Transaction[];fixedIncome:FixedIncome[];targets:Record<Group,number>;weights:Record<string,number>;incomes?:Income[];statements?:Statement[]};
+export type Portfolio = {transactions:Transaction[];fixedIncome:FixedIncome[];targets:Record<Group,number>;weights:Record<string,number>;incomes?:Income[];statements?:Statement[];tradeHistory?:TradeEvent[]};
 export const EMPTY:Portfolio = {transactions:[],fixedIncome:[],targets:{br:35,rf:35,etf:22,crypto:8},weights:{},incomes:[],statements:[]};
 export type Point = {date:string;close:number};
 export type Quote = {ticker:string;price:number;previous:number;change:number;currency:string;time:number;source:string;delay:number|null;history:Point[];priceHistory?:Point[];volatility:number|null;momentum:number|null;drawdown:number|null;stale?:boolean};

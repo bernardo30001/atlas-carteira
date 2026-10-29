@@ -4,7 +4,7 @@ Painel privado de investimentos em português, com posições e estratégia vinc
 
 ## O que está pronto
 
-- 13 ações BR: ALUP11, WEGE3, ITUB4, KLBN4, EGIE3, BPAC11, BBSE3, PSSA3, TUPY3, LEVE3, FESA4, VALE3, PRIO3.
+- 14 ações BR: ALUP11, WEGE3, ITUB4, KLBN4, KLBN11, EGIE3, BPAC11, BBSE3, PSSA3, TUPY3, LEVE3, FESA4, VALE3, PRIO3.
 - ETFs internacionais VOO, SPHQ, VEA, VNQ, IAU e VWO; ABTC11 e AUPO11 na B3; Bitcoin direto.
 - AUPO11 classificado em renda fixa e ABTC11 em exposição cripto para as metas.
 - Custos, saldos, proventos e resultados por moeda de origem; conversão do saldo em USD para BRL exibida à parte.
@@ -12,6 +12,8 @@ Painel privado de investimentos em português, com posições e estratégia vinc
 - Extratos de referência preservados com os valores recebidos e observações de reconciliação.
 - S&P 500, Ibovespa, USD/BRL como referências.
 - Filtro de rendimento: tudo agregado, ações/ETFs americanos, ações na B3 e Bitcoin direto. O modo padrão Desde o preço médio inclui o resultado acumulado anterior ao cadastro: (saldo − custo + proventos) / custo, ponderado pelo capital investido. Custos exatos do extrato e taxas são preservados.
+- Histórico de compras e vendas separado das posições atuais. Vendas parciais reduzem o custo pelo preço médio; posições e ciclos encerrados ficam fora. Importações e backups preservam esse histórico.
+- Pontos de compra com botão liga/desliga, agrupados por data, detalhes de quantidade/preço/total e tabela acessível. Usa a data do extrato, sem inferir horário de execução.
 - Curva retroativa pelo preço médio com cotações históricas sem ajuste por dividendos, quando disponíveis. Posições iniciais são reconstruídas pelas quantidades cadastradas; compras com datas conhecidas entram na data informada. Proventos acumulados entram na data de referência. A janela do gráfico não zera o acumulado. A curva é uma estimativa, separada das observações reais.
 - No modo pelo preço médio, o grupo americano usa USD, B3 e Bitcoin usam BRL. O consolidado preserva o câmbio registrado; conversões sem câmbio de compra/recebimento usam o dólar da data avaliada e aparecem como estimativa, sem ganho cambial histórico. Renda fixa sem capital inicial fica fora do percentual, com cobertura indicada; saldos manuais conhecidos entram apenas no acumulado, sem curva diária inventada.
 - Acompanhamento real e simulação permanecem disponíveis em BRL, com aportes e proventos isolados por grupo. O histórico real anterior ao registro por grupo continua no consolidado.
@@ -42,6 +44,7 @@ As posições reais são registros privados no banco de dados e não são inclu�
 - `node --experimental-strip-types tests/currencies.mjs`
 - `node --experimental-strip-types tests/performance.mjs`
 - `node --experimental-strip-types tests/cost-performance.mjs`
+- `node --experimental-strip-types tests/trade-history.mjs`
 - `node --experimental-strip-types tests/news.mjs`
 - `node tests/api.mjs` (prévia local ativa; usa identidade de desenvolvimento e restaura o estado anterior)
 

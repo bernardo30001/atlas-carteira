@@ -10,7 +10,7 @@ type Segment=Exclude<PerformanceScope,'all'>;
 export function performancePortfolio(p:Portfolio,scope:PerformanceScope):Portfolio{
  if(scope==='all')return p;
  const matches=(ticker:string)=>{const asset=ASSETS.find(a=>a.ticker===ticker);return scope==='btc'?ticker==='BTC':scope==='br'?asset?.group==='br':asset?.currency==='USD'&&ticker!=='BTC';};
- return {...p,transactions:p.transactions.filter(t=>matches(t.ticker)),incomes:(p.incomes??[]).filter(i=>matches(i.ticker)),fixedIncome:[]};
+ return {...p,transactions:p.transactions.filter(t=>matches(t.ticker)),incomes:(p.incomes??[]).filter(i=>matches(i.ticker)),fixedIncome:[],tradeHistory:p.tradeHistory?.filter(e=>matches(e.ticker))};
 }
 export type BenchmarkKey='ibov'|'sp500'|'bitcoin'|'cdi';
 export type Benchmarks=Partial<Record<Exclude<BenchmarkKey,'cdi'>,number>>;

@@ -1,5 +1,6 @@
 import {z} from 'zod';
 import {ASSETS,today,wholeUnits} from './model.ts';
+import {replayTrades} from './trade-history.ts';
 const date=z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(s=>!isNaN(Date.parse(s))&&new Date(s).toISOString().slice(0,10)===s&&s<=today(),'Data inválida ou futura');
 const amount=z.number().finite().min(0).max(1e12),signed=z.number().finite().min(-1e12).max(1e12),currency=z.enum(['BRL','USD']),ticker=z.string().refine(t=>ASSETS.some(a=>a.ticker===t),'Ativo inválido');
 const transaction=z.object({id:z.string().uuid(),ticker,kind:z.enum(['opening','buy']),quantity:z.number().finite().positive().max(1e12),price:z.number().finite().positive().max(1e12),fx:z.number().finite().positive().max(10000).nullable(),fees:amount,date,note:z.string().max(500),currency:currency.optional(),costNative:amount.optional()}).superRefine((t,c)=>{
@@ -11,6 +12,11 @@ const transaction=z.object({id:z.string().uuid(),ticker,kind:z.enum(['opening','
 });
 const income=z.object({id:z.string().uuid(),ticker,amount,currency,date,kind:z.enum(['opening','payment']),fx:z.number().finite().positive().max(10000).nullable().optional(),note:z.string().max(500)}).superRefine((i,c)=>{const a=ASSETS.find(a=>a.ticker===i.ticker);if(a&&a.ticker!=='BTC'&&i.currency!==a.currency)c.addIssue({code:'custom',message:'Provento deve ser registrado na moeda do ativo.'});});
 const reportTotals=z.object({balance:amount,cost:amount,dividends:amount,result:signed});
+const tradeEvent=z.object({id:z.string().uuid(),ticker,kind:z.enum(['buy','sell']),quantity:z.number().finite().positive().max(1e12),price:z.number().finite().positive().max(1e12),total:amount,currency,fx:z.number().finite().positive().max(10000).nullable(),fees:amount,date,source:z.string().max(200).optional()}).superRefine((t,c)=>{
+ const a=ASSETS.find(a=>a.ticker===t.ticker);if(a&&t.currency!==a.currency)c.addIssue({code:'custom',message:'Moeda da movimentação incompatível com o ativo.'});
+ if(a&&wholeUnits(a)&&!Number.isInteger(t.quantity))c.addIssue({code:'custom',message:'A movimentação na B3 usa quantidades inteiras.'});
+ if(t.currency==='BRL'&&t.fx!==1)c.addIssue({code:'custom',message:'Registros em reais usam câmbio 1.'});
+});
 const statement=z.object({id:z.string().uuid(),date,label:z.string().max(150),rows:z.array(z.object({ticker,quantity:amount,average:amount,price:amount,balance:amount,cost:amount,dividends:amount,reportedResult:signed})).max(100),reportedTotals:z.object({BRL:reportTotals,USD:reportTotals}),bitcoin:z.object({quantity:amount,balance:amount,cost:amount,reportedProfit:signed,reportedPercent:signed,twelveMonthProfit:signed}).optional(),notes:z.array(z.string().max(1000)).max(30)});
 export const portfolioSchema=z.object({
  transactions:z.array(transaction).max(10000),
@@ -19,5 +25,10 @@ export const portfolioSchema=z.object({
  weights:z.record(z.number().finite().min(0).max(100)).refine(w=>ASSETS.filter(a=>a.group!=='rf').every(a=>ASSETS.filter(b=>b.group===a.group).some(b=>(w[b.ticker]??1)>0)),'Cada classe precisa ter algum peso positivo'),
  incomes:z.array(income).max(10000).optional(),
  statements:z.array(statement).max(100).optional(),
-}).superRefine((p,c)=>{const ids=[...p.transactions,...p.fixedIncome,...(p.incomes??[]),...(p.statements??[])].map(x=>x.id);if(new Set(ids).size!==ids.length)c.addIssue({code:'custom',message:'Registros duplicados'});});
+ tradeHistory:z.array(tradeEvent).max(10000).optional(),
+}).superRefine((p,c)=>{
+ const ids=[...p.transactions,...p.fixedIncome,...(p.incomes??[]),...(p.statements??[])].map(x=>x.id);if(new Set(ids).size!==ids.length)c.addIssue({code:'custom',message:'Registros duplicados'});
+ const history=p.tradeHistory??[];if(new Set(history.map(e=>e.id)).size!==history.length)c.addIssue({code:'custom',message:'Movimentações duplicadas'});
+ for(const ticker of new Set(history.map(e=>e.ticker))){try{replayTrades(history.filter(e=>e.ticker===ticker));}catch{c.addIssue({code:'custom',message:'Histórico de vendas sem posição suficiente para '+ticker});}}
+});
 export const requestSchema=z.object({revision:z.number().int().min(0),portfolio:portfolioSchema});
