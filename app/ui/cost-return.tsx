@@ -93,9 +93,10 @@ export function CostReturnMethod({
       <div>
         <p>
           Rendimento acumulado = (saldo atual − valor investido + proventos
-          registrados) ÷ valor investido. O custo usa quantidade × preço médio e
-          taxas, ou o valor investido exato do extrato quando informado. O
-          percentual do grupo é ponderado pelo capital investido.
+          registrados) ÷ valor investido. O preço médio já inclui as taxas. O
+          custo usa quantidade × preço médio, ou o valor investido exato do
+          extrato quando informado. O percentual do grupo é ponderado pelo
+          capital investido.
         </p>
         <p>
           Ações e ETFs americanos são calculados em dólares; ações da B3,

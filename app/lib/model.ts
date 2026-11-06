@@ -331,6 +331,14 @@ export function positions(portfolio: Portfolio, market: Market) {
               : null;
     const primaryCurrency: Currency = a.ticker === "BTC" ? "BRL" : a.currency;
     const primaryValue = primaryCurrency === "BRL" ? value : nativeValue;
+    // Taxas são em reais. Sem câmbio de compra, a parcela em dólar usa o câmbio atual
+    // e o custo em dólar nunca se perde por causa dela.
+    const usdCost = (t: Transaction) => {
+      const rate = t.fx ?? fx;
+      return transactionCost(t) + (t.fees > 0 && rate ? t.fees / rate : 0);
+    };
+    const costEstimated =
+      primaryCurrency === "USD" && tx.some((t) => t.fees > 0 && !t.fx);
     const cost = sumNullable(
       tx.map((t) =>
         transactionCurrency(t) === "BRL"
@@ -345,13 +353,7 @@ export function positions(portfolio: Portfolio, market: Market) {
         ? cost
         : sumNullable(
             tx.map((t) =>
-              transactionCurrency(t) === "USD"
-                ? t.fees === 0
-                  ? transactionCost(t)
-                  : t.fx
-                    ? transactionCost(t) + t.fees / t.fx
-                    : null
-                : null,
+              transactionCurrency(t) === "USD" ? usdCost(t) : null,
             ),
           );
     const nativeIncome = sumNullable(
@@ -381,7 +383,14 @@ export function positions(portfolio: Portfolio, market: Market) {
         ? primaryCost === null
           ? null
           : primaryCost / quantity
-        : tx.reduce((s, t) => s + t.quantity * t.price, 0) / quantity
+        : tx.reduce(
+            (s, t) =>
+              s +
+              (transactionCurrency(t) === "BRL"
+                ? transactionCost(t) + t.fees
+                : usdCost(t)),
+            0,
+          ) / quantity
       : 0;
     return {
       ...a,
@@ -392,6 +401,7 @@ export function positions(portfolio: Portfolio, market: Market) {
       primaryCurrency,
       primaryValue,
       primaryCost,
+      costEstimated,
       nativeIncome,
       result,
       quote: q,

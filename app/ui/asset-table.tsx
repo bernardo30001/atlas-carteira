@@ -294,6 +294,9 @@ export function AssetTable({
                               {a.feesBRL > 0 && (
                                 <small>Taxas: {fmt(a.feesBRL)}</small>
                               )}
+                              {a.costEstimated && (
+                                <small>Taxa convertida pelo câmbio atual</small>
+                              )}
                             </td>
                             <td>{fmt(a.nativeIncome, a.primaryCurrency)}</td>
                             <td>
