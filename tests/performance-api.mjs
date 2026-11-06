@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+const base='http://localhost:5182';
+assert.equal((await fetch(base+'/api/performance')).status,401);
+assert.equal((await fetch(base+'/api/performance',{method:'POST'})).status,401);
+const signin=await fetch(base+'/signin-with-chatgpt?return_to=/',{redirect:'manual'}),cookie=signin.headers.get('set-cookie')?.split(';')[0];assert.ok(cookie);
+const headers={Cookie:cookie,Origin:base};
+const original=await (await fetch(base+'/api/portfolio',{headers})).json();
+let first=await (await fetch(base+'/api/performance',{method:'POST',headers})).json();assert.ok(!first.error,JSON.stringify(first));assert.ok(first.points.length);assert.equal(first.points.filter(p=>p.baseline).length,1);
+const replies=await Promise.all(Array.from({length:5},()=>fetch(base+'/api/performance',{method:'POST',headers}).then(r=>r.json())));assert.ok(replies.every(j=>!j.error),JSON.stringify(replies));
+const saved=await (await fetch(base+'/api/performance',{headers})).json();assert.equal(saved.startedAt,first.startedAt);assert.equal(saved.points.filter(p=>p.baseline).length,1);assert.ok(saved.points.length<=first.points.length+1);
+assert.equal((await fetch(base+'/api/performance',{headers:{...headers,Origin:'https://unexpected.example'},method:'POST'})).status,403);
+const afterward=await (await fetch(base+'/api/portfolio',{headers})).json();assert.deepEqual(afterward,original);
+console.log('Performance API passed: sign-in required, persistent baseline, concurrent capture, bucket consolidation, origin guard and holdings unchanged.');
