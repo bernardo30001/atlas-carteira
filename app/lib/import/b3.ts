@@ -15,6 +15,9 @@ export type ParsedTrade = {
   total: number;
   institution: string;
   fraction?: boolean;
+  /** Taxas à parte do total, quando o arquivo as informa. */
+  fees?: number;
+  feesCurrency?: "USD";
 };
 export type ParsedIncome = {
   line: number;
@@ -22,8 +25,12 @@ export type ParsedIncome = {
   ticker: string;
   type: "dividend" | "jcp" | "yield";
   label: string;
+  /** O líquido recebido. */
   amount: number;
   institution: string;
+  /** Quando o arquivo permite separar o bruto do imposto retido. */
+  gross?: number;
+  withheldTax?: number;
 };
 export type ParsedAction = {
   line: number;
@@ -46,9 +53,13 @@ export type ParsedNote = {
   reason: string;
 };
 export type ParsedFile = {
-  format: "b3-negociacao" | "b3-movimentacao";
+  format: "b3-negociacao" | "b3-movimentacao" | "nomad-extrato";
   fileName: string;
   sheet: string;
+  /** Moeda dos valores do arquivo. Sem ela, reais. */
+  currency?: "USD";
+  /** O que o próprio arquivo pede para conferir. */
+  warnings?: string[];
   trades: ParsedTrade[];
   incomes: ParsedIncome[];
   actions: ParsedAction[];
