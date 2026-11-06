@@ -1003,7 +1003,13 @@ export default function Dashboard() {
                           <span>
                             {hasPositions ? "PATRIMÔNIO" : "META TOTAL"}
                           </span>
-                          <b>{hasPositions ? displayMoney(t.value) : "100%"}</b>
+                          <b>
+                            {!hasPositions
+                              ? "100%"
+                              : t.missing.length
+                                ? "Aguardando"
+                                : displayMoney(t.value)}
+                          </b>
                           <small>
                             {hasPositions
                               ? "4 classes de ativos"
@@ -1187,7 +1193,7 @@ export default function Dashboard() {
               </div>
             </>
           )}
-          {page === "portfolio" && (
+          {portfolioReady && page === "portfolio" && (
             <>
               <IncomePanel
                 portfolio={p}
