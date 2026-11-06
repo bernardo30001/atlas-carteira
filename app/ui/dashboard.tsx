@@ -39,6 +39,7 @@ import {
   Tooltip,
 } from "recharts";
 import {
+  allAssets,
   ASSETS,
   GROUPS,
   EMPTY,
@@ -54,6 +55,7 @@ import { fixed, money, num, plainPercent, signedMoney } from "../lib/format";
 import { portfolioSchema } from "../lib/validation";
 import { ledgerIssues, migratePortfolio } from "../lib/trade-history";
 import { MovementHistory } from "./movement-history";
+import { AssetForm } from "./asset-form";
 import { Change } from "./change";
 import { ContributionPreview } from "./contribution-preview";
 import { ValidatedForm, FormInput } from "./validated-form";
@@ -203,7 +205,8 @@ export default function Dashboard() {
     marketBusy = useRef(false),
     sidebarRef = useRef<HTMLElement>(null),
     menuRef = useRef<HTMLButtonElement>(null),
-    importRef = useRef<HTMLInputElement>(null);
+    importRef = useRef<HTMLInputElement>(null),
+    extraRef = useRef("");
   const p = demo ?? portfolio,
     t = useMemo(() => totals(p, market), [p, market]),
     classPlan = allocationPlan(p, market, budget),
@@ -311,7 +314,12 @@ export default function Dashboard() {
     marketBusy.current = true;
     setMarketLoading(true);
     try {
-      const r = await fetch("/api/market");
+      const r = await fetch(
+        "/api/market" +
+          (extraRef.current
+            ? "?assets=" + encodeURIComponent(extraRef.current)
+            : ""),
+      );
       if (!r.ok) throw Error();
       const j: any = await r.json();
       setMarket(j);
@@ -338,13 +346,18 @@ export default function Dashboard() {
       marketBusy.current = false;
     }
   }
+  const extraAssets = (p.customAssets ?? [])
+    .filter((a) => !a.archived)
+    .map((a) => `${a.ticker}:${a.symbol}`)
+    .join(",");
   useEffect(() => {
+    extraRef.current = extraAssets;
     refreshMarket();
     const timer = setInterval(() => {
       if (!document.hidden) refreshMarket();
     }, 60000);
     return () => clearInterval(timer);
-  }, []);
+  }, [extraAssets]);
   useEffect(() => {
     let canceled = false;
     const controller = new AbortController();
@@ -1440,7 +1453,12 @@ export default function Dashboard() {
           {page === "news" && newsBlock(true)}
           {portfolioReady && page === "strategy" && (
             <>
-              <Strategy portfolio={p} save={save} busy={saveBusy} />
+              <Strategy
+                portfolio={p}
+                save={save}
+                busy={saveBusy}
+                onAddAsset={() => setModal({ kind: "asset-new" })}
+              />
               <section className="panel method-panel">
                 <div className="panel-title">
                   <div>
@@ -1608,10 +1626,28 @@ export default function Dashboard() {
           {modal?.kind === "income" && !hidden && (
             <IncomeForm
               ticker={modal.ticker}
+              portfolio={p}
               busy={saveBusy}
               onSubmit={async (income) => {
                 if (
                   await save({ ...p, incomes: [...(p.incomes ?? []), income] })
+                )
+                  setModal(null);
+              }}
+            />
+          )}
+          {modal?.kind === "asset-new" && (
+            <AssetForm
+              key={modal.ticker ?? "novo"}
+              initialTicker={modal.ticker}
+              taken={allAssets(p).map((a) => a.ticker)}
+              busy={saveBusy}
+              onSubmit={async (asset) => {
+                if (
+                  await save({
+                    ...p,
+                    customAssets: [...(p.customAssets ?? []), asset],
+                  })
                 )
                   setModal(null);
               }}
@@ -1969,11 +2005,14 @@ function Strategy({
   portfolio,
   save,
   busy,
+  onAddAsset,
 }: {
   portfolio: Portfolio;
   save: (p: Portfolio) => Promise<boolean>;
   busy: boolean;
+  onAddAsset: () => void;
 }) {
+  const assets = allAssets(portfolio).filter((a) => !a.archived);
   const [targets, setTargets] = useState(portfolio.targets),
     [weights, setWeights] = useState(portfolio.weights),
     [dirty, setDirty] = useState(false);
@@ -2050,44 +2089,49 @@ function Strategy({
               título.
             </p>
           </div>
+          <button type="button" className="button outline" onClick={onAddAsset}>
+            <Plus size={15} />
+            Cadastrar ativo
+          </button>
         </div>
         <div className="weight-grid">
-          {ASSETS.filter((a) => a.group !== "rf").map((a) => {
-            const total = ASSETS.filter((x) => x.group === a.group).reduce(
-              (s, x) => s + (weights[x.ticker] ?? 1),
-              0,
-            );
-            return (
-              <label className="weight-item" key={a.ticker}>
-                <Mark ticker={a.ticker} size={30} />
-                <span>
-                  <b>{a.ticker}</b>
-                  <small>
-                    {total
-                      ? num(((weights[a.ticker] ?? 1) / total) * 100, 1)
-                      : 0}
-                    % da classe
-                  </small>
-                </span>
-                <FormInput
-                  name={"weight-" + a.ticker}
-                  aria-label={`Peso ${a.ticker}`}
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="0.1"
-                  value={weights[a.ticker] ?? 1}
-                  onChange={(e) => {
-                    setWeights({
-                      ...weights,
-                      [a.ticker]: Number(e.target.value),
-                    });
-                    setDirty(true);
-                  }}
-                />
-              </label>
-            );
-          })}
+          {assets
+            .filter((a) => a.group !== "rf")
+            .map((a) => {
+              const total = assets
+                .filter((x) => x.group === a.group)
+                .reduce((s, x) => s + (weights[x.ticker] ?? 1), 0);
+              return (
+                <label className="weight-item" key={a.ticker}>
+                  <Mark ticker={a.ticker} size={30} />
+                  <span>
+                    <b>{a.ticker}</b>
+                    <small>
+                      {total
+                        ? num(((weights[a.ticker] ?? 1) / total) * 100, 1)
+                        : 0}
+                      % da classe
+                    </small>
+                  </span>
+                  <FormInput
+                    name={"weight-" + a.ticker}
+                    aria-label={`Peso ${a.ticker}`}
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.1"
+                    value={weights[a.ticker] ?? 1}
+                    onChange={(e) => {
+                      setWeights({
+                        ...weights,
+                        [a.ticker]: Number(e.target.value),
+                      });
+                      setDirty(true);
+                    }}
+                  />
+                </label>
+              );
+            })}
         </div>
         <div className="save-row">
           <span className={valid ? "muted" : "negative"}>
@@ -2126,7 +2170,7 @@ function AssetDetail({
   onSell: () => void;
   onNews: () => void;
 }) {
-  const a = ASSETS.find((a) => a.ticker === ticker)!,
+  const a = position,
     q = market.quotes[ticker];
   return (
     <>

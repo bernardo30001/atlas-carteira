@@ -2,7 +2,9 @@
 import assert from "node:assert/strict";
 import { ASSETS, EMPTY } from "../../app/lib/model.ts";
 
-const assetOf = (ticker) => ASSETS.find((a) => a.ticker === ticker);
+// Códigos fora da lista padrão, como um FII cadastrado, são em reais nestes testes.
+const assetOf = (ticker) =>
+  ASSETS.find((a) => a.ticker === ticker) ?? { currency: "BRL" };
 
 /** Compara com tolerância e mostra "exibido" e "correto" na falha. */
 export const near = (actual, expected, label = "valor", eps = 1e-6) =>

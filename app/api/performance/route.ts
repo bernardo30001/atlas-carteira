@@ -1,6 +1,6 @@
 import { env } from "cloudflare:workers";
 import { getChatGPTUser } from "../../chatgpt-auth";
-import { loadMarket } from "../../lib/market-server";
+import { extraAssetsOf, loadMarket } from "../../lib/market-server";
 import {
   capturePerformance,
   type PerformanceState,
@@ -65,13 +65,14 @@ export async function POST(request: Request) {
   )
     return respond({ error: "Origem inválida" }, 403);
   try {
-    const market = await loadMarket();
     for (let attempt = 0; attempt < 3; attempt++) {
       const portfolio = await database()
         .prepare("SELECT payload,revision FROM portfolios WHERE user_id=?")
         .bind(user.userId)
         .first<{ payload: string; revision: number }>();
       if (!portfolio) return respond(await history(user.userId));
+      const stored = JSON.parse(portfolio.payload) as Portfolio,
+        market = await loadMarket(extraAssetsOf(stored));
       const previous = await database()
         .prepare(
           "SELECT payload,version FROM performance_states WHERE user_id=?",
@@ -82,7 +83,7 @@ export async function POST(request: Request) {
       let captured;
       try {
         captured = capturePerformance(
-          JSON.parse(portfolio.payload) as Portfolio,
+          stored,
           market,
           previous ? JSON.parse(previous.payload) : undefined,
           portfolio.revision,

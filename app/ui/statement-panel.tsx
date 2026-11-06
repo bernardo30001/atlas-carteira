@@ -1,7 +1,7 @@
 "use client";
 import { money } from "../lib/format";
 import { FileCheck2, Info } from "lucide-react";
-import { ASSETS, type Portfolio } from "../lib/model";
+import { assetOf, type Portfolio } from "../lib/model";
 export function StatementPanel({
   portfolio,
   hidden,
@@ -68,7 +68,7 @@ export function StatementPanel({
             <tbody>
               {report.rows.map((r) => {
                 const currency =
-                  ASSETS.find((a) => a.ticker === r.ticker)?.currency ?? "BRL";
+                  assetOf(portfolio, r.ticker)?.currency ?? "BRL";
                 return (
                   <tr key={r.ticker}>
                     <td>

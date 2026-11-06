@@ -1,7 +1,7 @@
 "use client";
 import { money } from "../lib/format";
 import { Plus, Coins } from "lucide-react";
-import { ASSETS, type Income, type Portfolio } from "../lib/model";
+import { assetOf, type Portfolio } from "../lib/model";
 export function IncomePanel({
   portfolio,
   hidden,
@@ -47,9 +47,7 @@ export function IncomePanel({
                 <tr key={i.id}>
                   <td>
                     <b>{i.ticker}</b>
-                    <small>
-                      {ASSETS.find((a) => a.ticker === i.ticker)?.name}
-                    </small>
+                    <small>{assetOf(portfolio, i.ticker)?.name}</small>
                   </td>
                   <td>
                     <b>{hidden ? "••••••" : money(i.amount, i.currency)}</b>

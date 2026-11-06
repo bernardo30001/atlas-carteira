@@ -25,7 +25,12 @@ export function CurrencySummary({
   const fmt = (v: number | null, c = "BRL") =>
     hidden ? "••••••" : v === null ? "Não informado" : money(v, c);
   const br = t.brazilStocks,
+    fiis = t.brazilFiis,
     etfs = t.brazilEtfs,
+    etfNames = t.rows
+      .filter((a) => a.currency === "BRL" && a.group !== "br" && a.quantity > 0)
+      .map((a) => a.ticker)
+      .join(" e "),
     us = t.international,
     btc = t.rows.find((a) => a.ticker === "BTC")!,
     realized = realizedResults(portfolio),
@@ -48,7 +53,11 @@ export function CurrencySummary({
     );
   return (
     <>
-      <div className="stats-grid currency-stats">
+      <div
+        className={
+          "stats-grid currency-stats" + (fiis.count ? " with-fiis" : "")
+        }
+      >
         <section className="stat-card wealth">
           <div className="stat-label">
             Patrimônio consolidado em reais <Wallet size={16} />
@@ -89,6 +98,19 @@ export function CurrencySummary({
           </div>
           <div className="stat-foot">{br.count} ações · valores em reais</div>
         </section>
+        {fiis.count > 0 && (
+          <section className="stat-card">
+            <div className="stat-label">
+              FIIs na B3 <Landmark size={16} />
+            </div>
+            <div className="stat-value">
+              {fiis.missing ? "Cotação pendente" : fmt(fiis.value)}
+            </div>
+            <div className="stat-foot">
+              {fiis.count} fundos · valores em reais
+            </div>
+          </section>
+        )}
         <section className="stat-card">
           <div className="stat-label">
             ETFs na B3 <Landmark size={16} />
@@ -96,7 +118,9 @@ export function CurrencySummary({
           <div className="stat-value">
             {etfs.missing ? "Cotação pendente" : fmt(etfs.value)}
           </div>
-          <div className="stat-foot">{etfs.count} ETFs · ABTC11 e AUPO11</div>
+          <div className="stat-foot">
+            {etfs.count} ETFs{etfNames ? ` · ${etfNames}` : ""}
+          </div>
         </section>
         <section className="stat-card">
           <div className="stat-label">
@@ -138,6 +162,9 @@ export function CurrencySummary({
           <div className="regional-summaries">
             {[
               { label: "Ações na B3", currency: "BRL", data: br },
+              ...(fiis.count
+                ? [{ label: "FIIs na B3", currency: "BRL", data: fiis }]
+                : []),
               { label: "ETFs na B3", currency: "BRL", data: etfs },
               {
                 label: "Exterior · ETFs em dólares",
@@ -174,8 +201,10 @@ export function CurrencySummary({
                   {currency === "USD"
                     ? "O câmbio de compra não foi presumido. O resultado acima é em dólares."
                     : label === "ETFs na B3"
-                      ? "ABTC11 e AUPO11, separados das ações. As metas seguem a exposição de cada fundo."
-                      : "Somente ações brasileiras. ETFs, CDB e Bitcoin direto ficam separados."}
+                      ? "Separados das ações. As metas seguem a exposição de cada fundo."
+                      : label === "FIIs na B3"
+                        ? "Separados das ações, mas dentro da meta Brasil."
+                        : "Somente ações brasileiras. FIIs, ETFs, CDB e Bitcoin direto ficam separados."}
                 </p>
               </section>
             ))}

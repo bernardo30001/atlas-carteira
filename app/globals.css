@@ -6428,3 +6428,23 @@ table,
     min-width: 0;
   }
 }
+
+.stats-grid.currency-stats.with-fiis {
+  grid-template-columns: 1.9fr 1fr 1fr 1fr 1fr;
+}
+@media (max-width: 1200px) {
+  .stats-grid.currency-stats.with-fiis {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .stats-grid.currency-stats.with-fiis .stat-card:last-child {
+    grid-column: auto;
+  }
+}
+.check-field {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  color: var(--muted);
+  font-size: 0.875rem;
+}

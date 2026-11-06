@@ -1,5 +1,5 @@
-import { hasHolding } from "./trade-history.ts";
-import { ASSETS, totals, type Portfolio, type Market } from "./model.ts";
+import { currentTicker, hasHolding } from "./trade-history.ts";
+import { assetOf, totals, type Portfolio, type Market } from "./model.ts";
 export const PERFORMANCE_SCOPES = [
   {
     key: "all",
@@ -31,20 +31,21 @@ export function performancePortfolio(
   scope: PerformanceScope,
 ): Portfolio {
   if (scope === "all") return p;
-  const matches = (ticker: string) => {
-    const asset = ASSETS.find((a) => a.ticker === ticker);
+  const matches = (record: { ticker: string; date: string }) => {
+    const ticker = currentTicker(p, record.ticker, record.date),
+      asset = assetOf(p, ticker);
     return scope === "btc"
       ? ticker === "BTC"
       : scope === "br"
-        ? asset?.group === "br"
+        ? asset?.group === "br" && asset.segment !== "fii"
         : asset?.currency === "USD" && ticker !== "BTC";
   };
   return {
     ...p,
-    transactions: p.transactions.filter((t) => matches(t.ticker)),
-    incomes: (p.incomes ?? []).filter((i) => matches(i.ticker)),
+    transactions: p.transactions.filter(matches),
+    incomes: (p.incomes ?? []).filter(matches),
     fixedIncome: [],
-    tradeHistory: p.tradeHistory?.filter((e) => matches(e.ticker)),
+    tradeHistory: p.tradeHistory?.filter(matches),
   };
 }
 export type BenchmarkKey = "ibov" | "sp500" | "bitcoin" | "cdi";
@@ -107,8 +108,8 @@ export const brDate = (d: Date) =>
     month: "2-digit",
     day: "2-digit",
   }).format(d);
-function priceBRL(ticker: string, m: Market): number | null {
-  const a = ASSETS.find((a) => a.ticker === ticker),
+function priceBRL(p: Portfolio, ticker: string, m: Market): number | null {
+  const a = assetOf(p, ticker),
     q = m.quotes[ticker];
   if (!a || !q || q.stale) return null;
   if (a.currency === "BRL") return q.price;
@@ -149,7 +150,7 @@ function captureSnapshot(
   if (previous) {
     let beforeChange = previous.fixed.reduce((s, r) => s + r.value, 0);
     for (const a of previous.holdings) {
-      const price = priceBRL(a.ticker, m);
+      const price = priceBRL(p, a.ticker, m);
       if (price === null)
         throw new Error("Cotação anterior pendente: " + a.ticker);
       beforeChange += a.quantity * price;

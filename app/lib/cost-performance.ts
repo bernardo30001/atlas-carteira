@@ -18,8 +18,10 @@ import {
 import {
   attributeIncomes,
   datedTrades,
+  incomesFor,
   ledgerFor,
   replayLedger,
+  splitAdjustment,
 } from "./trade-history.ts";
 
 export type CostPerformance = {
@@ -55,7 +57,7 @@ function costOf(tx: Transaction, currency: Currency, fx: number | null) {
   const rate = tx.fx ?? fx;
   return add([
     convert(transactionCost(tx), transactionCurrency(tx), currency, rate),
-    convert(tx.fees, "BRL", currency, rate),
+    convert(tx.fees, tx.feesCurrency ?? "BRL", currency, rate),
   ]);
 }
 const incomeOf = (i: Income, currency: Currency, fx: number | null) =>
@@ -63,7 +65,7 @@ const incomeOf = (i: Income, currency: Currency, fx: number | null) =>
 function needsEstimatedFX(tx: Transaction, currency: Currency) {
   return (
     ((transactionCurrency(tx) !== currency && transactionCost(tx) > 0) ||
-      (currency === "USD" && tx.fees > 0)) &&
+      (currency === "USD" && tx.fees > 0 && tx.feesCurrency !== "USD")) &&
     !tx.fx
   );
 }
@@ -100,6 +102,9 @@ export function costPerformance(
     excluded: string[] = [],
     warnings: string[] = [];
   const ledgers = new Map(rows.map((r) => [r.ticker, ledgerFor(p, r.ticker)])),
+    finals = new Map(
+      rows.map((r) => [r.ticker, replayLedger(ledgers.get(r.ticker)!)]),
+    ),
     events = datedTrades(p);
   const fxQuote = market.quotes.USD,
     fx =
@@ -198,8 +203,8 @@ export function costPerformance(
   for (const event of events)
     if (event.date >= start && event.date <= today) dates.add(event.date);
   const selectedTickers = new Set(included.map((r) => r.ticker));
-  const incomes = (p.incomes ?? []).filter((i) =>
-    selectedTickers.has(i.ticker),
+  const incomes = [...selectedTickers].flatMap((ticker) =>
+    incomesFor(p, ticker).map((i) => ({ ...i, ticker })),
   );
   for (const i of incomes)
     if (i.date >= start && i.date <= today) dates.add(i.date);
@@ -221,7 +226,14 @@ export function costPerformance(
       const lotValue =
         price === null
           ? null
-          : convert(state.quantity * price, row.currency, currency, dayFx);
+          : convert(
+              state.quantity *
+                splitAdjustment(finals.get(row.ticker)!, date) *
+                price,
+              row.currency,
+              currency,
+              dayFx,
+            );
       if (lotCost === null || lotValue === null) {
         complete = false;
         break;

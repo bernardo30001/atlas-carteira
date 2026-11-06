@@ -1,4 +1,11 @@
-import { ASSETS, metrics, type Quote, type Market, type Point } from "./model";
+import {
+  ASSETS,
+  metrics,
+  type Quote,
+  type Market,
+  type Point,
+  type Portfolio,
+} from "./model";
 const dayFormats = new Map<string, Intl.DateTimeFormat>();
 /** Dia da barra no fuso da bolsa. USD/BRL fecha em Londres: no horário de verão
  * britânico a barra começa às 23:00 UTC do dia anterior. */
@@ -114,7 +121,7 @@ async function refresh(): Promise<Market> {
   memory = { quotes, errors, fetchedAt: new Date().toISOString() };
   return memory;
 }
-export async function loadMarket() {
+async function loadBase() {
   if (memory && Date.now() - Date.parse(memory.fetchedAt) < 55000)
     return memory;
   if (!pending)
@@ -123,3 +130,56 @@ export async function loadMarket() {
     });
   return await pending;
 }
+
+export type ExtraAsset = { ticker: string; symbol: string };
+const extras = new Map<string, { quote: Quote; at: number }>();
+/** Cotações dos ativos cadastrados, com o mesmo intervalo de atualização da lista padrão. */
+async function loadExtras(assets: ExtraAsset[], errors: string[]) {
+  const quotes: Record<string, Quote> = {};
+  for (let i = 0; i < assets.length; i += 4) {
+    await Promise.all(
+      assets.slice(i, i + 4).map(async (a) => {
+        const key = a.ticker + "|" + a.symbol,
+          cached = extras.get(key);
+        if (cached && Date.now() - cached.at < 55000) {
+          quotes[a.ticker] = cached.quote;
+          return;
+        }
+        try {
+          const fresh = await quote(a.ticker, a.symbol);
+          extras.set(key, { quote: fresh, at: Date.now() });
+          quotes[a.ticker] = fresh;
+        } catch {
+          errors.push(a.ticker);
+          if (cached) quotes[a.ticker] = { ...cached.quote, stale: true };
+        }
+      }),
+    );
+  }
+  return quotes;
+}
+
+export async function loadMarket(assets: ExtraAsset[] = []) {
+  const base = await loadBase();
+  if (!assets.length) return base;
+  const errors = [...base.errors],
+    added = await loadExtras(assets, errors);
+  return { ...base, quotes: { ...base.quotes, ...added }, errors };
+}
+
+const EXTRA_PATTERN = /^([A-Z0-9]{2,12}):([A-Z0-9.^=-]{1,20})$/;
+/** Lê a lista enviada pelo navegador. O host da consulta é fixo e o limite evita abuso. */
+export function parseExtraAssets(raw: string | null): ExtraAsset[] {
+  return (raw ?? "")
+    .split(",")
+    .flatMap((item) => {
+      const match = EXTRA_PATTERN.exec(item.trim());
+      return match ? [{ ticker: match[1], symbol: match[2] }] : [];
+    })
+    .slice(0, 40);
+}
+/** Ativos ainda em uso. Encerrados ficam só no histórico. */
+export const extraAssetsOf = (p: Portfolio): ExtraAsset[] =>
+  (p.customAssets ?? [])
+    .filter((a) => !a.archived)
+    .map((a) => ({ ticker: a.ticker, symbol: a.symbol }));

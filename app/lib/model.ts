@@ -1,4 +1,9 @@
-import { attributeIncomes, ledgerFor, replayLedger } from "./trade-history.ts";
+import {
+  attributeIncomes,
+  incomesFor,
+  ledgerFor,
+  replayLedger,
+} from "./trade-history.ts";
 export type Currency = "BRL" | "USD";
 export type Group = "br" | "rf" | "etf" | "crypto";
 export type Asset = {
@@ -10,6 +15,10 @@ export type Asset = {
   sector: string;
   color: string;
   query: string;
+  /** FIIs entram na meta Brasil, mas têm cartão e filtro próprios. */
+  segment?: "fii";
+  /** Ativo encerrado: fica no histórico sem exigir cotação. */
+  archived?: boolean;
 };
 export const GROUPS: Record<
   Group,
@@ -162,6 +171,8 @@ export type Transaction = {
   costNative?: number;
   /** Posição inicial que o histórico de movimentações já explica por inteiro. */
   reconciled?: boolean;
+  /** Moeda das taxas. Sem esse campo, são reais. */
+  feesCurrency?: Currency;
 };
 export type TradeEvent = {
   id: string;
@@ -173,8 +184,29 @@ export type TradeEvent = {
   currency: Currency;
   fx: number | null;
   fees: number;
+  /** Moeda das taxas. Sem esse campo, são reais. */
+  feesCurrency?: Currency;
   date: string;
+  /** Origem do registro: tipo-de-arquivo|instituição|data da importação. */
   source?: string;
+  institution?: string;
+  /** Chave estável da importação, para reimportar sem duplicar. */
+  importKey?: string;
+};
+export type CorporateAction = {
+  id: string;
+  ticker: string;
+  date: string;
+  kind: "split" | "bonus" | "rename";
+  /** Split: multiplicador de cotas (2 = 1 vira 2; 0,5 = grupamento). Bonus: proporção. */
+  factor?: number;
+  /** Cotas creditadas ou debitadas, quando o arquivo traz isso em vez da proporção. */
+  delta?: number;
+  newTicker?: string;
+  /** Custo unitário atribuído às cotas bonificadas. */
+  unitCost?: number;
+  source?: string;
+  importKey?: string;
 };
 export type FixedIncome = {
   id: string;
@@ -235,6 +267,9 @@ export type Portfolio = {
   statements?: Statement[];
   tradeHistory?: TradeEvent[];
   schemaVersion?: number;
+  /** Ativos cadastrados por você, além da lista padrão. */
+  customAssets?: Asset[];
+  corporateActions?: CorporateAction[];
 };
 export const EMPTY: Portfolio = {
   transactions: [],
@@ -302,6 +337,10 @@ export function metrics(history: Point[], annual = 252) {
     drawdown,
   };
 }
+export const allAssets = (p: Pick<Portfolio, "customAssets">): Asset[] =>
+  p.customAssets?.length ? [...ASSETS, ...p.customAssets] : ASSETS;
+export const assetOf = (p: Pick<Portfolio, "customAssets">, ticker: string) =>
+  allAssets(p).find((a) => a.ticker === ticker);
 export const transactionCurrency = (tx: Transaction): Currency =>
   tx.currency ?? ASSETS.find((a) => a.ticker === tx.ticker)?.currency ?? "BRL";
 export const transactionCost = (tx: Transaction) =>
@@ -317,14 +356,11 @@ export function positions(portfolio: Portfolio, market: Market) {
     market.quotes.USD && !market.quotes.USD.stale
       ? market.quotes.USD.price
       : undefined;
-  return ASSETS.map((a) => {
+  return allAssets(portfolio).map((a) => {
     const ledger = ledgerFor(portfolio, a.ticker),
       state = replayLedger(ledger),
       tx = state.lots,
-      income = attributeIncomes(
-        ledger,
-        (portfolio.incomes ?? []).filter((i) => i.ticker === a.ticker),
-      ).kept;
+      income = attributeIncomes(ledger, incomesFor(portfolio, a.ticker)).kept;
     const quantity = state.quantity,
       q = market.quotes[a.ticker],
       quoteValid = !!q && !q.stale;
@@ -345,17 +381,21 @@ export function positions(portfolio: Portfolio, market: Market) {
     // Taxas são em reais. Sem câmbio de compra, a parcela em dólar usa o câmbio atual
     // e o custo em dólar nunca se perde por causa dela.
     const usdCost = (t: Transaction) => {
+      if (t.feesCurrency === "USD") return transactionCost(t) + t.fees;
       const rate = t.fx ?? fx;
       return transactionCost(t) + (t.fees > 0 && rate ? t.fees / rate : 0);
     };
     const costEstimated =
-      primaryCurrency === "USD" && tx.some((t) => t.fees > 0 && !t.fx);
+      primaryCurrency === "USD" &&
+      tx.some((t) => t.fees > 0 && !t.fx && t.feesCurrency !== "USD");
     const cost = sumNullable(
       tx.map((t) =>
         transactionCurrency(t) === "BRL"
           ? transactionCost(t) + t.fees
           : t.fx !== null
-            ? transactionCost(t) * t.fx + t.fees
+            ? (transactionCost(t) + (t.feesCurrency === "USD" ? t.fees : 0)) *
+                t.fx +
+              (t.feesCurrency === "USD" ? 0 : t.fees)
             : null,
       ),
     );
@@ -450,14 +490,21 @@ export function totals(p: Portfolio, m: Market) {
     cost !== null && income !== null && !missing.length
       ? value - cost + income
       : null;
-  const regional = (currency: Currency, segment?: "stocks" | "etfs") => {
+  const regional = (
+    currency: Currency,
+    segment?: "stocks" | "etfs" | "fiis",
+  ) => {
     const owned = rows.filter(
       (r) =>
         r.ticker !== "BTC" &&
         r.currency === currency &&
         r.quantity > 0 &&
         (!segment ||
-          (segment === "stocks" ? r.group === "br" : r.group !== "br")),
+          (segment === "fiis"
+            ? r.segment === "fii"
+            : segment === "stocks"
+              ? r.group === "br" && r.segment !== "fii"
+              : r.group !== "br")),
     );
     return {
       value: owned.reduce((s, r) => s + (r.nativeValue ?? 0), 0),
@@ -478,6 +525,7 @@ export function totals(p: Portfolio, m: Market) {
     brazil: regional("BRL"),
     brazilStocks: regional("BRL", "stocks"),
     brazilEtfs: regional("BRL", "etfs"),
+    brazilFiis: regional("BRL", "fiis"),
     international: regional("USD"),
     incomes: {
       BRL: (p.incomes ?? [])
@@ -532,7 +580,7 @@ export function assetPlan(p: Portfolio, m: Market, budget: number) {
   return groups
     .flatMap((g) => {
       if (g.amount < 0.01 || g.group === "rf") return [];
-      const assets = t.rows.filter((a) => a.group === g.group);
+      const assets = t.rows.filter((a) => a.group === g.group && !a.archived);
       const sum = assets.reduce((s, a) => s + (p.weights[a.ticker] ?? 1), 0);
       // Sem histórico, o ativo recebe a qualidade média da classe: ajuste neutro.
       const qualityOf = (volatility: number) => 1 / (1 + volatility / 100);

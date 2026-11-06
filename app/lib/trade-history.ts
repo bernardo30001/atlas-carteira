@@ -1,7 +1,8 @@
 import {
-  ASSETS,
+  allAssets,
   transactionCost,
   transactionCurrency,
+  type CorporateAction,
   type Currency,
   type Income,
   type Portfolio,
@@ -94,11 +95,30 @@ export type Ledger = {
   baseline: Lot[];
   /** Compras e vendas em ordem, incluindo compras registradas à mão. */
   entries: TradeEvent[];
+  /** Desdobramentos, grupamentos e bonificações do ativo. */
+  actions: CorporateAction[];
   /** O ativo tem movimentações datadas em uso. */
   dated: boolean;
   /** Movimentações anteriores ao saldo inicial, já explicadas por ele. */
   excluded: TradeEvent[];
 };
+
+/** Ticker em que um registro está hoje, depois das trocas de código. */
+export function currentTicker(p: Portfolio, ticker: string, date: string) {
+  const renames = (p.corporateActions ?? []).filter((a) => a.kind === "rename");
+  let current = ticker;
+  for (let hops = 0; hops <= renames.length; hops++) {
+    const next = renames.find((r) => r.ticker === current && date <= r.date);
+    if (!next?.newTicker) return current;
+    current = next.newTicker;
+  }
+  return current;
+}
+/** Proventos do ativo, incluindo os recebidos com o código anterior. */
+export const incomesFor = (p: Portfolio, ticker: string) =>
+  (p.incomes ?? []).filter(
+    (i) => currentTicker(p, i.ticker, i.date) === ticker,
+  );
 
 const legacyCache = new WeakMap<Portfolio, Set<string>>();
 /** Carteiras antigas guardam uma posição conciliada que já resume o histórico. */
@@ -140,6 +160,7 @@ const lotFromEvent = (e: TradeEvent): Lot => ({
   price: e.price,
   fx: e.fx,
   fees: e.fees,
+  feesCurrency: e.feesCurrency,
   date: e.date,
   note: "",
   currency: e.currency,
@@ -155,13 +176,20 @@ const eventFromTransaction = (t: Transaction): TradeEvent => ({
   currency: transactionCurrency(t),
   fx: t.fx,
   fees: t.fees,
+  feesCurrency: t.feesCurrency,
   date: t.date,
   source: "Registro no Atlas",
 });
 
 export function ledgerFor(p: Portfolio, ticker: string): Ledger {
-  const lots = p.transactions.filter((t) => t.ticker === ticker),
-    history = (p.tradeHistory ?? []).filter((e) => e.ticker === ticker);
+  const relabel = <T extends { ticker: string }>(record: T): T =>
+    record.ticker === ticker ? record : { ...record, ticker };
+  const lots = p.transactions
+      .filter((t) => currentTicker(p, t.ticker, t.date) === ticker)
+      .map(relabel),
+    history = (p.tradeHistory ?? [])
+      .filter((e) => currentTicker(p, e.ticker, e.date) === ticker)
+      .map(relabel);
   const baseline = lots.filter(
     (t) => t.kind === "opening" && !isReconciled(p, t),
   );
@@ -177,9 +205,75 @@ export function ledgerFor(p: Portfolio, ticker: string): Ledger {
   return {
     baseline: baseline.map(lotFromTransaction),
     entries: ordered([...kept, ...manual]),
+    actions: (p.corporateActions ?? [])
+      .filter(
+        (a) =>
+          a.kind !== "rename" &&
+          a.date >= since &&
+          currentTicker(p, a.ticker, a.date) === ticker,
+      )
+      .sort((x, y) => x.date.localeCompare(y.date)),
     dated: kept.length > 0,
     excluded,
   };
+}
+
+type Step =
+  | { date: string; action: CorporateAction }
+  | { date: string; event: TradeEvent }
+  | { date: string; income: Income };
+/** No mesmo dia: evento societário, proventos, compras e vendas. O desdobramento vale
+ * desde a abertura e o provento é de quem já tinha o ativo. */
+const STEP_ORDER = { action: 0, income: 1, buy: 2, sell: 3 };
+function timeline(ledger: Ledger, incomes: Income[], date: string): Step[] {
+  const position = (step: Step) =>
+    "action" in step
+      ? STEP_ORDER.action
+      : "income" in step
+        ? STEP_ORDER.income
+        : STEP_ORDER[step.event.kind];
+  return [
+    ...ledger.actions.map((action): Step => ({ date: action.date, action })),
+    ...ledger.entries.map((event): Step => ({ date: event.date, event })),
+    ...incomes.map((income): Step => ({ date: income.date, income })),
+  ]
+    .filter((step) => step.date <= date)
+    .sort((a, b) => a.date.localeCompare(b.date) || position(a) - position(b));
+}
+
+/** Fator de quantidade de um evento: o arquivo pode trazer a proporção ou as cotas. */
+function actionFactor(action: CorporateAction, quantity: number) {
+  if (action.factor !== undefined)
+    return action.kind === "bonus" ? 1 + action.factor : action.factor;
+  if (action.delta !== undefined && quantity > 0)
+    return (quantity + action.delta) / quantity;
+  return 1;
+}
+function applyAction(lots: Lot[], action: CorporateAction, factor: number) {
+  const before = lots.reduce((s, l) => s + l.quantity, 0);
+  if (action.kind === "bonus") {
+    const added = before * (factor - 1);
+    return added > 0
+      ? [
+          ...lots,
+          {
+            ...lots[0],
+            id: action.id,
+            kind: "buy" as const,
+            quantity: added,
+            price: action.unitCost ?? 0,
+            costNative: added * (action.unitCost ?? 0),
+            fees: 0,
+            date: action.date,
+          },
+        ]
+      : lots;
+  }
+  return lots.map((l) => ({
+    ...l,
+    quantity: l.quantity * factor,
+    price: l.price / factor,
+  }));
 }
 
 export type LedgerState = {
@@ -189,6 +283,8 @@ export type LedgerState = {
   cycle: TradeEvent[];
   /** Alguma venda superou o saldo disponível. */
   oversold: boolean;
+  /** Fatores de quantidade aplicados, para reexpressar quantidades antigas. */
+  factors: { date: string; factor: number }[];
 };
 
 /** Reproduz o livro até a data. Vendas reduzem cada lote pelo preço médio. */
@@ -197,8 +293,18 @@ export function replayLedger(ledger: Ledger, date = "9999-12-31"): LedgerState {
     quantity = lots.reduce((s, l) => s + l.quantity, 0),
     cycle: TradeEvent[] = [],
     oversold = false;
-  for (const event of ledger.entries) {
-    if (event.date > date) break;
+  const factors: LedgerState["factors"] = [];
+  for (const step of timeline(ledger, [], date)) {
+    if ("action" in step) {
+      if (quantity === 0) continue;
+      const factor = actionFactor(step.action, quantity);
+      lots = applyAction(lots, step.action, factor);
+      quantity *= factor;
+      factors.push({ date: step.date, factor });
+      continue;
+    }
+    if (!("event" in step)) continue;
+    const event = step.event;
     if (event.kind === "buy") {
       if (quantity === 0) {
         lots = [];
@@ -226,14 +332,23 @@ export function replayLedger(ledger: Ledger, date = "9999-12-31"): LedgerState {
       cycle = [];
     }
   }
-  return { lots, quantity, cycle, oversold };
+  return { lots, quantity, cycle, oversold, factors };
+}
+
+/** O histórico de preços já vem ajustado por desdobramentos: uma quantidade antiga
+ * precisa do mesmo ajuste para valer o que valia naquela data. */
+export function splitAdjustment(state: LedgerState, date: string) {
+  return state.factors
+    .filter((f) => f.date > date)
+    .reduce((total, f) => total * f.factor, 1);
 }
 
 const allTickers = (p: Portfolio) =>
-  new Set([
-    ...p.transactions.map((t) => t.ticker),
-    ...(p.tradeHistory ?? []).map((e) => e.ticker),
-  ]);
+  new Set(
+    [...p.transactions, ...(p.tradeHistory ?? [])].map((record) =>
+      currentTicker(p, record.ticker, record.date),
+    ),
+  );
 
 export const hasHolding = (p: Portfolio) =>
   [...allTickers(p)].some(
@@ -253,8 +368,9 @@ export function purchasesForPoints<T extends { date: string }>(
   p: Portfolio,
   points: T[],
 ): (T & { purchases: TradeEvent[] })[] {
+  const known = new Set(allAssets(p).map((a) => a.ticker));
   const trades = datedTrades(p).filter(
-    (e) => e.kind === "buy" && ASSETS.some((a) => a.ticker === e.ticker),
+    (e) => e.kind === "buy" && known.has(e.ticker),
   );
   const lastPerDay = new Map(points.map((point, index) => [point.date, index]));
   return points.map((point, index) => ({
@@ -325,29 +441,21 @@ export function attributeIncomes(
   incomes: Income[],
   date = "9999-12-31",
 ): { kept: Income[]; realized: Income[] } {
-  const timeline = [
-    ...incomes
-      .filter((i) => i.date <= date)
-      .map((income) => ({ date: income.date, rank: 0, income })),
-    ...ledger.entries
-      .filter((e) => e.date <= date)
-      .map((event) => ({
-        date: event.date,
-        rank: event.kind === "buy" ? 1 : 2,
-        event,
-      })),
-  ].sort((a, b) => a.date.localeCompare(b.date) || a.rank - b.rank);
   let quantity = ledger.baseline.reduce((s, l) => s + l.quantity, 0),
     closed = false,
     kept: Income[] = [];
   const realized: Income[] = [];
-  for (const item of timeline) {
-    if ("income" in item && item.income) {
-      if (quantity === 0 && closed) realized.push(item.income);
-      else kept.push({ ...item.income });
+  for (const step of timeline(ledger, incomes, date)) {
+    if ("income" in step) {
+      if (quantity === 0 && closed) realized.push(step.income);
+      else kept.push({ ...step.income });
       continue;
     }
-    const event = (item as { event: TradeEvent }).event;
+    if ("action" in step) {
+      quantity *= actionFactor(step.action, quantity);
+      continue;
+    }
+    const event = step.event;
     if (event.kind === "buy") {
       quantity += event.quantity;
       continue;
@@ -413,7 +521,16 @@ export function realizedResults(p: Portfolio) {
     const ledger = ledgerFor(p, ticker);
     let lots = ledger.baseline,
       quantity = lots.reduce((s, l) => s + l.quantity, 0);
-    for (const event of ledger.entries) {
+    for (const step of timeline(ledger, [], "9999-12-31")) {
+      if ("action" in step) {
+        if (quantity === 0) continue;
+        const factor = actionFactor(step.action, quantity);
+        lots = applyAction(lots, step.action, factor);
+        quantity *= factor;
+        continue;
+      }
+      if (!("event" in step)) continue;
+      const event = step.event;
       if (event.kind === "buy") {
         if (quantity === 0) lots = [];
         lots = [...lots, lotFromEvent(event)];
@@ -435,11 +552,21 @@ export function realizedResults(p: Portfolio) {
             event.currency,
             lotRate,
           ),
-          fee = convertTo(lot.fees * sold, "BRL", event.currency, lotRate);
+          fee = convertTo(
+            lot.fees * sold,
+            lot.feesCurrency ?? "BRL",
+            event.currency,
+            lotRate,
+          );
         if (native === null || fee === null) complete = false;
         else cost += native + fee;
       }
-      const saleFee = convertTo(event.fees, "BRL", event.currency, rate);
+      const saleFee = convertTo(
+        event.fees,
+        event.feesCurrency ?? "BRL",
+        event.currency,
+        rate,
+      );
       if (complete && saleFee !== null) {
         target.sales += event.total;
         target.fees += saleFee;
@@ -458,10 +585,7 @@ export function realizedResults(p: Portfolio) {
         lots = [];
       }
     }
-    const { realized } = attributeIncomes(
-      ledger,
-      (p.incomes ?? []).filter((i) => i.ticker === ticker),
-    );
+    const { realized } = attributeIncomes(ledger, incomesFor(p, ticker));
     for (const income of realized)
       totals[income.currency].income += income.amount;
   }

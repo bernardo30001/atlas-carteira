@@ -35,10 +35,13 @@ export function AssetTable({
       market.quotes.USD && !market.quotes.USD.stale
         ? market.quotes.USD.price
         : undefined;
+  const hasFiis = t.rows.some((a) => a.segment === "fii" && !a.archived);
   const rows = t.rows.filter(
     (a) =>
+      (!a.archived || a.quantity > 0) &&
       (filter === "all" ||
         (filter === "brazil" && a.currency === "BRL") ||
+        (filter === "fii" && a.segment === "fii") ||
         (filter === "held" && a.quantity > 0) ||
         (filter === "b3etf" && a.currency === "BRL" && a.group !== "br") ||
         filter === a.group) &&
@@ -54,12 +57,20 @@ export function AssetTable({
       id: "stocks",
       title: "Ações na B3",
       text: "Empresas brasileiras · valores em R$",
-      rows: shown.filter((a) => a.currency === "BRL" && a.group === "br"),
+      rows: shown.filter(
+        (a) => a.currency === "BRL" && a.group === "br" && a.segment !== "fii",
+      ),
+    },
+    {
+      id: "fiis",
+      title: "FIIs na B3",
+      text: "Fundos imobiliários · valores em R$",
+      rows: shown.filter((a) => a.segment === "fii"),
     },
     {
       id: "b3etfs",
       title: "ETFs na B3",
-      text: "ABTC11 e AUPO11 · valores em R$",
+      text: "Fundos negociados em reais · valores em R$",
       rows: shown.filter((a) => a.currency === "BRL" && a.group !== "br"),
     },
     {
@@ -112,6 +123,7 @@ export function AssetTable({
             ["all", "Todos"],
             ["brazil", "Bolsa brasileira"],
             ["br", "Ações na B3"],
+            ...(hasFiis ? [["fii", "FIIs na B3"]] : []),
             ["b3etf", "ETFs na B3"],
             ["etf", "Exterior"],
             ["crypto", "Cripto"],

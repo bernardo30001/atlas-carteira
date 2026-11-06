@@ -4,7 +4,7 @@ import { useState } from "react";
 import { saleIssue } from "../lib/trade-history";
 import { Check, Trash2 } from "lucide-react";
 import {
-  ASSETS,
+  allAssets,
   today,
   wholeUnits,
   type Portfolio,
@@ -34,15 +34,16 @@ export function TransactionForm({
   onSubmit: (t: Transaction) => Promise<void>;
   onSell: (sale: TradeEvent) => Promise<void>;
 }) {
-  const [selected, setSelected] = useState(ticker ?? "ALUP11"),
+  const assets = allAssets(portfolio).filter((a) => !a.archived);
+  const [selected, setSelected] = useState(ticker ?? assets[0].ticker),
     [kind, setKind] = useState<"buy" | "opening" | "sell">(initialKind),
     [currency, setCurrency] = useState<Currency>(
-      ASSETS.find((a) => a.ticker === ticker)?.ticker === "BTC"
+      ticker === "BTC"
         ? "BRL"
-        : (ASSETS.find((a) => a.ticker === ticker)?.currency ?? "BRL"),
+        : (assets.find((a) => a.ticker === ticker)?.currency ?? "BRL"),
     ),
     [error, setError] = useState("");
-  const a = ASSETS.find((a) => a.ticker === selected)!;
+  const a = assets.find((a) => a.ticker === selected) ?? assets[0];
   return (
     <>
       <span className="eyebrow">CONSTRUA SEU PATRIMÔNIO</span>
@@ -146,11 +147,11 @@ export function TransactionForm({
             value={selected}
             onChange={(e) => {
               setSelected(e.target.value);
-              const aa = ASSETS.find((x) => x.ticker === e.target.value)!;
+              const aa = assets.find((x) => x.ticker === e.target.value)!;
               setCurrency(aa.ticker === "BTC" ? "BRL" : aa.currency);
             }}
           >
-            {ASSETS.map((a) => (
+            {assets.map((a) => (
               <option key={a.ticker} value={a.ticker}>
                 {a.ticker} · {a.name}
               </option>
@@ -441,16 +442,19 @@ export function FixedForm({
 }
 export function IncomeForm({
   ticker,
+  portfolio,
   busy,
   onSubmit,
 }: {
   ticker?: string;
+  portfolio: Portfolio;
   busy: boolean;
   onSubmit: (i: Income) => Promise<void>;
 }) {
   const [selected, setSelected] = useState(ticker ?? "PSSA3"),
     [kind, setKind] = useState<"opening" | "payment">("payment");
-  const a = ASSETS.find((a) => a.ticker === selected)!;
+  const assets = allAssets(portfolio).filter((a) => a.ticker !== "BTC");
+  const a = assets.find((a) => a.ticker === selected) ?? assets[0];
   return (
     <>
       <span className="eyebrow">PROVENTOS E DIVIDENDOS</span>
@@ -505,7 +509,7 @@ export function IncomeForm({
             value={selected}
             onChange={(e) => setSelected(e.target.value)}
           >
-            {ASSETS.filter((a) => a.ticker !== "BTC").map((a) => (
+            {assets.map((a) => (
               <option value={a.ticker} key={a.ticker}>
                 {a.ticker} · {a.name}
               </option>
