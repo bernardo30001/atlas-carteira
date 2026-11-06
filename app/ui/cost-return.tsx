@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Info } from "lucide-react";
 import type { CostPerformance } from "../lib/cost-performance";
 
@@ -80,9 +81,11 @@ export function CostReturnSummary({
 export function CostReturnMethod({
   data,
   hidden,
+  children,
 }: {
   data: CostPerformance;
   hidden: boolean;
+  children?: ReactNode;
 }) {
   return (
     <details className="performance-method">
@@ -91,6 +94,7 @@ export function CostReturnMethod({
         Como o retroativo é calculado
       </summary>
       <div>
+        {children}
         <p>
           Rendimento acumulado = (saldo atual − valor investido + proventos
           registrados) ÷ valor investido. O preço médio já inclui as taxas. O

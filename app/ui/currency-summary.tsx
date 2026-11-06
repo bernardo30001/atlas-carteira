@@ -1,9 +1,11 @@
 "use client";
 import { money } from "../lib/format";
 import { Wallet, Globe2, Landmark, Coins } from "lucide-react";
-import { signedMoney, tone } from "../lib/format";
+import { useMemo } from "react";
+import { percent, signedMoney, tone } from "../lib/format";
+import { costPerformance } from "../lib/cost-performance";
 import { realizedResults } from "../lib/trade-history";
-import { totals, type Portfolio, type Market } from "../lib/model";
+import { dayChange, totals, type Portfolio, type Market } from "../lib/model";
 export function CurrencySummary({
   portfolio,
   market,
@@ -28,6 +30,22 @@ export function CurrencySummary({
     btc = t.rows.find((a) => a.ticker === "BTC")!,
     realized = realizedResults(portfolio),
     sold = realized.BRL.count + realized.USD.count;
+  // A janela de 1 dia dispensa reconstruir a curva: aqui só importa o acumulado.
+  const accumulated = useMemo(
+      () => costPerformance(portfolio, market, "all", 1),
+      [portfolio, market],
+    ),
+    today = useMemo(() => dayChange(portfolio, market), [portfolio, market]);
+  const figure = (amount: number | undefined, change: number | undefined) =>
+    hidden ? (
+      "••••••"
+    ) : t.missing.length || amount === undefined || change === undefined ? (
+      "Aguardando"
+    ) : (
+      <>
+        {signedMoney(amount)} <span>{percent(change)}</span>
+      </>
+    );
   return (
     <>
       <div className="stats-grid currency-stats">
@@ -38,10 +56,27 @@ export function CurrencySummary({
           <div className="stat-value">
             {t.missing.length ? "Aguardando cotações" : fmt(t.value)}
           </div>
+          {(accumulated.includedCount > 0 || t.missing.length > 0) && (
+            <dl className="wealth-figures">
+              <div>
+                <dt>
+                  Resultado com proventos
+                  {accumulated.estimatedFX ? " (estimado)" : ""}
+                </dt>
+                <dd>{figure(accumulated.result, accumulated.returnPercent)}</dd>
+              </div>
+              <div>
+                <dt>Hoje, nas posições cotadas</dt>
+                <dd>{figure(today?.amount, today?.percent)}</dd>
+              </div>
+            </dl>
+          )}
           <div className="stat-foot">
             {t.missing.length
               ? "Valor parcial · cotação ou câmbio pendente"
-              : "Posições + renda fixa · exterior convertido hoje"}
+              : accumulated.excluded.length
+                ? `Resultado sem ${accumulated.excluded.length} ${accumulated.excluded.length === 1 ? "posição pendente" : "posições pendentes"} · detalhes no gráfico`
+                : "Posições + renda fixa · exterior convertido hoje"}
           </div>
           <div className="wealth-decoration" />
         </section>
@@ -79,23 +114,25 @@ export function CurrencySummary({
           </div>
         </section>
       </div>
-      <div className="fx-ribbon">
-        <Globe2 size={16} />
-        <b>
-          {fx
-            ? `US$ 1 = ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 4, maximumFractionDigits: 4 }).format(fx.price)}`
-            : "Câmbio USD/BRL indisponível"}
-        </b>
-        <span>
-          {fx
-            ? `Cotação de ${new Date(fx.time * 1000).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}`
-            : "Aguardando a fonte"}
-        </span>
-        <small>
-          Consulta automática a cada 60s · custos de compra em US$ permanecem em
-          US$.
-        </small>
-      </div>
+      {!compact && (
+        <div className="fx-ribbon">
+          <Globe2 size={16} />
+          <b>
+            {fx
+              ? `US$ 1 = ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 4, maximumFractionDigits: 4 }).format(fx.price)}`
+              : "Câmbio USD/BRL indisponível"}
+          </b>
+          <span>
+            {fx
+              ? `Cotação de ${new Date(fx.time * 1000).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}`
+              : "Aguardando a fonte"}
+          </span>
+          <small>
+            Consulta automática a cada 60s · custos de compra em US$ permanecem
+            em US$.
+          </small>
+        </div>
+      )}
       {!compact && (
         <>
           <div className="regional-summaries">

@@ -1,6 +1,7 @@
 "use client";
 import { useMemo, useState } from "react";
-import { fixed, percent } from "../lib/format";
+import { niceAxis } from "../lib/chart-axis";
+import { fixed, num, percent } from "../lib/format";
 import {
   ResponsiveContainer,
   ComposedChart,
@@ -132,6 +133,22 @@ export function PerformanceChart({
               last?.[r.key] === undefined,
           )
           .map((r) => r.key);
+  const axis = useMemo(
+    () =>
+      niceAxis(
+        points.flatMap((point) => [
+          point.portfolio,
+          ...(mode === "cost"
+            ? []
+            : references
+                .filter((r) => selected.includes(r.key))
+                .flatMap((r) =>
+                  point[r.key] === undefined ? [] : [point[r.key]!],
+                )),
+        ]),
+      ),
+    [points, mode, selected],
+  );
   const toggle = (key: BenchmarkKey) =>
     setSelected((old) =>
       old.includes(key) ? old.filter((k) => k !== key) : [...old, key],
@@ -168,6 +185,67 @@ export function PerformanceChart({
         timeZone: "America/Sao_Paulo",
       })
     : undefined;
+  const contextBox = (
+    <div
+      className={
+        "performance-context " +
+        (mode === "simulation" ? "simulated" : "observed")
+      }
+    >
+      <b>
+        {mode === "cost"
+          ? "ACUMULADO DESDE O PREÇO MÉDIO"
+          : mode === "simulation"
+            ? "SIMULAÇÃO · " +
+              (partial ? "COBERTURA PARCIAL" : "COMPOSIÇÃO ATUAL")
+            : started
+              ? "HISTÓRICO REAL DESDE " + started
+              : "ACOMPANHAMENTO REAL"}
+      </b>
+      <span>
+        {mode === "cost"
+          ? "Saldo atual − valor investido + proventos. Inclui ganhos e perdas anteriores ao cadastro."
+          : mode === "simulation"
+            ? "Não representa o rendimento que você obteve nas compras anteriores."
+            : "Novos aportes são separados da valorização entre observações."}
+      </span>
+    </div>
+  );
+  const about = (
+    <>
+      <p>
+        {mode === "cost"
+          ? "Inclui o resultado acumulado antes do cadastro no Atlas."
+          : mode === "simulation"
+            ? "Estimativa histórica com os pesos de hoje."
+            : "Valorização e desvalorização do patrimônio registrado."}
+      </p>
+      <p>
+        {mode === "cost" && scope === "us"
+          ? "Ativos negociados em dólar, com custo, saldo e proventos em US$."
+          : scopeInfo.description}{" "}
+        Todos os retornos deste gráfico são em {currencyName}.
+      </p>
+      {mode !== "simulation" && contextBox}
+      {mode === "cost" && (
+        <div className="cost-chart-note">
+          <b>Curva retroativa pelo preço médio</b>
+          <p>
+            {accumulated.datedPositionCount
+              ? `${accumulated.datedPositionCount} posições com compras e vendas datadas. Demais posições pelo preço médio`
+              : "Estimativa das posições com cotações históricas"}
+            {first && last ? ` · ${date(first.date)} — ${date(last.date)}` : ""}
+            .{" "}
+            {scope === "all" && portfolio.fixedIncome.length > 0
+              ? "Renda fixa manual aparece apenas no acumulado acima. "
+              : ""}
+            O período muda a janela da curva; o acumulado continua desde o preço
+            médio.
+          </p>
+        </div>
+      )}
+    </>
+  );
   return (
     <section
       className="panel performance-panel"
@@ -183,13 +261,6 @@ export function PerformanceChart({
                 ? "Simulação da composição atual"
                 : "Acompanhamento real da carteira"}
           </h2>
-          <p>
-            {mode === "cost"
-              ? "Inclui o resultado acumulado antes do cadastro no Atlas."
-              : mode === "simulation"
-                ? "Estimativa histórica com os pesos de hoje."
-                : "Valorização e desvalorização do patrimônio registrado."}
-          </p>
         </div>
         <TrendingUp size={21} />
       </div>
@@ -258,37 +329,8 @@ export function PerformanceChart({
             </button>
           ))}
         </div>
-        <p role="status">
-          {mode === "cost" && scope === "us"
-            ? "Ativos negociados em dólar, com custo, saldo e proventos em US$."
-            : scopeInfo.description}{" "}
-          Todos os retornos deste gráfico são em {currencyName}.
-        </p>
       </div>
-      <div
-        className={
-          "performance-context " +
-          (mode === "simulation" ? "simulated" : "observed")
-        }
-      >
-        <b>
-          {mode === "cost"
-            ? "ACUMULADO DESDE O PREÇO MÉDIO"
-            : mode === "simulation"
-              ? "SIMULAÇÃO · " +
-                (partial ? "COBERTURA PARCIAL" : "COMPOSIÇÃO ATUAL")
-              : started
-                ? "HISTÓRICO REAL DESDE " + started
-                : "ACOMPANHAMENTO REAL"}
-        </b>
-        <span>
-          {mode === "cost"
-            ? "Saldo atual − valor investido + proventos. Inclui ganhos e perdas anteriores ao cadastro."
-            : mode === "simulation"
-              ? "Não representa o rendimento que você obteve nas compras anteriores."
-              : "Novos aportes são separados da valorização entre observações."}
-        </span>
-      </div>
+      {mode === "simulation" && contextBox}
       {mode === "simulation" && simulation.coverage > 0 && (
         <div
           className={"coverage-note " + (partial ? "partial" : "")}
@@ -346,28 +388,6 @@ export function PerformanceChart({
           </small>
         </span>
       </div>
-      {mode === "cost" && (
-        <>
-          <CostReturnSummary data={accumulated} hidden={hidden} />
-          <div className="cost-chart-note">
-            <b>Curva retroativa pelo preço médio</b>
-            <p>
-              {accumulated.datedPositionCount
-                ? `${accumulated.datedPositionCount} posições com compras e vendas datadas. Demais posições pelo preço médio`
-                : "Estimativa das posições com cotações históricas"}
-              {first && last
-                ? ` · ${date(first.date)} — ${date(last.date)}`
-                : ""}
-              .{" "}
-              {scope === "all" && portfolio.fixedIncome.length > 0
-                ? "Renda fixa manual aparece apenas no acumulado acima. "
-                : ""}
-              O período muda a janela da curva; o acumulado continua desde o
-              preço médio.
-            </p>
-          </div>
-        </>
-      )}
       <div
         className="performance-legend"
         role="group"
@@ -432,26 +452,6 @@ export function PerformanceChart({
             . As demais referências foram preservadas.
           </p>
         )}
-      <div className="purchase-controls">
-        <button
-          type="button"
-          role="switch"
-          aria-checked={showPurchases}
-          onClick={() => setShowPurchases((value) => !value)}
-          className={
-            showPurchases ? "purchase-switch active" : "purchase-switch"
-          }
-        >
-          <span aria-hidden="true" className="switch-track">
-            <i />
-          </span>
-          Pontos de compra <b>{showPurchases ? "Ativados" : "Desativados"}</b>
-        </button>
-        <span>
-          {visiblePurchases.length} compras com data conhecida nesta janela.
-          Posições e ciclos encerrados ficam fora.
-        </span>
-      </div>
       <div className="performance-chart">
         {points.length > 0 ? (
           <ResponsiveContainer width="100%" height="100%">
@@ -505,13 +505,9 @@ export function PerformanceChart({
                 tickLine={false}
                 width={60}
                 tick={{ fontSize: "0.75rem", fill: "var(--muted)" }}
-                tickFormatter={(v) =>
-                  `${Number(v).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`
-                }
-                domain={[
-                  (v: number) => Math.min(v, -1),
-                  (v: number) => Math.max(v, 1),
-                ]}
+                tickFormatter={(v) => `${num(Number(v), 2)}%`}
+                domain={axis.domain}
+                ticks={axis.ticks}
               />
               <Tooltip
                 contentStyle={{
@@ -623,6 +619,31 @@ export function PerformanceChart({
           </div>
         )}
       </div>
+      {mode === "cost" && (
+        <CostReturnSummary data={accumulated} hidden={hidden} />
+      )}
+      {visiblePurchases.length > 0 && (
+        <div className="purchase-controls">
+          <button
+            type="button"
+            role="switch"
+            aria-checked={showPurchases}
+            onClick={() => setShowPurchases((value) => !value)}
+            className={
+              showPurchases ? "purchase-switch active" : "purchase-switch"
+            }
+          >
+            <span aria-hidden="true" className="switch-track">
+              <i />
+            </span>
+            Pontos de compra <b>{showPurchases ? "Ativados" : "Desativados"}</b>
+          </button>
+          <span>
+            {visiblePurchases.length} compras com data conhecida nesta janela.
+            Posições e ciclos encerrados ficam fora.
+          </span>
+        </div>
+      )}
       {showPurchases && (
         <PurchaseTable purchases={visiblePurchases} hidden={hidden} />
       )}
@@ -679,7 +700,9 @@ export function PerformanceChart({
         </div>
       )}
       {mode === "cost" ? (
-        <CostReturnMethod data={accumulated} hidden={hidden} />
+        <CostReturnMethod data={accumulated} hidden={hidden}>
+          {about}
+        </CostReturnMethod>
       ) : (
         <details className="performance-method">
           <summary>
@@ -687,6 +710,7 @@ export function PerformanceChart({
             Como este gráfico é calculado
           </summary>
           <div>
+            {about}
             <p>
               {mode === "simulation"
                 ? "A estimativa usa os pesos atuais como alocação inicial, mantém as posições e compara a variação no período disponível. Faltam as datas reais das compras para reconstruir seu passado."

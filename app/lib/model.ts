@@ -489,6 +489,26 @@ export function totals(p: Portfolio, m: Market) {
     },
   };
 }
+/** Variação do dia nas posições cotadas, em reais e com o efeito do dólar. Renda fixa
+ * manual não tem cotação diária. Sem preço válido, fica pendente em vez de parcial. */
+export function dayChange(p: Portfolio, m: Market) {
+  const usd = m.quotes.USD && !m.quotes.USD.stale ? m.quotes.USD : undefined;
+  let now = 0,
+    before = 0;
+  for (const r of positions(p, m)) {
+    if (r.quantity <= 0) continue;
+    const q = r.quote;
+    if (!q || q.stale || (r.currency === "USD" && !usd)) return null;
+    now += r.quantity * q.price * (r.currency === "USD" ? usd!.price : 1);
+    before +=
+      r.quantity *
+      (q.previous || q.price) *
+      (r.currency === "USD" ? usd!.previous || usd!.price : 1);
+  }
+  return before > 0
+    ? { amount: now - before, percent: (now / before - 1) * 100 }
+    : null;
+}
 export function allocationPlan(p: Portfolio, m: Market, budget: number) {
   const t = totals(p, m);
   if (t.missing.length || !(budget > 0)) return [];

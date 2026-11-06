@@ -6196,3 +6196,48 @@ table,
 .performance-comparison {
   font-variant-numeric: tabular-nums;
 }
+
+/* Bloco principal: patrimônio e resultado lado a lado, antes de tudo (D-1). */
+.currency-stats {
+  grid-template-columns: 1.9fr 1fr 1fr 1fr;
+}
+.wealth-figures {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+  margin: 0.75rem 0 0.5rem;
+  position: relative;
+}
+.wealth-figures dt {
+  color: var(--on-brand-muted);
+  font-size: 0.75rem;
+}
+.wealth-figures dd {
+  color: var(--on-brand);
+  font-size: 1rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  margin: 0;
+}
+.wealth-figures dd span {
+  font-weight: 500;
+}
+@media (max-width: 1200px) {
+  .currency-stats {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .currency-stats .stat-card.wealth {
+    grid-column: 1 / -1;
+  }
+}
+@media (max-width: 760px) {
+  .currency-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .currency-stats .stat-card:last-child {
+    grid-column: 1 / -1;
+  }
+  .page-heading p {
+    display: none;
+  }
+}
