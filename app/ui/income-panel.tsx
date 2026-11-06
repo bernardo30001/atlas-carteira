@@ -61,6 +61,9 @@ export function IncomePanel({
                         "pt-BR",
                       )}{" "}
                       · {hidden ? "Observação oculta" : i.note}
+                      {!hidden && i.withheldTax
+                        ? ` · ${money(i.withheldTax, i.currency)} retidos na fonte`
+                        : ""}
                     </small>
                   </td>
                   <td>
