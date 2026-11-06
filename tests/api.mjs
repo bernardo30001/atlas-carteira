@@ -1,5 +1,9 @@
 import assert from "node:assert/strict";
-const base = "http://localhost:5182";
+const base = process.env.ATLAS_TEST_BASE;
+if (!base)
+  throw new Error(
+    "Rode com npm run test:api: este teste grava dados e não usa o banco local real.",
+  );
 assert.equal((await fetch(base + "/api/portfolio")).status, 401);
 const sign = await fetch(base + "/signin-with-chatgpt?return_to=/", {
     redirect: "manual",
