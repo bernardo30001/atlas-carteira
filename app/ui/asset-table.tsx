@@ -1,6 +1,6 @@
 "use client";
 import { Search, Plus, ArrowRight, Coins } from "lucide-react";
-import { money, num, plainPercent, tone } from "../lib/format";
+import { money, num, plainPercent, signedMoney, tone } from "../lib/format";
 import { Change } from "./change";
 import { GROUPS, totals, type Portfolio, type Market } from "../lib/model";
 export function AssetTable({
@@ -328,16 +328,12 @@ export function AssetTable({
                               </small>
                             </td>
                             <td role="cell" data-label="Resultado c/ proventos">
-                              <b
-                                className={
-                                  a.result !== null && a.result < 0
-                                    ? "negative"
-                                    : "positive"
-                                }
-                              >
+                              <b className={hidden ? "" : tone(a.result)}>
                                 {a.result === null
                                   ? "Não disponível"
-                                  : fmt(a.result, a.primaryCurrency)}
+                                  : hidden
+                                    ? "••••••"
+                                    : signedMoney(a.result, a.primaryCurrency)}
                               </b>
                               <small>
                                 {hidden ? (

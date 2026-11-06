@@ -160,16 +160,14 @@ export function CurrencySummary({
                 </div>
                 <div>
                   <span>Resultado com proventos</span>
-                  <b
-                    className={
-                      data.result !== null && data.result < 0
-                        ? "negative"
-                        : "positive"
-                    }
-                  >
+                  <b className={hidden ? "" : tone(data.result)}>
                     {data.missing
                       ? "Cotação pendente"
-                      : fmt(data.result, currency)}
+                      : hidden
+                        ? "••••••"
+                        : data.result === null
+                          ? "Não informado"
+                          : signedMoney(data.result, currency)}
                   </b>
                 </div>
                 <p>
@@ -243,7 +241,14 @@ export function CurrencySummary({
                     <strong>
                       {btc.value === null ? "Cotação pendente" : fmt(btc.value)}
                     </strong>
-                    <small>Resultado atual: {fmt(btc.result)}</small>
+                    <small>
+                      Resultado atual:{" "}
+                      {hidden
+                        ? "••••••"
+                        : btc.result === null
+                          ? "Não informado"
+                          : signedMoney(btc.result)}
+                    </small>
                   </div>
                 </section>
               )}

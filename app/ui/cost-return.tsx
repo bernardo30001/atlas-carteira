@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Info } from "lucide-react";
+import { signedMoney, tone } from "../lib/format";
 import type { CostPerformance } from "../lib/cost-performance";
 
 export function CostReturnSummary({
@@ -37,8 +38,8 @@ export function CostReturnSummary({
           </div>
           <div>
             <span>Resultado com proventos</span>
-            <b className={!hidden && data.result < 0 ? "negative" : "positive"}>
-              {money(data.result)}
+            <b className={hidden ? "" : tone(data.result)}>
+              {hidden ? "••••••" : signedMoney(data.result, data.currency)}
             </b>
           </div>
         </div>

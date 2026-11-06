@@ -50,7 +50,7 @@ import {
   type Portfolio,
   type Market,
 } from "../lib/model";
-import { fixed, money, num, plainPercent } from "../lib/format";
+import { fixed, money, num, plainPercent, signedMoney } from "../lib/format";
 import { portfolioSchema } from "../lib/validation";
 import { ledgerIssues, migratePortfolio } from "../lib/trade-history";
 import { MovementHistory } from "./movement-history";
@@ -754,6 +754,11 @@ export default function Dashboard() {
                   : "—"}
               </b>
               <Change value={market.quotes[key]?.change} />
+              {(market.quotes[key]?.stale || market.quotes[key]?.outdated) && (
+                <small className="quote-age">
+                  {market.quotes[key].stale ? "sem atualização" : "antiga"}
+                </small>
+              )}
             </div>
           ))}
           <button
@@ -912,6 +917,14 @@ export default function Dashboard() {
                   ? "Vamos mostrar os saldos assim que seus registros forem confirmados."
                   : "Entre na sua conta ou recarregue para acessar os registros. Nenhum saldo foi presumido."}
               </p>
+              {account !== "loading" && (
+                <button
+                  className="button outline"
+                  onClick={() => setDemo(demoPortfolio())}
+                >
+                  Explorar demonstração
+                </button>
+              )}
               {account === "loading" && (
                 <div className="loading-cards" aria-hidden="true">
                   {[1, 2, 3, 4].map((i) => (
@@ -931,6 +944,32 @@ export default function Dashboard() {
           )}
           {portfolioReady && overview && (
             <>
+              {!hasPositions && (
+                <div className="onboarding">
+                  <span className="onboard-icon">
+                    <Wallet size={24} />
+                  </span>
+                  <div>
+                    <h3>Sua estratégia já está aqui. Agora, sua carteira.</h3>
+                    <p>
+                      Cadastre as posições que você já tem para ver o patrimônio
+                      e os desvios reais.
+                    </p>
+                  </div>
+                  <button
+                    className="button outline"
+                    onClick={() => setDemo(demoPortfolio())}
+                  >
+                    Explorar demonstração
+                  </button>
+                  <button
+                    className="button primary"
+                    onClick={() => setModal({ kind: "transaction" })}
+                  >
+                    Cadastrar posição <ArrowRight size={15} />
+                  </button>
+                </div>
+              )}
               <div className="overview-grid">
                 <PerformanceChart
                   portfolio={p}
@@ -1026,32 +1065,6 @@ export default function Dashboard() {
                   />
                 </div>
               </div>
-              {!hasPositions && (
-                <div className="onboarding">
-                  <span className="onboard-icon">
-                    <Wallet size={24} />
-                  </span>
-                  <div>
-                    <h3>Sua estratégia já está aqui. Agora, sua carteira.</h3>
-                    <p>
-                      Cadastre as posições que você já tem para ver o patrimônio
-                      e os desvios reais.
-                    </p>
-                  </div>
-                  <button
-                    className="button outline"
-                    onClick={() => setDemo(demoPortfolio())}
-                  >
-                    Explorar demonstração
-                  </button>
-                  <button
-                    className="button primary"
-                    onClick={() => setModal({ kind: "transaction" })}
-                  >
-                    Cadastrar posição <ArrowRight size={15} />
-                  </button>
-                </div>
-              )}
               {table()}
               {newsBlock()}
             </>
@@ -1826,6 +1839,17 @@ export default function Dashboard() {
                     : "Entre para acessar seus registros."}
                 </span>
               </div>
+              {!demo && (
+                <button
+                  className="button outline"
+                  onClick={() => {
+                    setDemo(demoPortfolio());
+                    setModal(null);
+                  }}
+                >
+                  Explorar demonstração
+                </button>
+              )}
               {account !== "ready" ? (
                 <a
                   className="button primary"
@@ -2121,7 +2145,7 @@ function AssetDetail({
       </div>
       <p>
         {q
-          ? `Yahoo Finance · ${datetime(q.time)} · atraso ${q.delay === null ? "não informado" : q.delay + " min"}`
+          ? `Yahoo Finance · ${datetime(q.time)} · ${q.stale ? "sem atualização" : q.outdated ? "cotação antiga" : "pode haver atraso"}`
           : "Aguardando a fonte de mercado."}
       </p>
       {q && q.history.length > 2 && (
@@ -2201,7 +2225,7 @@ function AssetDetail({
             {hidden
               ? "••••••"
               : position.result !== null
-                ? money(position.result, position.primaryCurrency)
+                ? signedMoney(position.result, position.primaryCurrency)
                 : "Não disponível"}
           </b>
         </div>

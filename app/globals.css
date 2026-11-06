@@ -6325,3 +6325,9 @@ table,
 .button {
   min-height: 2.75rem;
 }
+
+.quote-age {
+  color: var(--warn-text);
+  font-size: 0.75rem;
+  margin-left: 0.25rem;
+}
