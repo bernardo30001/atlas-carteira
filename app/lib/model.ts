@@ -251,7 +251,10 @@ export type Quote = {
   volatility: number | null;
   momentum: number | null;
   drawdown: number | null;
+  /** A última consulta falhou e o preço é o anterior. */
   stale?: boolean;
+  /** A fonte respondeu, mas o preço é antigo. Não bloqueia o patrimônio. */
+  outdated?: boolean;
 };
 export type Market = {
   quotes: Record<string, Quote>;

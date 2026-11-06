@@ -272,7 +272,11 @@ export function AssetTable({
                                   },
                                 )
                               : "Aguardando a fonte"}
-                            {a.quote?.stale ? " · sem atualização" : ""}
+                            {a.quote?.stale
+                              ? " · sem atualização"
+                              : a.quote?.outdated
+                                ? " · cotação antiga"
+                                : ""}
                           </small>
                         </td>
                         {full ? (

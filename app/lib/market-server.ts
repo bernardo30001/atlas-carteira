@@ -1,4 +1,21 @@
 import { ASSETS, metrics, type Quote, type Market, type Point } from "./model";
+const dayFormats = new Map<string, Intl.DateTimeFormat>();
+/** Dia da barra no fuso da bolsa. USD/BRL fecha em Londres: no horário de verão
+ * britânico a barra começa às 23:00 UTC do dia anterior. */
+function barDay(seconds: number, zone: string) {
+  let format = dayFormats.get(zone);
+  if (!format) {
+    format = new Intl.DateTimeFormat("en-CA", {
+      timeZone: zone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
+    dayFormats.set(zone, format);
+  }
+  return format.format(new Date(seconds * 1000));
+}
+const DAY = 86400;
 let memory: Market | undefined;
 let pending: Promise<Market> | undefined;
 const SYMBOLS = [
@@ -23,13 +40,14 @@ async function quote(ticker: string, symbol: string): Promise<Quote> {
         result = data.chart?.result?.[0],
         meta = result?.meta;
       if (!(meta?.regularMarketPrice > 0)) throw new Error("Sem cotação");
+      const zone: string = meta.exchangeTimezoneName ?? "UTC";
       const closes =
         result.indicators?.adjclose?.[0]?.adjclose ??
         result.indicators?.quote?.[0]?.close ??
         [];
       const history = (result.timestamp ?? [])
         .map((t: number, i: number) => ({
-          date: new Date(t * 1000).toISOString().slice(0, 10),
+          date: barDay(t, zone),
           close: closes[i],
         }))
         .filter((p: any) => Number.isFinite(p.close) && p.close > 0);
@@ -37,14 +55,9 @@ async function quote(ticker: string, symbol: string): Promise<Quote> {
       const valid = raw
         .map((c: number, i: number) => ({ c, t: result.timestamp?.[i] }))
         .filter((p: any) => p.c > 0);
-      const sessionDay = new Date(meta.regularMarketTime * 1000)
-        .toISOString()
-        .slice(0, 10);
+      const sessionDay = barDay(meta.regularMarketTime, zone);
       const prior = valid
-        .filter(
-          (p: any) =>
-            new Date(p.t * 1000).toISOString().slice(0, 10) < sessionDay,
-        )
+        .filter((p: any) => barDay(p.t, zone) < sessionDay)
         .at(-1)?.c;
       const stated = Number.isFinite(meta.regularMarketChangePercent)
         ? meta.regularMarketChangePercent
@@ -55,7 +68,7 @@ async function quote(ticker: string, symbol: string): Promise<Quote> {
           : (prior ?? meta.previousClose ?? 0);
       const priceHistory = (result.timestamp ?? [])
         .map((t: number, i: number) => ({
-          date: new Date(t * 1000).toISOString().slice(0, 10),
+          date: barDay(t, zone),
           close: raw[i],
         }))
         .filter((p: Point) => Number.isFinite(p.close) && p.close > 0);
@@ -69,6 +82,9 @@ async function quote(ticker: string, symbol: string): Promise<Quote> {
         time: meta.regularMarketTime,
         source: "Yahoo Finance",
         delay: meta.exchangeDataDelayedBy ?? null,
+        outdated:
+          Date.now() / 1000 - meta.regularMarketTime >
+          (ticker === "BTC" ? 2 : 5) * DAY,
         history,
         priceHistory,
         ...metrics(history, ticker === "BTC" ? 365 : 252),
