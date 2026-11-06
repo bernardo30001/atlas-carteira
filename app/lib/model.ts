@@ -228,6 +228,14 @@ export type Income = {
   kind: "opening" | "payment";
   fx?: number | null;
   note: string;
+  /** Origem do registro: tipo-de-arquivo|instituição|data da importação. */
+  source?: string;
+  institution?: string;
+  /** Chave estável da importação, para reimportar sem duplicar. */
+  importKey?: string;
+  type?: "dividend" | "jcp" | "yield";
+  /** Imposto retido na fonte. O valor registrado é o líquido recebido. */
+  withheldTax?: number;
 };
 export type StatementRow = {
   ticker: string;
