@@ -193,11 +193,11 @@ p {
 }
 .button {
   display: inline-flex;
-  gap: 0.5625rem;
+  gap: 0.5rem;
   align-items: center;
   justify-content: center;
   border-radius: 0.4375rem;
-  padding: 0.6875rem 1rem;
+  padding: 0.75rem 1rem;
   font-size: 0.875rem;
   font-weight: 600;
   white-space: nowrap;
@@ -258,7 +258,7 @@ p {
   font-weight: 650;
   display: inline-flex;
   align-items: center;
-  gap: 0.375rem;
+  gap: 0.5rem;
 }
 .app-shell {
   min-height: 100vh;
@@ -271,7 +271,7 @@ p {
   bottom: 0;
   background: var(--surface-2);
   border-right: 1px solid var(--line);
-  padding: 2.125rem 1.1875rem 0;
+  padding: 2rem 1.25rem 0;
   display: flex;
   flex-direction: column;
   z-index: 30;
@@ -279,14 +279,14 @@ p {
 .brand {
   display: flex;
   align-items: center;
-  gap: 0.625rem;
+  gap: 0.5rem;
   font-family: inherit;
   font-weight: 800;
   letter-spacing: -2px;
   font-size: 2.125rem;
   color: var(--ink);
-  padding-left: 0.6875rem;
-  margin-bottom: 3.125rem;
+  padding-left: 0.75rem;
+  margin-bottom: 3rem;
 }
 .brand-icon {
   width: 2.25rem;
@@ -307,8 +307,8 @@ p {
   letter-spacing: 1.1px;
   color: var(--muted);
   font-weight: 600;
-  padding-left: 0.875rem;
-  margin-bottom: 1.0625rem;
+  padding-left: 1rem;
+  margin-bottom: 1rem;
 }
 .sidebar nav {
   display: flex;
@@ -321,7 +321,7 @@ p {
   align-items: center;
   text-align: left;
   gap: 0.75rem;
-  padding: 0.75rem 0.875rem;
+  padding: 0.75rem 1rem;
   font-size: 0.875rem;
   font-weight: 500;
   border-radius: 0.4375rem;
@@ -348,7 +348,7 @@ p {
 }
 .nav-separator {
   border-top: 1px solid var(--line);
-  margin: 1.5rem 0.875rem 0.875rem;
+  margin: 1.5rem 1rem 1rem;
 }
 .sidebar-bottom {
   margin-top: auto;
@@ -358,7 +358,7 @@ p {
   border: 1px solid var(--line);
   padding: 1rem 0.75rem;
   border-radius: 0.5rem;
-  margin-bottom: 1.3125rem;
+  margin-bottom: 1.25rem;
 }
 .strategy-mini > div {
   display: flex;
@@ -374,7 +374,7 @@ p {
 .strategy-mini p {
   font-size: 0.75rem;
   line-height: 1.8;
-  margin: 0.5625rem 0;
+  margin: 0.5rem 0;
   color: var(--muted);
 }
 .strategy-mini button {
@@ -391,18 +391,18 @@ p {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.3125rem;
+  gap: 0.25rem;
   color: var(--muted);
   font-size: 0.75rem;
-  padding-bottom: 1.375rem;
+  padding-bottom: 1.5rem;
 }
 .profile {
   border-top: 1px solid var(--line);
-  margin: 0 -1.1875rem;
+  margin: 0 -1.25rem;
   width: calc(100% + 2.375rem);
-  padding: 1.1875rem 1.5rem;
+  padding: 1.25rem 1.5rem;
   display: flex;
-  gap: 0.625rem;
+  gap: 0.5rem;
   align-items: center;
   text-align: left;
 }
@@ -442,7 +442,7 @@ p {
 }
 .topbar {
   height: 4.5rem;
-  padding: 0 2.1875rem;
+  padding: 0 2.25rem;
   border-bottom: 1px solid var(--line);
   background: var(--surface);
   display: flex;
@@ -451,7 +451,7 @@ p {
 }
 .breadcrumbs {
   display: flex;
-  gap: 0.6875rem;
+  gap: 0.75rem;
   align-items: center;
   font-size: 0.75rem;
   color: var(--muted);
@@ -472,10 +472,10 @@ p {
 .currency-button {
   display: flex;
   align-items: center;
-  gap: 0.4375rem;
+  gap: 0.5rem;
   font-size: 0.75rem;
   color: var(--muted);
-  padding: 0.4375rem;
+  padding: 0.5rem;
 }
 .top-divider {
   height: 1.25rem;
@@ -496,7 +496,7 @@ p {
   border-bottom: 1px solid var(--line);
   display: flex;
   align-items: center;
-  padding: 0 2.1875rem;
+  padding: 0 2.25rem;
   gap: 1.5rem;
   overflow-x: auto;
   white-space: nowrap;
@@ -508,7 +508,7 @@ p {
   letter-spacing: 1.1px;
   display: flex;
   align-items: center;
-  gap: 0.375rem;
+  gap: 0.5rem;
   margin-right: 1px;
 }
 .live-dot {
@@ -522,7 +522,7 @@ p {
 .market-strip > div {
   display: flex;
   align-items: center;
-  gap: 0.5625rem;
+  gap: 0.5rem;
 }
 .market-strip > div > span:first-child {
   color: var(--muted);
@@ -554,24 +554,24 @@ p {
 }
 main {
   max-width: 97.5rem;
-  padding: 1.875rem 2.1875rem 0;
+  padding: 2rem 2.25rem 0;
   margin: 0 auto;
 }
 .page-heading {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5625rem;
+  margin-bottom: 1.5rem;
   gap: 1.25rem;
 }
 .page-heading .eyebrow {
   font-size: 0.75rem;
-  margin-bottom: 0.5625rem;
+  margin-bottom: 0.5rem;
   letter-spacing: 1.1px;
 }
 .page-heading p {
   font-size: 0.75rem;
-  margin-top: 0.4375rem;
+  margin-top: 0.5rem;
   color: var(--muted);
 }
 .page-heading > .button {
@@ -580,13 +580,13 @@ main {
 .notice {
   display: flex;
   align-items: center;
-  gap: 0.6875rem;
+  gap: 0.75rem;
   background: var(--surface-3);
   border: 1px solid var(--line);
   color: var(--muted);
-  padding: 0.8125rem 0.9375rem;
+  padding: 0.75rem 1rem;
   border-radius: 0.5rem;
-  margin-bottom: 1.125rem;
+  margin-bottom: 1rem;
   font-size: 0.75rem;
   line-height: 1.6;
 }
@@ -599,7 +599,7 @@ main {
 .notice a,
 .notice button {
   display: inline-flex;
-  gap: 0.375rem;
+  gap: 0.5rem;
   align-items: center;
   font-weight: 650;
   color: var(--muted);
@@ -622,8 +622,8 @@ main {
 .stats-grid {
   display: grid;
   grid-template-columns: 1.15fr 1fr 1fr 1fr;
-  gap: 0.9375rem;
-  margin-bottom: 1.4375rem;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
 }
 .stat-card {
   position: relative;
@@ -631,7 +631,7 @@ main {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 0.625rem;
-  padding: 1.1875rem 1.25rem 1.0625rem;
+  padding: 1.25rem 1.25rem 1rem;
   min-height: 8.625rem;
 }
 .stat-label {
@@ -660,9 +660,9 @@ main {
   font-size: 0.75rem;
   display: flex;
   align-items: center;
-  gap: 0.375rem;
+  gap: 0.5rem;
   color: var(--muted);
-  margin-top: 0.6875rem;
+  margin-top: 0.75rem;
   position: relative;
   z-index: 1;
   min-height: 0.875rem;
@@ -716,18 +716,18 @@ main {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 0.9375rem;
-  padding: 1.375rem 1.4375rem 0;
+  gap: 1rem;
+  padding: 1.5rem 1.5rem 0;
 }
 .panel-title h2 {
   display: flex;
   align-items: center;
-  gap: 0.5625rem;
+  gap: 0.5rem;
   font-size: 0.875rem;
 }
 .panel-title p {
   font-size: 0.75rem;
-  margin-top: 0.375rem;
+  margin-top: 0.5rem;
   color: var(--muted);
 }
 .panel-title > svg {
@@ -748,7 +748,7 @@ main {
   gap: 1px;
 }
 .period-tabs button {
-  padding: 0.3125rem 0.5rem;
+  padding: 0.25rem 0.5rem;
   font-size: 0.75rem;
   color: var(--muted);
   border-radius: 3px;
@@ -761,15 +761,15 @@ main {
 }
 .chart-legend {
   display: flex;
-  gap: 1.4375rem;
-  padding: 1.4375rem 1.5625rem 2px;
+  gap: 1.5rem;
+  padding: 1.5rem 1.5rem 2px;
   font-size: 0.75rem;
   color: var(--muted);
 }
 .chart-legend > span {
   display: flex;
   align-items: center;
-  gap: 0.375rem;
+  gap: 0.5rem;
 }
 .chart-legend b {
   font-size: 0.75rem;
@@ -791,25 +791,25 @@ main {
 }
 .benchmark-chart {
   height: 13rem;
-  margin: 0.375rem 0.8125rem 0 0.5625rem;
+  margin: 0.5rem 0.75rem 0 0.5rem;
 }
 .chart-note {
   border-top: 1px solid var(--line);
   color: var(--muted);
   display: flex;
   align-items: center;
-  gap: 0.3125rem;
+  gap: 0.25rem;
   font-size: 0.75rem;
-  padding: 0.75rem 1.4375rem;
+  padding: 0.75rem 1.5rem;
 }
 .allocation .panel-title {
-  padding: 1.375rem 1.3125rem 0;
+  padding: 1.5rem 1.25rem 0;
 }
 .allocation .panel-title h2 {
   font-size: 0.875rem;
 }
 .donut-wrap {
-  padding: 1.1875rem 0 1.0625rem;
+  padding: 1.25rem 0 1rem;
   display: flex;
   justify-content: center;
 }
@@ -840,18 +840,18 @@ main {
   font-size: 1.5rem;
   letter-spacing: -0.5px;
   font-weight: 700;
-  margin-top: 0.4375rem;
+  margin-top: 0.5rem;
 }
 .donut small {
   color: var(--muted);
   font-size: 0.75rem;
-  margin-top: 0.3125rem;
+  margin-top: 0.25rem;
 }
 .allocation-legend {
-  padding: 0 1.4375rem 1rem;
+  padding: 0 1.5rem 1rem;
   display: flex;
   flex-direction: column;
-  gap: 0.6875rem;
+  gap: 0.75rem;
 }
 .allocation-legend > div {
   display: flex;
@@ -862,7 +862,7 @@ main {
 .allocation-legend > div > span {
   display: flex;
   align-items: center;
-  gap: 0.4375rem;
+  gap: 0.5rem;
   flex: 1;
   color: var(--muted);
 }
@@ -878,14 +878,14 @@ main {
   color: var(--muted);
 }
 .onboarding {
-  padding: 1.0625rem 1.25rem;
+  padding: 1rem 1.25rem;
   display: flex;
-  gap: 0.875rem;
+  gap: 1rem;
   align-items: center;
   border: 1px dashed var(--line);
   background: var(--surface-3);
   border-radius: 0.5625rem;
-  margin-bottom: 1.375rem;
+  margin-bottom: 1.5rem;
 }
 .onboard-icon {
   color: var(--muted);
@@ -906,12 +906,12 @@ main {
 }
 .onboarding p {
   font-size: 0.75rem;
-  margin-top: 0.3125rem;
+  margin-top: 0.25rem;
   color: var(--muted);
 }
 .onboarding > .button {
   font-size: 0.75rem;
-  padding: 0.5625rem 0.75rem;
+  padding: 0.5rem 0.75rem;
 }
 .next-contribution {
   background: var(--surface-3);
@@ -919,8 +919,8 @@ main {
   border-radius: 0.625rem;
   display: grid;
   grid-template-columns: 1.2fr 1fr;
-  margin-bottom: 1.6875rem;
-  padding: 1.5625rem 1.8125rem;
+  margin-bottom: 1.75rem;
+  padding: 1.5rem 1.75rem;
   gap: 2.5rem;
 }
 .next-contribution-left h2 {
@@ -940,7 +940,7 @@ main {
 .next-contribution-left p {
   font-size: 0.75rem;
   max-width: 18.125rem;
-  margin: 0.625rem 0 1rem;
+  margin: 0.5rem 0 1rem;
   color: var(--muted);
 }
 .next-contribution-left .eyebrow {
@@ -953,7 +953,7 @@ main {
   color: var(--muted);
 }
 .next-contribution-right {
-  padding-top: 0.375rem;
+  padding-top: 0.5rem;
 }
 .budget-label {
   display: flex;
@@ -970,8 +970,8 @@ main {
   display: flex;
   align-items: center;
   border-bottom: 1px solid var(--line);
-  padding: 0.5625rem 0 0.8125rem;
-  gap: 0.625rem;
+  padding: 0.5rem 0 0.75rem;
+  gap: 0.5rem;
 }
 .budget-input > span {
   color: var(--muted);
@@ -997,13 +997,13 @@ main {
 .mini-plan {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 0.625rem;
-  margin-top: 1.3125rem;
+  gap: 0.5rem;
+  margin-top: 1.25rem;
 }
 .mini-plan > div {
   display: grid;
   grid-template-columns: 0.375rem 1fr;
-  gap: 0.4375rem;
+  gap: 0.5rem;
   align-items: center;
   font-size: 0.75rem;
   color: var(--muted);
@@ -1019,7 +1019,7 @@ main {
   font-size: 0.75rem;
   color: var(--muted);
   display: block;
-  margin-top: 1.0625rem;
+  margin-top: 1rem;
 }
 .asset-panel {
   margin-bottom: 1.75rem;
@@ -1031,7 +1031,7 @@ main {
   background: var(--surface-3);
   border: 1px solid var(--line);
   border-radius: 0.3125rem;
-  padding: 2px 0.375rem;
+  padding: 2px 0.5rem;
   letter-spacing: 0;
   font-weight: 600;
 }
@@ -1039,18 +1039,18 @@ main {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1.25rem 1.4375rem 0;
+  padding: 1.25rem 1.5rem 0;
   gap: 0.75rem;
 }
 .tabs {
   display: flex;
-  gap: 0.375rem;
+  gap: 0.5rem;
   align-items: center;
 }
 .tabs button {
   font-size: 0.75rem;
   color: var(--muted);
-  padding: 0.375rem 0.6875rem;
+  padding: 0.5rem 0.75rem;
   border-radius: 0.3125rem;
 }
 .tabs button.active {
@@ -1061,7 +1061,7 @@ main {
 .search {
   display: flex;
   align-items: center;
-  gap: 0.4375rem;
+  gap: 0.5rem;
   color: var(--muted);
 }
 .search input {
@@ -1071,7 +1071,7 @@ main {
   min-width: 0;
   font-size: 0.75rem;
   width: 7.5rem;
-  padding: 0.375rem;
+  padding: 0.5rem;
   color: var(--muted);
 }
 .search input::placeholder {
@@ -1091,12 +1091,12 @@ th {
   font-size: 0.75rem;
   font-weight: 500;
   color: var(--muted);
-  padding: 1rem 1.4375rem 0.75rem;
+  padding: 1rem 1.5rem 0.75rem;
   border-bottom: 1px solid var(--line);
 }
 td {
   font-size: 0.75rem;
-  padding: 0.8125rem 1.4375rem;
+  padding: 0.75rem 1.5rem;
   border-bottom: 1px solid var(--line);
   color: var(--muted);
 }
@@ -1128,7 +1128,7 @@ th:nth-child(3) {
 .asset-name {
   display: flex;
   align-items: center;
-  gap: 0.6875rem;
+  gap: 0.75rem;
   text-align: left;
   padding: 0;
 }
@@ -1166,7 +1166,7 @@ th:nth-child(3) {
 .metric {
   display: flex;
   align-items: center;
-  gap: 0.875rem;
+  gap: 1rem;
   font-size: 0.75rem;
   color: var(--muted);
 }
@@ -1180,8 +1180,8 @@ th:nth-child(3) {
   color: var(--muted);
   display: flex;
   justify-content: space-between;
-  gap: 0.9375rem;
-  padding: 0.8125rem 1.4375rem;
+  gap: 1rem;
+  padding: 0.75rem 1.5rem;
   background: var(--surface);
   border-top: 1px solid var(--line);
   line-height: 1.6;
@@ -1189,14 +1189,14 @@ th:nth-child(3) {
 .panel-foot > span:first-child {
   display: flex;
   align-items: center;
-  gap: 0.375rem;
+  gap: 0.5rem;
 }
 .section-title {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 0.75rem;
-  margin-bottom: 1.0625rem;
+  margin-bottom: 1rem;
 }
 .section-title .eyebrow {
   font-size: 0.75rem;
@@ -1212,13 +1212,13 @@ th:nth-child(3) {
 }
 .news-filters {
   display: flex;
-  gap: 0.4375rem;
+  gap: 0.5rem;
   overflow: auto;
   white-space: nowrap;
-  padding-bottom: 1.0625rem;
+  padding-bottom: 1rem;
 }
 .chip {
-  padding: 0.375rem 0.6875rem;
+  padding: 0.5rem 0.75rem;
   border: 1px solid var(--line);
   border-radius: 0.3125rem;
   font-size: 0.75rem;
@@ -1241,16 +1241,16 @@ th:nth-child(3) {
   border-radius: 0.3125rem;
   background: var(--surface);
   color: var(--muted);
-  padding: 0.3125rem 0.5rem;
+  padding: 0.25rem 0.5rem;
   max-width: 7.5rem;
 }
 .news-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 1.0625rem;
+  gap: 1rem;
 }
 .news-card {
-  padding: 1.3125rem 1.3125rem 1.0625rem;
+  padding: 1.25rem 1.25rem 1rem;
   display: flex;
   flex-direction: column;
   min-height: 11.875rem;
@@ -1268,7 +1268,7 @@ th:nth-child(3) {
 }
 .news-ticker {
   background: var(--surface-3);
-  padding: 0.25rem 0.4375rem;
+  padding: 0.25rem 0.5rem;
   border-radius: 0.25rem;
   color: var(--muted);
   font-size: 0.75rem;
@@ -1281,14 +1281,14 @@ th:nth-child(3) {
   font-weight: 650;
   line-height: 1.65;
   letter-spacing: -0.2px;
-  margin: 0.9375rem 0 1.5rem;
+  margin: 1rem 0 1.5rem;
 }
 .news-source {
   margin-top: auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.625rem;
+  gap: 0.5rem;
   color: var(--muted);
   font-size: 0.75rem;
 }
@@ -1321,14 +1321,14 @@ th:nth-child(3) {
   }
 }
 .empty {
-  padding: 2.1875rem 1.25rem;
+  padding: 2.25rem 1.25rem;
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   min-height: 11.875rem;
-  gap: 0.625rem;
+  gap: 0.5rem;
 }
 .empty-icon {
   display: flex;
@@ -1351,12 +1351,12 @@ th:nth-child(3) {
   max-width: 21.875rem;
 }
 .empty .button {
-  margin-top: 0.375rem;
+  margin-top: 0.5rem;
 }
 .benchmark-chart .empty {
   height: 100%;
   min-height: 0;
-  padding: 0.625rem;
+  padding: 0.5rem;
 }
 .benchmark-chart .empty-icon {
   width: 2.1875rem;
@@ -1364,34 +1364,34 @@ th:nth-child(3) {
   margin: 0;
 }
 .fixed-panel {
-  margin-top: 1.375rem;
+  margin-top: 1.5rem;
   overflow: hidden;
 }
 .fixed-panel .panel-title {
-  padding-bottom: 0.9375rem;
+  padding-bottom: 1rem;
 }
 .fixed-panel .button {
   font-size: 0.75rem;
 }
 .allocation-comparison {
   padding: 1.5rem;
-  margin-top: 1.375rem;
+  margin-top: 1.5rem;
 }
 .allocation-comparison h2 {
-  margin-bottom: 1.625rem;
+  margin-bottom: 1.5rem;
 }
 .comparison-row {
   display: grid;
   grid-template-columns: 9.375rem 1fr 3.4375rem 4.0625rem;
-  gap: 0.9375rem;
+  gap: 1rem;
   align-items: center;
-  margin: 1.375rem 0;
+  margin: 1.5rem 0;
   font-size: 0.75rem;
 }
 .comparison-row > span {
   display: flex;
   align-items: center;
-  gap: 0.4375rem;
+  gap: 0.5rem;
   color: var(--muted);
 }
 .comparison-row > b {
@@ -1424,7 +1424,7 @@ th:nth-child(3) {
 .planner-grid {
   display: grid;
   grid-template-columns: 1fr 0.85fr;
-  gap: 1.375rem;
+  gap: 1.5rem;
   margin-bottom: 1.5rem;
 }
 .planner {
@@ -1437,7 +1437,7 @@ th:nth-child(3) {
 }
 .planner .panel-title h2 {
   font-size: 1.4375rem;
-  margin-top: 0.4375rem;
+  margin-top: 0.5rem;
 }
 .field {
   display: flex;
@@ -1445,14 +1445,14 @@ th:nth-child(3) {
   gap: 0.5rem;
   font-size: 0.75rem;
   color: var(--muted);
-  margin-bottom: 1.0625rem;
+  margin-bottom: 1rem;
 }
 .field > input,
 .field > select {
   border: 1px solid var(--line);
   border-radius: 0.375rem;
   background: var(--surface);
-  padding: 0.6875rem;
+  padding: 0.75rem;
   font-size: 0.875rem;
   width: 100%;
   min-width: 0;
@@ -1464,12 +1464,12 @@ th:nth-child(3) {
 .planner > .field input {
   font-family: inherit;
   font-size: 1.5625rem;
-  padding: 0.8125rem;
+  padding: 0.75rem;
 }
 .quick-budgets {
   display: flex;
-  gap: 0.4375rem;
-  margin: -0.375rem 0 1.4375rem;
+  gap: 0.5rem;
+  margin: -0.5rem 0 1.5rem;
 }
 .class-plan {
   border-top: 1px solid var(--line);
@@ -1478,8 +1478,8 @@ th:nth-child(3) {
 .class-plan > div {
   display: grid;
   grid-template-columns: 1fr auto;
-  gap: 0.375rem;
-  padding: 0.9375rem 0;
+  gap: 0.5rem;
+  padding: 1rem 0;
   border-bottom: 1px solid var(--line);
   font-size: 0.75rem;
 }
@@ -1522,14 +1522,14 @@ th:nth-child(3) {
 .planner-summary > div {
   display: flex;
   align-items: center;
-  gap: 0.625rem;
-  margin: 0.6875rem 0;
+  gap: 0.5rem;
+  margin: 0.75rem 0;
   color: var(--muted);
   font-size: 0.75rem;
 }
 .planner-summary > small {
   margin-top: auto;
-  padding-top: 1.375rem;
+  padding-top: 1.5rem;
   font-size: 0.75rem;
   line-height: 1.8;
   color: var(--muted);
@@ -1540,7 +1540,7 @@ th:nth-child(3) {
 }
 .target-panel,
 .weights-panel {
-  margin-bottom: 1.375rem;
+  margin-bottom: 1.5rem;
 }
 .total-pill {
   background: var(--surface-3);
@@ -1548,7 +1548,7 @@ th:nth-child(3) {
   color: var(--muted);
   border-radius: 1.25rem;
   font-size: 0.75rem;
-  padding: 0.4375rem 0.75rem;
+  padding: 0.5rem 0.75rem;
 }
 .total-pill.invalid {
   background: var(--danger-bg);
@@ -1557,18 +1557,18 @@ th:nth-child(3) {
 .target-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 0.9375rem;
-  padding: 1.5625rem;
+  gap: 1rem;
+  padding: 1.5rem;
 }
 .target-card {
-  padding: 1.125rem;
+  padding: 1rem;
   border: 1px solid var(--line);
   border-radius: 0.5rem;
   background: var(--surface-2);
 }
 .target-card > span {
   display: flex;
-  gap: 0.4375rem;
+  gap: 0.5rem;
   align-items: center;
   color: var(--muted);
   font-size: 0.75rem;
@@ -1577,7 +1577,7 @@ th:nth-child(3) {
   display: flex;
   align-items: center;
   gap: 2px;
-  margin: 1.125rem 0 0.5rem;
+  margin: 1rem 0 0.5rem;
 }
 .target-card input {
   width: 5.625rem;
@@ -1601,7 +1601,7 @@ th:nth-child(3) {
 .target-strip {
   display: flex;
   height: 0.4375rem;
-  margin: 0 1.5625rem 1.5625rem;
+  margin: 0 1.5rem 1.5rem;
   border-radius: 3px;
   overflow: hidden;
 }
@@ -1609,13 +1609,13 @@ th:nth-child(3) {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 0 1.5rem;
-  padding: 1.25rem 1.5625rem;
+  padding: 1.25rem 1.5rem;
 }
 .weight-item {
   display: flex;
   align-items: center;
-  gap: 0.625rem;
-  padding: 0.8125rem 0;
+  gap: 0.5rem;
+  padding: 0.75rem 0;
   border-bottom: 1px solid var(--line);
 }
 .weight-item > span:not(.asset-mark) {
@@ -1637,7 +1637,7 @@ th:nth-child(3) {
   width: 3.375rem;
   border: 1px solid var(--line);
   border-radius: 0.3125rem;
-  padding: 0.4375rem 0.25rem 0.4375rem 0.5rem;
+  padding: 0.5rem 0.25rem 0.5rem 0.5rem;
   font-size: 0.75rem;
   color: var(--muted);
 }
@@ -1645,19 +1645,19 @@ th:nth-child(3) {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1.125rem 1.5625rem;
+  padding: 1rem 1.5rem;
   border-top: 1px solid var(--line);
   font-size: 0.75rem;
 }
 .method-panel {
-  padding-bottom: 1.5625rem;
-  margin-bottom: 1.375rem;
+  padding-bottom: 1.5rem;
+  margin-bottom: 1.5rem;
 }
 .method-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 1.875rem;
-  padding: 1.75rem 1.5625rem;
+  gap: 2rem;
+  padding: 1.75rem 1.5rem;
 }
 .method-grid > div > span {
   color: var(--muted);
@@ -1675,7 +1675,7 @@ th:nth-child(3) {
   line-height: 1.9;
 }
 .method-panel > .text-button {
-  margin-left: 1.5625rem;
+  margin-left: 1.5rem;
 }
 .backup-panel {
   display: flex;
@@ -1686,11 +1686,11 @@ th:nth-child(3) {
 }
 .backup-panel p {
   font-size: 0.75rem;
-  margin-top: 0.4375rem;
+  margin-top: 0.5rem;
 }
 .button-row {
   display: flex;
-  gap: 0.625rem;
+  gap: 0.5rem;
 }
 .button-row .button {
   font-size: 0.75rem;
@@ -1698,10 +1698,10 @@ th:nth-child(3) {
 footer {
   display: flex;
   align-items: center;
-  gap: 0.875rem;
+  gap: 1rem;
   border-top: 1px solid var(--line);
-  margin-top: 2.1875rem;
-  padding: 1.5625rem 0;
+  margin-top: 2.25rem;
+  padding: 1.5rem 0;
   color: var(--muted);
   font-size: 0.75rem;
 }
@@ -1718,11 +1718,11 @@ footer > p {
 }
 footer > button {
   display: flex;
-  gap: 0.3125rem;
+  gap: 0.25rem;
   align-items: center;
   color: var(--muted);
   font-size: 0.75rem;
-  margin-left: 0.625rem;
+  margin-left: 0.5rem;
 }
 .footer-right {
   margin-left: auto;
@@ -1739,8 +1739,8 @@ footer > button {
   border-radius: 0.5625rem;
   display: flex;
   align-items: center;
-  gap: 0.6875rem;
-  padding: 1rem 1.125rem;
+  gap: 0.75rem;
+  padding: 1rem 1rem;
   z-index: 70;
   font-size: 0.875rem;
   max-width: calc(100vw - 2.5rem);
@@ -1752,7 +1752,7 @@ footer > button {
 .toast button {
   color: var(--muted);
   display: flex;
-  margin-left: 0.3125rem;
+  margin-left: 0.25rem;
 }
 dialog {
   border: 1px solid var(--line);
@@ -1769,7 +1769,7 @@ dialog::backdrop {
   backdrop-filter: blur(3px);
 }
 .dialog-content {
-  padding: 1.9375rem;
+  padding: 2rem;
   position: relative;
 }
 .dialog-close {
@@ -1779,14 +1779,14 @@ dialog::backdrop {
 }
 .dialog-content > h2 {
   font-size: 1.5rem;
-  margin: 0.5625rem 0 0.625rem;
+  margin: 0.5rem 0 0.5rem;
   letter-spacing: -0.9px;
-  padding-right: 0.9375rem;
+  padding-right: 1rem;
 }
 .dialog-content > p {
   font-size: 0.75rem;
   line-height: 1.9;
-  margin-bottom: 1.375rem;
+  margin-bottom: 1.5rem;
 }
 .dialog-content .eyebrow {
   font-size: 0.75rem;
@@ -1794,20 +1794,20 @@ dialog::backdrop {
 .form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0 0.9375rem;
+  gap: 0 1rem;
 }
 .segmented {
   display: flex;
   background: var(--surface-3);
   border-radius: 0.4375rem;
   padding: 0.25rem;
-  margin: 1.4375rem 0;
+  margin: 1.5rem 0;
   gap: 0.25rem;
 }
 .segmented > button {
   font-size: 0.75rem;
   flex: 1;
-  padding: 0.625rem;
+  padding: 0.5rem;
   border-radius: 0.3125rem;
   color: var(--muted);
 }
@@ -1824,7 +1824,7 @@ dialog::backdrop {
   padding: 0.75rem;
   background: var(--surface-2);
   border-radius: 0.375rem;
-  margin: 0.3125rem 0 1.25rem;
+  margin: 0.25rem 0 1.25rem;
 }
 .dialog-content .full {
   margin-top: 0.5rem;
@@ -1833,7 +1833,7 @@ dialog::backdrop {
   display: flex;
   justify-content: flex-end;
   gap: 0.75rem;
-  margin-top: 1.5625rem;
+  margin-top: 1.5rem;
 }
 .delete-title {
   display: flex;
@@ -1846,7 +1846,7 @@ dialog::backdrop {
 .prose h3 {
   font-size: 0.875rem;
   color: var(--muted);
-  margin: 1.5625rem 0 0.5rem;
+  margin: 1.5rem 0 0.5rem;
 }
 .prose p {
   font-size: 0.75rem;
@@ -1862,13 +1862,13 @@ dialog::backdrop {
 }
 .asset-detail-heading {
   display: flex;
-  gap: 0.9375rem;
+  gap: 1rem;
   align-items: center;
-  margin: 0.3125rem 0 1.5rem;
+  margin: 0.25rem 0 1.5rem;
 }
 .asset-detail-heading h2 {
   font-size: 1.375rem;
-  margin-top: 0.3125rem;
+  margin-top: 0.25rem;
 }
 .asset-detail-heading h2 small {
   display: block;
@@ -1883,19 +1883,19 @@ dialog::backdrop {
   letter-spacing: -1px;
   display: flex;
   align-items: center;
-  gap: 0.9375rem;
+  gap: 1rem;
   margin-bottom: 0.5rem;
 }
 .detail-chart {
   height: 10.625rem;
-  margin: 1.25rem -0.625rem;
+  margin: 1.25rem -0.5rem;
 }
 .detail-metrics {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 0.9375rem;
+  gap: 1rem;
   padding: 1.25rem 0;
-  margin-bottom: 0.625rem;
+  margin-bottom: 0.5rem;
   border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
 }
@@ -1909,7 +1909,7 @@ dialog::backdrop {
   font-family: inherit;
   font-size: 1.1875rem;
   color: var(--muted);
-  margin-top: 0.5625rem;
+  margin-top: 0.5rem;
 }
 .mobile-backdrop {
   display: none;
@@ -1922,13 +1922,13 @@ input[type="number"]::-webkit-inner-spin-button {
     --sidebar: 15.25rem;
   }
   main {
-    padding-left: 2.8125rem;
-    padding-right: 2.8125rem;
+    padding-left: 2.75rem;
+    padding-right: 2.75rem;
   }
   .topbar,
   .market-strip {
-    padding-left: 2.8125rem;
-    padding-right: 2.8125rem;
+    padding-left: 2.75rem;
+    padding-right: 2.75rem;
   }
   .stat-value {
     font-size: 1.75rem;
@@ -1944,7 +1944,7 @@ input[type="number"]::-webkit-inner-spin-button {
     height: 11.25rem;
   }
   .donut-wrap {
-    padding: 1.5625rem 0;
+    padding: 1.5rem 0;
   }
   .panel-title h2 {
     font-size: 1rem;
@@ -1962,14 +1962,14 @@ input[type="number"]::-webkit-inner-spin-button {
     font-size: 0.75rem;
   }
   .next-contribution {
-    padding: 1.875rem 2.1875rem;
+    padding: 2rem 2.25rem;
   }
   .market-strip {
-    gap: 2.1875rem;
+    gap: 2.25rem;
   }
   td {
-    padding-top: 0.9375rem;
-    padding-bottom: 0.9375rem;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
   }
 }
 @media (max-width: 1200px) {
@@ -1977,20 +1977,20 @@ input[type="number"]::-webkit-inner-spin-button {
     --sidebar: 12.5rem;
   }
   .sidebar {
-    padding-left: 0.875rem;
-    padding-right: 0.875rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
   }
   .brand {
     padding-left: 0.5rem;
   }
   .profile {
-    margin-left: -0.875rem;
-    margin-right: -0.875rem;
+    margin-left: -1rem;
+    margin-right: -1rem;
     width: calc(100% + 1.75rem);
-    padding: 1.125rem;
+    padding: 1rem;
   }
   .strategy-mini {
-    padding: 0.75rem 0.625rem;
+    padding: 0.75rem 0.5rem;
   }
   .strategy-mini > div {
     font-size: 0.75rem;
@@ -1999,7 +1999,7 @@ input[type="number"]::-webkit-inner-spin-button {
     font-size: 0.75rem;
   }
   .nav-item {
-    padding: 0.75rem 0.625rem;
+    padding: 0.75rem 0.5rem;
     font-size: 0.75rem;
   }
   .topbar,
@@ -2008,19 +2008,19 @@ input[type="number"]::-webkit-inner-spin-button {
     padding-right: 1.5rem;
   }
   .market-strip {
-    gap: 1.0625rem;
+    gap: 1rem;
   }
   .market-strip > div {
-    gap: 0.375rem;
+    gap: 0.5rem;
   }
   main {
-    padding: 1.625rem 1.5rem 0;
+    padding: 1.5rem 1.5rem 0;
   }
   .stats-grid {
-    gap: 0.625rem;
+    gap: 0.5rem;
   }
   .stat-card {
-    padding: 1.0625rem 0.875rem;
+    padding: 1rem 1rem;
   }
   .stat-value,
   .wealth .stat-value {
@@ -2033,11 +2033,11 @@ input[type="number"]::-webkit-inner-spin-button {
     font-size: 0.75rem;
   }
   .overview-grid {
-    gap: 0.9375rem;
+    gap: 1rem;
     grid-template-columns: 1.55fr 1fr;
   }
   .panel-title {
-    padding: 1.25rem 1.125rem 0;
+    padding: 1.25rem 1rem 0;
   }
   .panel-title h2 {
     font-size: 0.875rem;
@@ -2046,22 +2046,22 @@ input[type="number"]::-webkit-inner-spin-button {
     font-size: 0.75rem;
   }
   .allocation .panel-title {
-    padding-left: 1.125rem;
-    padding-right: 1.125rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
   }
   .allocation .panel-title h2 {
     font-size: 0.875rem;
   }
   .allocation-legend {
-    padding-left: 1.125rem;
-    padding-right: 1.125rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
   }
   .chart-legend {
     gap: 0.75rem;
     padding-left: 1.25rem;
   }
   .period-tabs button {
-    padding: 0.3125rem 0.375rem;
+    padding: 0.25rem 0.5rem;
   }
   .onboarding {
     flex-wrap: wrap;
@@ -2070,10 +2070,10 @@ input[type="number"]::-webkit-inner-spin-button {
     flex-basis: 70%;
   }
   .onboarding > .button:first-of-type {
-    margin-left: 3.5625rem;
+    margin-left: 3.5rem;
   }
   .next-contribution {
-    gap: 1.5625rem;
+    gap: 1.5rem;
     padding: 1.5rem;
   }
   .mini-plan {
@@ -2087,24 +2087,24 @@ input[type="number"]::-webkit-inner-spin-button {
   }
   th,
   td {
-    padding-left: 1.125rem;
-    padding-right: 1.125rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
   }
   th:nth-child(3) {
     min-width: 7.1875rem;
   }
   .news-card {
-    padding: 1.0625rem;
+    padding: 1rem;
   }
   .news-card h3 {
     font-size: 0.875rem;
   }
   .target-grid {
     padding: 1.25rem;
-    gap: 0.625rem;
+    gap: 0.5rem;
   }
   .target-card {
-    padding: 0.875rem;
+    padding: 1rem;
   }
   .target-card > span {
     font-size: 0.75rem;
@@ -2120,17 +2120,17 @@ input[type="number"]::-webkit-inner-spin-button {
     grid-template-columns: repeat(3, 1fr);
     padding-left: 1.25rem;
     padding-right: 1.25rem;
-    gap: 0 1.0625rem;
+    gap: 0 1rem;
   }
   .planner-summary {
-    padding: 1.625rem;
+    padding: 1.5rem;
   }
   .planner-summary h2 {
     font-size: 1.5rem;
   }
   .comparison-row {
     grid-template-columns: 8.4375rem 1fr 2.8125rem 3.75rem;
-    gap: 0.625rem;
+    gap: 0.5rem;
   }
 }
 @media (max-width: 980px) {
@@ -2139,7 +2139,7 @@ input[type="number"]::-webkit-inner-spin-button {
     gap: 0.75rem;
   }
   .stat-card {
-    padding: 1.1875rem;
+    padding: 1.25rem;
     min-height: 8.4375rem;
   }
   .stat-value,
@@ -2169,7 +2169,7 @@ input[type="number"]::-webkit-inner-spin-button {
   .next-contribution {
     grid-template-columns: 1fr 1fr;
     gap: 1.25rem;
-    padding: 1.375rem;
+    padding: 1.5rem;
   }
   .next-contribution-left h2 {
     font-size: 1.3125rem;
@@ -2179,7 +2179,7 @@ input[type="number"]::-webkit-inner-spin-button {
   }
   .mini-plan {
     grid-template-columns: 1fr 1fr;
-    gap: 0.9375rem;
+    gap: 1rem;
   }
   .mini-plan b {
     font-size: 0.75rem;
@@ -2197,13 +2197,13 @@ input[type="number"]::-webkit-inner-spin-button {
     display: none;
   }
   .table-tools {
-    padding: 1.0625rem 1.125rem 0;
+    padding: 1rem 1rem 0;
   }
   .tabs {
     gap: 3px;
   }
   .tabs button {
-    padding: 0.375rem 0.5625rem;
+    padding: 0.5rem 0.5rem;
   }
   .table-tools .search input {
     width: 5.3125rem;
@@ -2212,7 +2212,7 @@ input[type="number"]::-webkit-inner-spin-button {
     grid-template-columns: 1fr;
   }
   .planner-summary {
-    padding: 1.5625rem;
+    padding: 1.5rem;
   }
   .planner-summary h2 {
     font-size: 1.4375rem;
@@ -2222,7 +2222,7 @@ input[type="number"]::-webkit-inner-spin-button {
     display: none;
   }
   .planner-summary > div {
-    margin: 0.4375rem 0;
+    margin: 0.5rem 0;
   }
   .target-grid {
     grid-template-columns: 1fr 1fr;
@@ -2232,7 +2232,7 @@ input[type="number"]::-webkit-inner-spin-button {
   }
   .method-grid {
     grid-template-columns: 1fr;
-    gap: 0.875rem;
+    gap: 1rem;
   }
   .method-grid > div {
     display: grid;
@@ -2240,7 +2240,7 @@ input[type="number"]::-webkit-inner-spin-button {
     gap: 0.25rem 0.75rem;
   }
   .method-grid h3 {
-    margin: 0.3125rem 0;
+    margin: 0.25rem 0;
   }
   .method-grid p {
     grid-column: 2;
@@ -2264,7 +2264,7 @@ input[type="number"]::-webkit-inner-spin-button {
     font-size: 1.6875rem;
   }
   .page-heading > .button {
-    padding: 0.625rem 0.75rem;
+    padding: 0.5rem 0.75rem;
     font-size: 0.75rem;
   }
   .toast {
@@ -2293,14 +2293,14 @@ input[type="number"]::-webkit-inner-spin-button {
   }
   .mobile-menu {
     display: inline-flex;
-    margin-left: -0.4375rem;
+    margin-left: -0.5rem;
   }
   .app-main {
     margin: 0;
   }
   .topbar {
     height: 3.625rem;
-    padding: 0 1.125rem;
+    padding: 0 1rem;
   }
   .breadcrumbs {
     gap: 0.5rem;
@@ -2310,18 +2310,18 @@ input[type="number"]::-webkit-inner-spin-button {
     font-size: 0.75rem;
   }
   .top-actions {
-    gap: 0.3125rem;
+    gap: 0.25rem;
   }
   .currency-button {
     font-size: 0.75rem;
   }
   .market-strip {
     height: 2.4375rem;
-    gap: 1.1875rem;
-    padding: 0 1.125rem;
+    gap: 1.25rem;
+    padding: 0 1rem;
   }
   .market-strip > div {
-    gap: 0.4375rem;
+    gap: 0.5rem;
     flex: none;
   }
   .market-strip > button {
@@ -2331,12 +2331,12 @@ input[type="number"]::-webkit-inner-spin-button {
     font-size: 0.75rem;
   }
   main {
-    padding: 1.5rem 1.125rem 0;
+    padding: 1.5rem 1rem 0;
   }
   .page-heading {
-    margin-bottom: 1.3125rem;
+    margin-bottom: 1.25rem;
     align-items: flex-start;
-    gap: 0.625rem;
+    gap: 0.5rem;
   }
   .page-heading h1 {
     font-size: 1.5625rem;
@@ -2351,7 +2351,7 @@ input[type="number"]::-webkit-inner-spin-button {
     letter-spacing: 0.8px;
   }
   .page-heading > .button {
-    margin-top: 1.125rem;
+    margin-top: 1rem;
     font-size: 0;
     gap: 0;
     min-width: 2.1875rem;
@@ -2386,13 +2386,13 @@ input[type="number"]::-webkit-inner-spin-button {
   }
   .overview-grid {
     gap: 1rem;
-    margin-bottom: 1.0625rem;
+    margin-bottom: 1rem;
   }
   .market-chart .panel-title {
-    gap: 0.5625rem;
+    gap: 0.5rem;
   }
   .period-tabs button {
-    padding: 0.3125rem 0.4375rem;
+    padding: 0.25rem 0.5rem;
   }
   .panel-title p {
     font-size: 0.75rem;
@@ -2405,7 +2405,7 @@ input[type="number"]::-webkit-inner-spin-button {
   }
   .chart-note {
     font-size: 0.75rem;
-    padding: 0.6875rem 1.125rem;
+    padding: 0.75rem 1rem;
   }
   .allocation > .panel-title h2 {
     font-size: 0.875rem;
@@ -2418,11 +2418,11 @@ input[type="number"]::-webkit-inner-spin-button {
     font-size: 1.25rem;
   }
   .allocation-legend {
-    padding: 1.25rem 1.125rem 1.25rem 0;
-    gap: 0.875rem;
+    padding: 1.25rem 1rem 1.25rem 0;
+    gap: 1rem;
   }
   .allocation-legend > div {
-    gap: 0.375rem;
+    gap: 0.5rem;
     font-size: 0.75rem;
   }
   .allocation-legend small {
@@ -2430,7 +2430,7 @@ input[type="number"]::-webkit-inner-spin-button {
     width: 2.25rem;
   }
   .onboarding {
-    padding: 1.0625rem;
+    padding: 1rem;
     gap: 0.75rem;
   }
   .onboarding > div {
@@ -2455,19 +2455,19 @@ input[type="number"]::-webkit-inner-spin-button {
   .onboarding > .button {
     flex: 1;
     font-size: 0.75rem;
-    padding: 0.5625rem 0.5rem;
+    padding: 0.5rem 0.5rem;
   }
   .next-contribution {
-    padding: 1.375rem;
+    padding: 1.5rem;
     grid-template-columns: 1fr;
-    gap: 1.375rem;
+    gap: 1.5rem;
   }
   .next-contribution-left h2 br {
     display: none;
   }
   .next-contribution-left h2 {
     font-size: 1.375rem;
-    margin-top: 0.5625rem;
+    margin-top: 0.5rem;
   }
   .next-contribution-left h2 em {
     font-size: 1.4375rem;
@@ -2476,7 +2476,7 @@ input[type="number"]::-webkit-inner-spin-button {
   .next-contribution-left p {
     max-width: 100%;
     font-size: 0.75rem;
-    margin-bottom: 0.8125rem;
+    margin-bottom: 0.75rem;
   }
   .next-contribution-right {
     border-top: 1px solid var(--line);
@@ -2488,7 +2488,7 @@ input[type="number"]::-webkit-inner-spin-button {
   }
   .mini-plan {
     grid-template-columns: repeat(4, 1fr);
-    gap: 0.4375rem;
+    gap: 0.5rem;
   }
   .mini-plan b {
     font-size: 0.75rem;
@@ -2503,15 +2503,15 @@ input[type="number"]::-webkit-inner-spin-button {
     font-size: 0.875rem;
   }
   .table-tools {
-    padding-left: 0.9375rem;
-    padding-right: 0.9375rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
   }
   .tabs {
     overflow: auto;
   }
   .tabs button {
     font-size: 0.75rem;
-    padding: 0.375rem 0.5rem;
+    padding: 0.5rem 0.5rem;
     white-space: nowrap;
   }
   .compact {
@@ -2519,14 +2519,14 @@ input[type="number"]::-webkit-inner-spin-button {
   }
   th,
   td {
-    padding-left: 0.9375rem;
-    padding-right: 0.9375rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
   }
   th {
     font-size: 0.75rem;
   }
   .panel-foot {
-    padding: 0.6875rem 0.9375rem;
+    padding: 0.75rem 1rem;
     font-size: 0.75rem;
   }
   .panel-foot > span:last-child {
@@ -2547,11 +2547,11 @@ input[type="number"]::-webkit-inner-spin-button {
   }
   .news-card {
     min-height: 10.625rem;
-    padding: 1.1875rem;
+    padding: 1.25rem;
   }
   .news-card h3 {
     font-size: 0.875rem;
-    margin-top: 0.875rem;
+    margin-top: 1rem;
     line-height: 1.7;
     margin-bottom: 1.25rem;
   }
@@ -2569,20 +2569,20 @@ input[type="number"]::-webkit-inner-spin-button {
     align-items: flex-start;
   }
   .fixed-panel .button {
-    padding: 0.5rem 0.625rem;
+    padding: 0.5rem 0.5rem;
     font-size: 0.75rem;
     min-height: 2rem;
   }
   .comparison-row {
     grid-template-columns: 7.375rem 1fr 2.5rem;
-    gap: 0.5625rem;
+    gap: 0.5rem;
     font-size: 0.75rem;
   }
   .comparison-row > small {
     display: none;
   }
   .allocation-comparison {
-    padding: 1.25rem 1.0625rem;
+    padding: 1.25rem 1rem;
   }
   .planner .panel-title h2 {
     font-size: 1.375rem;
@@ -2591,10 +2591,10 @@ input[type="number"]::-webkit-inner-spin-button {
     font-size: 0.75rem;
   }
   .planner {
-    padding: 0 1.1875rem 1.375rem;
+    padding: 0 1.25rem 1.5rem;
   }
   .planner-summary {
-    padding: 1.5625rem;
+    padding: 1.5rem;
   }
   .target-card > span {
     font-size: 0.75rem;
@@ -2604,11 +2604,11 @@ input[type="number"]::-webkit-inner-spin-button {
     width: 5rem;
   }
   .target-card {
-    padding: 0.9375rem;
+    padding: 1rem;
   }
   .target-grid {
-    padding: 1.125rem;
-    gap: 0.625rem;
+    padding: 1rem;
+    gap: 0.5rem;
   }
   .target-panel .panel-title {
     gap: 0.5rem;
@@ -2616,19 +2616,19 @@ input[type="number"]::-webkit-inner-spin-button {
   }
   .total-pill {
     font-size: 0.75rem;
-    padding: 0.4375rem;
+    padding: 0.5rem;
     white-space: nowrap;
   }
   .target-panel .panel-title h2 {
     font-size: 0.875rem;
-    margin-top: 0.3125rem;
+    margin-top: 0.25rem;
   }
   .weight-grid {
-    padding: 0.625rem 1.125rem;
-    gap: 0 1.125rem;
+    padding: 0.5rem 1rem;
+    gap: 0 1rem;
   }
   .weight-item {
-    gap: 0.4375rem;
+    gap: 0.5rem;
   }
   .weight-item .asset-mark {
     width: 1.625rem !important;
@@ -2638,7 +2638,7 @@ input[type="number"]::-webkit-inner-spin-button {
   .weight-item input {
     width: 2.6875rem;
     font-size: 0.75rem;
-    padding: 0.4375rem 0.3125rem;
+    padding: 0.5rem 0.25rem;
   }
   .weight-item b {
     font-size: 0.75rem;
@@ -2647,8 +2647,8 @@ input[type="number"]::-webkit-inner-spin-button {
     font-size: 0.75rem;
   }
   .save-row {
-    padding: 1.0625rem 1.125rem;
-    gap: 0.9375rem;
+    padding: 1rem 1rem;
+    gap: 1rem;
   }
   .save-row > span {
     font-size: 0.75rem;
@@ -2656,14 +2656,14 @@ input[type="number"]::-webkit-inner-spin-button {
   }
   .save-row .button {
     font-size: 0.75rem;
-    padding: 0.5625rem 0.6875rem;
+    padding: 0.5rem 0.75rem;
     min-height: 2.125rem;
   }
   .weights-panel .panel-title p {
     line-height: 1.8;
   }
   .method-grid {
-    padding: 1.4375rem 1.125rem;
+    padding: 1.5rem 1rem;
   }
   .method-grid p {
     font-size: 0.75rem;
@@ -2676,7 +2676,7 @@ input[type="number"]::-webkit-inner-spin-button {
   }
   .button-row {
     width: 100%;
-    gap: 0.5625rem;
+    gap: 0.5rem;
   }
   .button-row .button {
     flex: 1;
@@ -2684,8 +2684,8 @@ input[type="number"]::-webkit-inner-spin-button {
   }
   footer {
     margin-top: 1.75rem;
-    padding: 1.375rem 0;
-    gap: 0.625rem;
+    padding: 1.5rem 0;
+    gap: 0.5rem;
   }
   footer > p {
     font-size: 0.75rem;
@@ -2699,10 +2699,10 @@ input[type="number"]::-webkit-inner-spin-button {
     bottom: 1rem;
     width: calc(100% - 2rem);
     font-size: 0.75rem;
-    padding: 0.8125rem 0.9375rem;
+    padding: 0.75rem 1rem;
   }
   .dialog-content {
-    padding: 1.6875rem 1.375rem;
+    padding: 1.75rem 1.5rem;
   }
   .dialog-content > h2 {
     font-size: 1.4375rem;
@@ -2714,7 +2714,7 @@ input[type="number"]::-webkit-inner-spin-button {
     font-size: 0.75rem;
   }
   .detail-metrics {
-    gap: 0.625rem;
+    gap: 0.5rem;
   }
   .detail-metrics small {
     font-size: 0.75rem;
@@ -2741,14 +2741,14 @@ input[type="number"]::-webkit-inner-spin-button {
     font-size: 0.75rem;
   }
   .notice.demo > button {
-    margin-left: 1.6875rem;
+    margin-left: 1.75rem;
   }
   .form-note {
     font-size: 0.75rem;
   }
   .form-grid .field > input {
     font-size: 0.75rem;
-    padding: 0.6875rem 0.5rem;
+    padding: 0.75rem 0.5rem;
   }
   .dialog-actions .button {
     font-size: 0.75rem;
@@ -2917,7 +2917,7 @@ td small {
   font-size: 0.875rem;
 }
 .modal-notice {
-  margin-top: 0.9375rem;
+  margin-top: 1rem;
   font-size: 0.75rem;
 }
 .field {
@@ -3060,12 +3060,12 @@ footer button {
 .fx-ribbon {
   display: flex;
   align-items: center;
-  gap: 0.6875rem;
-  padding: 0.6875rem 0.9375rem;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
   border: 1px solid var(--line);
   background: var(--surface-3);
   border-radius: 0.4375rem;
-  margin: -0.4375rem 0 1.125rem;
+  margin: -0.5rem 0 1rem;
   color: var(--muted);
   font-size: 0.75rem;
   line-height: 1.6;
@@ -3086,23 +3086,23 @@ footer button {
 .regional-summaries {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1.125rem;
-  margin-bottom: 1.4375rem;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
 }
 .regional-summary {
-  padding: 1.1875rem 1.3125rem;
+  padding: 1.25rem 1.25rem;
 }
 .regional-heading {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.0625rem;
+  margin-bottom: 1rem;
 }
 .regional-heading h2 {
   font-size: 0.875rem;
 }
 .regional-heading > span {
-  padding: 0.25rem 0.4375rem;
+  padding: 0.25rem 0.5rem;
   background: var(--surface-3);
   color: var(--muted);
   border-radius: 0.25rem;
@@ -3112,7 +3112,7 @@ footer button {
 .regional-summary > div:not(:first-child) {
   display: flex;
   justify-content: space-between;
-  gap: 0.9375rem;
+  gap: 1rem;
   margin-top: 0.75rem;
   font-size: 0.75rem;
   color: var(--muted);
@@ -3124,7 +3124,7 @@ footer button {
 .regional-summary p {
   font-size: 0.75rem;
   color: var(--muted);
-  margin-top: 0.875rem;
+  margin-top: 1rem;
   line-height: 1.7;
 }
 .table-tools .tabs {
@@ -3133,8 +3133,8 @@ footer button {
 }
 .portfolio-table th,
 .portfolio-table td {
-  padding-left: 0.9375rem;
-  padding-right: 0.9375rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
 }
 .portfolio-table th:nth-child(3) {
   min-width: 5.625rem;
@@ -3144,10 +3144,10 @@ footer button {
 }
 .portfolio-table th:last-child,
 .portfolio-table td:last-child {
-  padding-right: 0.9375rem;
+  padding-right: 1rem;
 }
 .income-panel {
-  margin-top: 1.4375rem;
+  margin-top: 1.5rem;
   padding-bottom: 0.25rem;
   overflow: hidden;
 }
@@ -3158,7 +3158,7 @@ footer button {
   font-size: 0.75rem;
 }
 .statement-panel {
-  margin-top: 1.4375rem;
+  margin-top: 1.5rem;
   overflow: hidden;
 }
 .statement-panel .panel-title h2 {
@@ -3167,17 +3167,17 @@ footer button {
 .statement-totals {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1.125rem;
-  padding: 1.3125rem 1.4375rem 0.5rem;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem 0.5rem;
 }
 .statement-totals > div {
   background: var(--surface-2);
-  padding: 1.125rem;
+  padding: 1rem;
   border: 1px solid var(--line);
   border-radius: 0.4375rem;
   display: flex;
   flex-direction: column;
-  gap: 0.4375rem;
+  gap: 0.5rem;
 }
 .statement-totals span {
   font-size: 0.75rem;
@@ -3198,7 +3198,7 @@ footer button {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.75rem 1.4375rem;
+  padding: 0.75rem 1.5rem;
   font-size: 0.75rem;
   color: var(--muted);
 }
@@ -3207,17 +3207,17 @@ footer button {
 }
 .statement-panel details {
   border-top: 1px solid var(--line);
-  margin-top: 0.3125rem;
+  margin-top: 0.25rem;
 }
 .statement-panel summary {
   font-size: 0.75rem;
   color: var(--muted);
   font-weight: 600;
-  padding: 1rem 1.4375rem;
+  padding: 1rem 1.5rem;
   cursor: pointer;
 }
 .bitcoin-reference {
-  padding: 1.25rem 1.4375rem;
+  padding: 1.25rem 1.5rem;
   background: var(--warn-bg);
   border-top: 1px solid var(--warn-line);
 }
@@ -3225,15 +3225,15 @@ footer button {
   font-size: 0.875rem;
   color: var(--muted);
   display: block;
-  margin-bottom: 1.0625rem;
+  margin-bottom: 1rem;
 }
 .bitcoin-reference > div {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.9375rem;
+  gap: 1rem;
   font-size: 0.75rem;
-  margin: 0.625rem 0;
+  margin: 0.5rem 0;
   color: var(--muted);
 }
 .bitcoin-reference strong {
@@ -3247,12 +3247,12 @@ footer button {
   margin-top: 1rem;
 }
 .statement-notes {
-  padding: 0.5625rem 1.4375rem 1.1875rem;
+  padding: 0.5rem 1.5rem 1.25rem;
 }
 .statement-notes p {
   display: flex;
   align-items: flex-start;
-  gap: 0.4375rem;
+  gap: 0.5rem;
   font-size: 0.75rem;
   color: var(--muted);
   line-height: 1.8;
@@ -3268,9 +3268,9 @@ footer button {
 .detail-financials > div {
   display: flex;
   justify-content: space-between;
-  gap: 0.9375rem;
+  gap: 1rem;
   font-size: 0.75rem;
-  margin: 0.875rem 0;
+  margin: 1rem 0;
   color: var(--muted);
 }
 .detail-financials b {
@@ -3289,7 +3289,7 @@ footer button {
     flex-basis: 100%;
   }
   .regional-summary {
-    padding: 1.125rem;
+    padding: 1rem;
   }
 }
 @media (max-width: 980px) {
@@ -3315,17 +3315,17 @@ footer button {
   }
   .fx-ribbon {
     font-size: 0.75rem;
-    gap: 0.4375rem;
+    gap: 0.5rem;
   }
   .fx-ribbon small {
     font-size: 0.75rem;
   }
   .regional-summaries {
     grid-template-columns: 1fr;
-    gap: 0.8125rem;
+    gap: 0.75rem;
   }
   .regional-summary {
-    padding: 1.0625rem;
+    padding: 1rem;
   }
   .regional-heading h2 {
     font-size: 0.875rem;
@@ -3335,7 +3335,7 @@ footer button {
   }
   .income-panel .panel-title {
     align-items: flex-start;
-    gap: 0.625rem;
+    gap: 0.5rem;
   }
   .income-panel .panel-title h2 {
     font-size: 0.875rem;
@@ -3347,8 +3347,8 @@ footer button {
     gap: 0.25rem;
   }
   .statement-totals {
-    gap: 0.625rem;
-    padding: 1.125rem 1.0625rem 0.4375rem;
+    gap: 0.5rem;
+    padding: 1rem 1rem 0.5rem;
   }
   .statement-totals > div {
     padding: 0.75rem;
@@ -3360,44 +3360,44 @@ footer button {
     font-size: 0.75rem;
   }
   .statement-note {
-    padding: 0.75rem 1.0625rem;
+    padding: 0.75rem 1rem;
     font-size: 0.75rem;
   }
   .bitcoin-reference {
-    padding: 1.125rem 1.0625rem;
+    padding: 1rem 1rem;
   }
   .bitcoin-reference > div {
     font-size: 0.75rem;
   }
   .statement-notes {
-    padding: 0.5rem 1.0625rem 1.125rem;
+    padding: 0.5rem 1rem 1rem;
   }
   .statement-panel summary {
-    padding: 0.875rem 1.0625rem;
+    padding: 1rem 1rem;
     font-size: 0.75rem;
   }
   .statement-panel .panel-title {
-    padding-left: 1.0625rem;
-    padding-right: 1.0625rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
   }
 }
 .supplemental-holdings {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1.125rem;
-  margin: -0.3125rem 0 1.4375rem;
+  gap: 1rem;
+  margin: -0.25rem 0 1.5rem;
 }
 .supplemental-holding {
-  padding: 1.125rem 1.3125rem;
+  padding: 1rem 1.25rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.9375rem;
+  gap: 1rem;
 }
 .supplemental-holding > div {
   display: flex;
   flex-direction: column;
-  gap: 0.4375rem;
+  gap: 0.5rem;
 }
 .supplemental-holding > div:last-child {
   text-align: right;
@@ -3426,12 +3426,12 @@ footer button {
 @media (max-width: 980px) {
   .supplemental-holdings {
     grid-template-columns: 1fr;
-    gap: 0.8125rem;
+    gap: 0.75rem;
   }
 }
 @media (max-width: 760px) {
   .supplemental-holding {
-    padding: 1.0625rem;
+    padding: 1rem;
     gap: 0.75rem;
   }
   .supplemental-holding b {
@@ -3447,10 +3447,10 @@ footer button {
 /* Portfolio performance and explicit exchange segments. */
 .regional-summaries {
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.9375rem;
+  gap: 1rem;
 }
 .regional-summary {
-  padding: 1.125rem;
+  padding: 1rem;
 }
 .regional-summary > div:not(:first-child) {
   font-size: 0.75rem;
@@ -3458,19 +3458,19 @@ footer button {
 }
 .supplemental-holdings {
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.9375rem;
+  gap: 1rem;
 }
 .supplemental-holding {
   flex-direction: column;
   align-items: stretch;
-  gap: 0.8125rem;
-  padding: 1.125rem;
+  gap: 0.75rem;
+  padding: 1rem;
 }
 .supplemental-holding > div:last-child {
   text-align: left;
 }
 .supplemental-income {
-  padding: 1.125rem;
+  padding: 1rem;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -3490,7 +3490,7 @@ footer button {
   border-top: 1px solid var(--line);
 }
 .asset-segment-heading {
-  padding: 1.0625rem 1.4375rem;
+  padding: 1rem 1.5rem;
   background: var(--surface-2);
   display: flex;
   align-items: center;
@@ -3518,7 +3518,7 @@ footer button {
   overflow: hidden;
 }
 .performance-panel .panel-title h2 {
-  margin-top: 0.4375rem;
+  margin-top: 0.5rem;
   font-size: 1.0625rem;
 }
 .performance-panel .panel-title .eyebrow {
@@ -3529,22 +3529,22 @@ footer button {
   font-size: 0.75rem;
 }
 .performance-toolbar {
-  padding: 1.25rem 1.4375rem 0;
+  padding: 1.25rem 1.5rem 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.625rem;
+  gap: 0.5rem;
   flex-wrap: wrap;
 }
 .performance-modes {
   display: flex;
   border-bottom: 1px solid var(--line);
-  gap: 0.9375rem;
+  gap: 1rem;
 }
 .performance-modes button {
   font-size: 0.75rem;
   color: var(--muted);
-  padding: 0.375rem 0 0.625rem;
+  padding: 0.5rem 0 0.5rem;
   white-space: nowrap;
   border-bottom: 2px solid transparent;
 }
@@ -3554,11 +3554,11 @@ footer button {
   font-weight: 650;
 }
 .performance-result {
-  padding: 1.5625rem 1.4375rem 0.75rem;
+  padding: 1.5rem 1.5rem 0.75rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.625rem;
+  gap: 0.5rem;
 }
 .performance-scope {
   display: block;
@@ -3588,13 +3588,13 @@ footer button {
   display: block;
   font-size: 0.75rem;
   color: var(--muted);
-  margin-top: 0.3125rem;
+  margin-top: 0.25rem;
 }
 .performance-legend {
   display: flex;
   align-items: center;
-  gap: 0.4375rem 0.75rem;
-  padding: 0.4375rem 1.4375rem 0;
+  gap: 0.5rem 0.75rem;
+  padding: 0.5rem 1.5rem 0;
   flex-wrap: wrap;
   font-size: 0.75rem;
   color: var(--muted);
@@ -3602,7 +3602,7 @@ footer button {
 .performance-legend > span {
   display: flex;
   align-items: center;
-  gap: 0.3125rem;
+  gap: 0.25rem;
   font-weight: 650;
   color: var(--muted);
 }
@@ -3621,7 +3621,7 @@ footer button {
 .performance-legend button {
   padding: 0.25rem 0;
   display: flex;
-  gap: 0.3125rem;
+  gap: 0.25rem;
   align-items: center;
   color: var(--muted);
   font-size: 0.75rem;
@@ -3641,7 +3641,7 @@ footer button {
 }
 .performance-chart {
   height: 15.9375rem;
-  margin: 0.875rem 0.625rem 0 0.25rem;
+  margin: 1rem 0.5rem 0 0.25rem;
   min-width: 0;
 }
 .performance-empty {
@@ -3652,7 +3652,7 @@ footer button {
   text-align: center;
   flex-direction: column;
   gap: 0.75rem;
-  padding: 1.25rem 1.875rem;
+  padding: 1.25rem 2rem;
   color: var(--muted);
 }
 .performance-empty b {
@@ -3666,7 +3666,7 @@ footer button {
 .performance-record-note {
   display: flex;
   gap: 0.5rem;
-  padding: 0.375rem 1.4375rem 0.9375rem;
+  padding: 0.5rem 1.5rem 1rem;
   color: var(--muted);
   font-size: 0.75rem;
   line-height: 1.8;
@@ -3676,21 +3676,21 @@ footer button {
   margin-top: 2px;
 }
 .performance-comparison {
-  margin: 0 1.4375rem 1.0625rem;
+  margin: 0 1.5rem 1rem;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(5.9375rem, 1fr));
-  gap: 0.875rem;
+  gap: 1rem;
   border-top: 1px solid var(--line);
-  padding-top: 0.9375rem;
+  padding-top: 1rem;
 }
 .performance-comparison > div {
   display: flex;
   flex-direction: column;
-  gap: 0.4375rem;
+  gap: 0.5rem;
 }
 .performance-comparison span {
   display: flex;
-  gap: 0.3125rem;
+  gap: 0.25rem;
   align-items: center;
   font-size: 0.75rem;
   color: var(--muted);
@@ -3708,7 +3708,7 @@ footer button {
   line-height: 1.6;
 }
 .performance-alert {
-  padding: 0 1.4375rem 0.8125rem;
+  padding: 0 1.5rem 0.75rem;
   font-size: 0.75rem;
   color: var(--muted);
 }
@@ -3717,12 +3717,12 @@ footer button {
 }
 .performance-method summary {
   cursor: pointer;
-  padding: 0.8125rem 1.4375rem;
+  padding: 0.75rem 1.5rem;
   font-size: 0.75rem;
   color: var(--muted);
   display: flex;
   align-items: center;
-  gap: 0.4375rem;
+  gap: 0.5rem;
   list-style: none;
 }
 .performance-method summary::after {
@@ -3734,13 +3734,13 @@ footer button {
   content: "−";
 }
 .performance-method > div {
-  padding: 0 1.4375rem 0.9375rem;
+  padding: 0 1.5rem 1rem;
 }
 .performance-method p {
   font-size: 0.75rem;
   color: var(--muted);
   line-height: 1.9;
-  margin-bottom: 0.625rem;
+  margin-bottom: 0.5rem;
 }
 .performance-method a {
   color: var(--muted);
@@ -3783,23 +3783,23 @@ footer button {
     grid-column: auto;
   }
   .performance-toolbar {
-    padding: 1rem 1.0625rem 0;
-    gap: 0.8125rem;
+    padding: 1rem 1rem 0;
+    gap: 0.75rem;
   }
   .performance-modes {
-    gap: 0.8125rem;
+    gap: 0.75rem;
   }
   .performance-modes button {
     font-size: 0.75rem;
   }
   .performance-panel .panel-title {
-    padding: 1.1875rem 1.0625rem 0;
+    padding: 1.25rem 1rem 0;
   }
   .performance-panel .panel-title h2 {
     font-size: 1rem;
   }
   .performance-result {
-    padding: 1.3125rem 1.0625rem 0.625rem;
+    padding: 1.25rem 1rem 0.5rem;
   }
   .performance-result strong {
     font-size: 2rem;
@@ -3819,8 +3819,8 @@ footer button {
     font-size: 0.75rem;
   }
   .performance-legend {
-    padding: 0.4375rem 1.0625rem 0;
-    gap: 0.375rem 0.6875rem;
+    padding: 0.5rem 1rem 0;
+    gap: 0.5rem 0.75rem;
   }
   .performance-legend > small {
     display: none;
@@ -3829,24 +3829,24 @@ footer button {
     height: 15rem;
   }
   .performance-comparison {
-    margin: 0 1.0625rem 1rem;
+    margin: 0 1rem 1rem;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 1rem;
   }
   .performance-method summary {
-    padding: 0.8125rem 1.0625rem;
+    padding: 0.75rem 1rem;
   }
   .performance-method > div {
-    padding: 0 1.0625rem 0.9375rem;
+    padding: 0 1rem 1rem;
   }
   .performance-record-note {
-    padding: 0.5rem 1.0625rem 0.9375rem;
+    padding: 0.5rem 1rem 1rem;
   }
   .asset-segment-heading {
-    padding: 0.9375rem;
+    padding: 1rem;
     align-items: flex-start;
     flex-direction: column;
-    gap: 0.3125rem;
+    gap: 0.25rem;
   }
   .asset-segment-heading > span {
     font-size: 0.75rem;
@@ -3963,7 +3963,7 @@ main:focus {
   min-height: 2.75rem;
 }
 .button {
-  padding: 0.625rem 1rem;
+  padding: 0.5rem 1rem;
   border-radius: 0.55rem;
   white-space: normal;
 }
@@ -4032,7 +4032,7 @@ td b,
 .nav-item {
   font-size: 0.875rem;
   min-height: 3rem;
-  padding: 0.625rem 0.75rem;
+  padding: 0.5rem 0.75rem;
   color: var(--muted);
 }
 .nav-item.active {
@@ -4040,7 +4040,7 @@ td b,
   background: var(--surface-4);
 }
 .strategy-mini {
-  padding: 0.875rem;
+  padding: 1rem;
 }
 .strategy-mini p,
 .strategy-mini button,
@@ -4156,7 +4156,7 @@ main {
   line-height: 1.6;
 }
 .notice {
-  padding: 0.875rem 1rem;
+  padding: 1rem 1rem;
 }
 .notice.warn {
   color: var(--warn-text);
@@ -4400,7 +4400,7 @@ main {
   padding: 0 1.25rem;
   display: flex;
   flex-direction: column;
-  gap: 0.625rem;
+  gap: 0.5rem;
 }
 .preview-plan > div {
   display: flex;
@@ -4445,7 +4445,7 @@ main {
   font-size: 0.8125rem;
   line-height: 1.4;
   min-height: 2.75rem;
-  padding: 0.625rem 0;
+  padding: 0.5rem 0;
   color: var(--muted);
 }
 .performance-modes button.active {
@@ -4469,11 +4469,11 @@ main {
 }
 .performance-context {
   margin: 1rem 1.25rem 0;
-  padding: 0.875rem 1rem;
+  padding: 1rem 1rem;
   border-radius: 0.5rem;
   display: flex;
   flex-direction: column;
-  gap: 0.375rem;
+  gap: 0.5rem;
   border: 1px solid var(--line);
   background: var(--surface-3);
   color: var(--ink-2);
@@ -4498,7 +4498,7 @@ main {
   color: var(--ink-2);
   display: flex;
   flex-direction: column;
-  gap: 0.375rem;
+  gap: 0.5rem;
   line-height: 1.6;
 }
 .coverage-note.partial {
@@ -4554,9 +4554,9 @@ main {
   font-size: 0.8125rem;
   min-height: 2.75rem;
   color: var(--muted);
-  padding: 0.375rem 0.25rem;
+  padding: 0.5rem 0.25rem;
   flex-wrap: wrap;
-  gap: 0.375rem;
+  gap: 0.5rem;
 }
 .performance-legend button.selected {
   color: var(--ink);
@@ -4632,7 +4632,7 @@ main {
 }
 .source-recovery {
   margin: 0.75rem 1.25rem 0;
-  padding: 0.875rem 1rem;
+  padding: 1rem 1rem;
   background: var(--warn-bg);
   border: 1px solid var(--warn-line);
   border-radius: 0.5rem;
@@ -4714,7 +4714,7 @@ main {
 .search input {
   font-size: 1rem;
   width: 100%;
-  padding: 0.625rem 0;
+  padding: 0.5rem 0;
   color: var(--ink);
 }
 .search input::placeholder {
@@ -4742,7 +4742,7 @@ td,
 .portfolio-table td {
   font-size: 0.875rem;
   color: var(--ink-2);
-  padding: 0.875rem 1rem;
+  padding: 1rem 1rem;
   line-height: 1.5;
 }
 th {
@@ -4763,7 +4763,7 @@ td small,
 }
 .asset-name {
   min-height: 2.75rem;
-  gap: 0.625rem;
+  gap: 0.5rem;
 }
 .asset-mark {
   font-size: 0.875rem;
@@ -4800,7 +4800,7 @@ td small,
 .panel-foot {
   font-size: 0.75rem;
   color: var(--muted);
-  padding: 0.875rem 1.25rem;
+  padding: 1rem 1.25rem;
   flex-wrap: wrap;
 }
 .panel-foot > span:last-child {
@@ -4886,7 +4886,7 @@ td small,
 .field > input,
 .field > select {
   font-size: 1rem;
-  padding: 0.625rem 0.75rem;
+  padding: 0.5rem 0.75rem;
   border-color: var(--line-strong);
 }
 .field > span,
@@ -4910,7 +4910,7 @@ td small,
   border: 1px solid var(--danger-line);
   padding: 0.75rem;
   border-radius: 0.5rem;
-  margin: 0.875rem 0;
+  margin: 1rem 0;
 }
 [aria-invalid="true"] {
   border-color: var(--danger-line) !important;
@@ -5081,7 +5081,7 @@ footer button,
   font-size: 0.875rem;
   max-width: 40rem;
   line-height: 1.6;
-  padding: 0.875rem 1rem;
+  padding: 1rem 1rem;
 }
 .toast button {
   min-width: 2.75rem;
@@ -5123,7 +5123,7 @@ dialog {
   font-size: 0.875rem;
   min-height: 2.75rem;
   color: var(--muted);
-  padding: 0.625rem;
+  padding: 0.5rem;
 }
 .segmented .active {
   color: var(--ink);
@@ -5269,7 +5269,7 @@ dialog {
     gap: 0.5rem;
   }
   .breadcrumbs {
-    gap: 0.375rem;
+    gap: 0.5rem;
     min-width: 0;
     flex-wrap: wrap;
   }
@@ -5287,7 +5287,7 @@ dialog {
   }
   .currency-button {
     font-size: 0.75rem;
-    padding: 0.375rem;
+    padding: 0.5rem;
   }
   .currency-button svg:last-child {
     display: none;
@@ -5316,7 +5316,7 @@ dialog {
     margin-bottom: 1rem;
   }
   .currency-stats .stat-card {
-    padding: 0.875rem;
+    padding: 1rem;
     min-height: 8.5rem;
   }
   .currency-stats .stat-label {
@@ -5336,7 +5336,7 @@ dialog {
   .fx-ribbon {
     padding: 0.75rem;
     font-size: 0.8125rem;
-    gap: 0.375rem 0.75rem;
+    gap: 0.5rem 0.75rem;
     margin-bottom: 1rem;
   }
   .fx-ribbon small {
@@ -5481,7 +5481,7 @@ dialog {
   .tabs button,
   .table-tools .tabs button {
     font-size: 0.8125rem !important;
-    padding: 0.5rem 0.625rem;
+    padding: 0.5rem 0.5rem;
   }
   .compact,
   .search.compact {
@@ -5523,7 +5523,7 @@ dialog {
   td,
   .portfolio-table th,
   .portfolio-table td {
-    padding: 0.875rem;
+    padding: 1rem;
     font-size: 0.875rem;
   }
   .panel-foot {
@@ -5537,7 +5537,7 @@ dialog {
     display: block;
   }
   .table-scroll-hint {
-    padding: 0.625rem 1rem;
+    padding: 0.5rem 1rem;
     font-size: 0.75rem;
   }
   .section-title h2 {
@@ -5595,7 +5595,7 @@ dialog {
     padding: 1rem;
   }
   .target-card {
-    padding: 0.875rem;
+    padding: 1rem;
   }
   .target-card > span {
     font-size: 0.8125rem;
@@ -5920,12 +5920,12 @@ textarea::placeholder {
     flex: 1;
   }
   .page-heading {
-    gap: 0.875rem;
+    gap: 1rem;
   }
 }
 @media (max-width: 380px) {
   .heading-actions .button {
-    padding: 0.625rem 0.75rem;
+    padding: 0.5rem 0.75rem;
     font-size: 0.8125rem;
   }
 }
@@ -5952,7 +5952,7 @@ textarea::placeholder {
 .performance-filters .chip,
 .news-filters .chip {
   min-height: 2.75rem;
-  padding: 0.625rem 0.875rem;
+  padding: 0.5rem 1rem;
   border: 1px solid var(--line-strong);
   border-radius: 0.5rem;
   font-size: 0.8125rem;
@@ -5971,7 +5971,7 @@ textarea::placeholder {
 .performance-filters > p {
   font-size: 0.8125rem;
   line-height: 1.6;
-  margin-top: 0.625rem;
+  margin-top: 0.5rem;
 }
 .news-filter-panel {
   margin-bottom: 1.25rem;
@@ -5980,7 +5980,7 @@ textarea::placeholder {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-  margin-bottom: 0.875rem;
+  margin-bottom: 1rem;
 }
 .news-asset-select {
   display: flex;
@@ -5995,7 +5995,7 @@ textarea::placeholder {
   width: 100%;
   border: 1px solid var(--line-strong);
   border-radius: 0.5rem;
-  padding: 0.625rem 0.75rem;
+  padding: 0.5rem 0.75rem;
   background: var(--surface);
   color: var(--ink);
   font-weight: 400;
@@ -6003,7 +6003,7 @@ textarea::placeholder {
 }
 .news-selection {
   font-size: 0.8125rem;
-  margin-top: 0.625rem;
+  margin-top: 0.5rem;
 }
 @media (max-width: 760px) {
   .performance-filters {
@@ -6037,7 +6037,7 @@ textarea::placeholder {
 .cost-return-summary > div {
   display: flex;
   flex-direction: column;
-  gap: 0.375rem;
+  gap: 0.5rem;
   min-width: 0;
 }
 .cost-return-summary span {
@@ -6059,7 +6059,7 @@ textarea::placeholder {
 .cost-chart-note p {
   font-size: 0.8125rem;
   line-height: 1.6;
-  margin-top: 0.375rem;
+  margin-top: 0.5rem;
 }
 .performance-modes {
   row-gap: 0;
@@ -6070,8 +6070,8 @@ textarea::placeholder {
 @media (max-width: 760px) {
   .cost-return-summary {
     margin: 0.5rem 1rem 1rem;
-    padding: 0.875rem;
-    gap: 0.875rem;
+    padding: 1rem;
+    gap: 1rem;
   }
   .cost-return-summary b {
     font-size: 0.9375rem;
@@ -6090,10 +6090,10 @@ textarea::placeholder {
 .purchase-switch {
   display: flex;
   align-items: center;
-  gap: 0.625rem;
+  gap: 0.5rem;
   align-self: flex-start;
   min-height: 2.75rem;
-  padding: 0.5rem 0.625rem;
+  padding: 0.5rem 0.5rem;
   border: 1px solid var(--line-strong);
   border-radius: 0.5rem;
   font-size: 0.8125rem;
@@ -6198,7 +6198,7 @@ table,
 }
 
 /* Bloco principal: patrimônio e resultado lado a lado, antes de tudo (D-1). */
-.currency-stats {
+.stats-grid.currency-stats {
   grid-template-columns: 1.9fr 1fr 1fr 1fr;
 }
 .wealth-figures {
@@ -6223,7 +6223,7 @@ table,
   font-weight: 500;
 }
 @media (max-width: 1200px) {
-  .currency-stats {
+  .stats-grid.currency-stats {
     grid-template-columns: repeat(3, 1fr);
   }
   .currency-stats .stat-card.wealth {
@@ -6231,7 +6231,7 @@ table,
   }
 }
 @media (max-width: 760px) {
-  .currency-stats {
+  .stats-grid.currency-stats {
     grid-template-columns: repeat(2, 1fr);
   }
   .currency-stats .stat-card:last-child {
@@ -6330,4 +6330,101 @@ table,
   color: var(--warn-text);
   font-size: 0.75rem;
   margin-left: 0.25rem;
+}
+
+/* Um único controle para escolhas exclusivas (D-10). */
+.performance-modes,
+.period-tabs,
+.tabs,
+.segmented,
+.performance-filters > div {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  background: var(--surface-3);
+  border: 0;
+  border-radius: 0.75rem;
+}
+.performance-modes button,
+.period-tabs button,
+.tabs button,
+.segmented button,
+.performance-filters .chip {
+  min-height: 2.75rem;
+  padding: 0.25rem 0.75rem;
+  background: transparent;
+  border: 0;
+  border-radius: 0.5rem;
+  color: var(--muted);
+  font-size: 0.875rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.performance-modes button.active,
+.period-tabs button.active,
+.tabs button.active,
+.segmented button.active,
+.performance-filters .chip.active {
+  background: var(--surface);
+  border: 0;
+  box-shadow: 0 1px 3px var(--shadow);
+  color: var(--ink);
+  font-weight: 650;
+}
+@media (max-width: 760px) {
+  .performance-modes,
+  .performance-filters > div {
+    display: flex;
+    flex-wrap: nowrap;
+    max-width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .performance-modes button,
+  .performance-filters .chip {
+    flex: 0 0 auto;
+  }
+  .segmented {
+    display: flex;
+  }
+  .segmented button {
+    flex: 1 1 auto;
+    white-space: normal;
+  }
+  .performance-filters > span,
+  .performance-base {
+    display: none;
+  }
+}
+
+.panel-title .button {
+  min-height: 2.75rem;
+}
+@media (min-width: 981px) {
+  .table-scroll-hint {
+    display: none;
+  }
+}
+@media (max-width: 760px) {
+  .asset-segment table.asset-table,
+  .asset-segment table.asset-table tbody {
+    width: 100%;
+    min-width: 0;
+  }
+  /* Filtros em uma linha só, roláveis. */
+  .tabs,
+  .table-tools .tabs {
+    flex-wrap: nowrap;
+    max-width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .tabs button {
+    flex: 0 0 auto;
+  }
+  .search.compact input {
+    width: 100%;
+    min-width: 0;
+  }
 }
