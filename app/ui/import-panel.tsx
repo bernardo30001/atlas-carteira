@@ -31,6 +31,7 @@ type Line = {
   amount?: number | null;
   institution: string;
   reason?: string;
+  currency?: string;
 };
 const TRADE_LABEL = { buy: "Compra", sell: "Venda" };
 function lineOf(row: ImportPreview["duplicates"][number]): Line {
@@ -43,7 +44,12 @@ function lineOf(row: ImportPreview["duplicates"][number]): Line {
       label: item.label,
       amount: item.amount,
       institution: item.institution,
-      reason: row.reason,
+      reason:
+        row.reason ??
+        (item.withheldTax === undefined || item.gross === undefined
+          ? undefined
+          : `Líquido. Bruto de ${money(item.gross, row.currency)}, com ${money(item.withheldTax, row.currency)} retidos na fonte.`),
+      currency: row.currency,
     };
   if ("delta" in item)
     return {
@@ -54,6 +60,7 @@ function lineOf(row: ImportPreview["duplicates"][number]): Line {
       quantity: item.delta,
       institution: item.institution,
       reason: row.reason,
+      currency: row.currency,
     };
   return {
     key: row.id,
@@ -65,6 +72,7 @@ function lineOf(row: ImportPreview["duplicates"][number]): Line {
     amount: item.total,
     institution: item.institution,
     reason: row.reason,
+    currency: row.currency,
   };
 }
 
@@ -131,12 +139,12 @@ function Lines({
                 <td>
                   {line.price === null || line.price === undefined
                     ? "—"
-                    : money(line.price)}
+                    : money(line.price, line.currency)}
                 </td>
                 <td>
                   {line.amount === null || line.amount === undefined
                     ? "—"
-                    : money(line.amount)}
+                    : money(line.amount, line.currency)}
                 </td>
                 <td>{line.institution || "—"}</td>
               </tr>
@@ -261,12 +269,12 @@ export function ImportPanel({
 
   const total = groups ? groups.add.length + chosen.size : 0,
     updates = groups ? groups.matched.length : 0;
-  const keepAsHistory = (tickers: string[]) =>
+  const keepAsHistory = (assets: ImportPreview["unknown"]) =>
     save({
       ...portfolio,
       customAssets: [
         ...(portfolio.customAssets ?? []),
-        ...tickers.map(archivedAsset),
+        ...assets.map((a) => archivedAsset(a.ticker, a.currency)),
       ],
     });
 
@@ -438,11 +446,7 @@ export function ImportPanel({
                   className="button outline"
                   disabled={busy}
                   onClick={() =>
-                    keepAsHistory(
-                      preview.unknown
-                        .filter((a) => a.closed)
-                        .map((a) => a.ticker),
-                    )
+                    keepAsHistory(preview.unknown.filter((a) => a.closed))
                   }
                 >
                   Guardar os {preview.unknown.filter((a) => a.closed).length}{" "}
@@ -462,7 +466,7 @@ export function ImportPanel({
                     <button
                       className="button outline"
                       disabled={busy}
-                      onClick={() => keepAsHistory([asset.ticker])}
+                      onClick={() => keepAsHistory([asset])}
                     >
                       Só histórico
                     </button>

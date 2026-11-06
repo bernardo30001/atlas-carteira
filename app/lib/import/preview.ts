@@ -21,11 +21,13 @@ import type {
   ParsedTrade,
 } from "./b3.ts";
 
+type Currency = "BRL" | "USD";
 export type Row<T> = {
   id: string;
   key: string;
   source: string;
   file: string;
+  currency: Currency;
   item: T;
   /** Motivo de estar fora do que será adicionado. */
   reason?: string;
@@ -44,9 +46,15 @@ export type ImportPreview = {
   /** Pagamentos já contidos em um provento "Acumulado anterior". */
   included: Row<ParsedIncome>[];
   /** Ativos fora da lista, com o que está aguardando o cadastro. */
-  unknown: { ticker: string; rows: number; closed: boolean; net: number }[];
-  ignored: (ParsedNote & { file: string })[];
-  decisions: (ParsedNote & { file: string })[];
+  unknown: {
+    ticker: string;
+    rows: number;
+    closed: boolean;
+    net: number;
+    currency: Currency;
+  }[];
+  ignored: (ParsedNote & { file: string; currency: Currency })[];
+  decisions: (ParsedNote & { file: string; currency: Currency })[];
   /** Posições iniciais que o histórico completo agora explica. */
   reconcile: string[];
   impact: { ticker: string; before: number; after: number }[];
@@ -104,6 +112,7 @@ async function withOccurrence<T>(
         key,
         source: sourceOf(file, institutionOf(item), importDate),
         file: file.fileName,
+        currency: file.currency ?? "BRL",
         item,
       };
     }),
@@ -301,14 +310,22 @@ export async function buildPreview(
     included: [],
     unknown: [],
     ignored: files.flatMap((f) =>
-      f.ignored.map((n) => ({ ...n, file: f.fileName })),
+      f.ignored.map((n) => ({
+        ...n,
+        file: f.fileName,
+        currency: f.currency ?? "BRL",
+      })),
     ),
     decisions: files.flatMap((f) =>
-      f.decisions.map((n) => ({ ...n, file: f.fileName })),
+      f.decisions.map((n) => ({
+        ...n,
+        file: f.fileName,
+        currency: f.currency ?? "BRL",
+      })),
     ),
     reconcile: [],
     impact: [],
-    warnings: [],
+    warnings: files.flatMap((f) => f.warnings ?? []),
   };
 
   // Duplicatas exatas: mesmo arquivo de novo, ou o mesmo período em dois arquivos.
@@ -428,11 +445,14 @@ export async function buildPreview(
   });
 
   // Ativos que ainda precisam de cadastro ficam aguardando, sem quebrar o resto.
-  const counts = new Map<string, { rows: number; net: number }>();
+  const counts = new Map<
+    string,
+    { rows: number; net: number; currency: Currency }
+  >();
   const hold = <T extends { ticker: string }>(rows: Row<T>[]) =>
-    rows.filter(({ item }) => {
+    rows.filter(({ item, currency }) => {
       if (known.has(item.ticker)) return true;
-      const c = counts.get(item.ticker) ?? { rows: 0, net: 0 };
+      const c = counts.get(item.ticker) ?? { rows: 0, net: 0, currency };
       c.rows++;
       const trade = item as unknown as Partial<ParsedTrade>;
       if (trade.quantity && trade.kind)
@@ -450,6 +470,7 @@ export async function buildPreview(
       // Saldo zero ou negativo: vendido, às vezes comprado antes do período do arquivo.
       closed: c.net < 1e-8,
       net: c.net,
+      currency: c.currency,
     }))
     .sort((a, b) => a.ticker.localeCompare(b.ticker));
 
@@ -465,7 +486,7 @@ export async function buildPreview(
     ...refreshed,
     tradeHistory: [
       ...(refreshed.tradeHistory ?? []),
-      ...rows.map((row) => eventFrom(row, "BRL")),
+      ...rows.map((row) => eventFrom(row, row.currency)),
     ],
     corporateActions: [
       ...(portfolio.corporateActions ?? []),
@@ -510,6 +531,7 @@ export async function buildPreview(
         amount: row.item.total,
         institution: row.item.institution,
         file: row.file,
+        currency: row.currency,
         reason:
           "Venda sem compra anterior no arquivo. Não afeta a posição atual.",
       });
@@ -527,6 +549,7 @@ export async function buildPreview(
         amount: row.item.total,
         institution: row.item.institution,
         file: row.file,
+        currency: row.currency,
         reason:
           "O histórico deste ativo está incompleto: uma venda supera o saldo. Informe a posição inicial ou envie um período maior.",
       });
@@ -614,19 +637,22 @@ function withMatched(
 }
 
 /** Ativo guardado só para o histórico: sem cotação, fora do patrimônio e dos aportes. */
-export const archivedAsset = (ticker: string): Asset => ({
+export const archivedAsset = (
+  ticker: string,
+  currency: Currency = "BRL",
+): Asset => ({
   ticker,
-  symbol: `${ticker}.SA`,
+  symbol: currency === "USD" ? ticker : `${ticker}.SA`,
   name: ticker,
-  group: "br",
-  currency: "BRL",
+  group: currency === "USD" ? "etf" : "br",
+  currency,
   sector: "Encerrado",
   color: "#626b99",
   query: ticker,
   archived: true,
 });
 
-function eventFrom(row: Row<ParsedTrade>, currency: "BRL" | "USD"): TradeEvent {
+function eventFrom(row: Row<ParsedTrade>, currency: Currency): TradeEvent {
   const t = row.item;
   return {
     id: row.id,
@@ -637,7 +663,8 @@ function eventFrom(row: Row<ParsedTrade>, currency: "BRL" | "USD"): TradeEvent {
     total: t.total,
     currency,
     fx: currency === "BRL" ? 1 : null,
-    fees: 0,
+    fees: t.fees ?? 0,
+    ...(t.feesCurrency ? { feesCurrency: t.feesCurrency } : {}),
     date: t.date,
     source: row.source,
     institution: t.institution,
@@ -657,7 +684,7 @@ function actionFrom(row: Row<ParsedAction>): CorporateAction {
     importKey: row.key,
   };
 }
-function incomeFrom(row: Row<ParsedIncome>, currency: "BRL" | "USD"): Income {
+function incomeFrom(row: Row<ParsedIncome>, currency: Currency): Income {
   const i = row.item;
   return {
     id: row.id,
@@ -672,6 +699,7 @@ function incomeFrom(row: Row<ParsedIncome>, currency: "BRL" | "USD"): Income {
     institution: i.institution,
     importKey: row.key,
     type: i.type,
+    ...(i.withheldTax ? { withheldTax: i.withheldTax } : {}),
   };
 }
 
@@ -703,8 +731,9 @@ export function applyPreview(
   probableIds: ReadonlySet<string> = new Set(),
 ): Portfolio {
   const portfolio = withMatched(migratePortfolio(current), preview.matched);
-  const currency = (ticker: string) =>
-    allAssets(portfolio).find((a) => a.ticker === ticker)?.currency ?? "BRL";
+  const currency = <T extends { ticker: string }>(row: Row<T>) =>
+    allAssets(portfolio).find((a) => a.ticker === row.item.ticker)?.currency ??
+    row.currency;
   const extraTrades = preview.probable.filter(
       (row) => probableIds.has(row.id) && "kind" in row.item,
     ) as Row<ParsedTrade>[],
@@ -720,13 +749,13 @@ export function applyPreview(
     tradeHistory: [
       ...(portfolio.tradeHistory ?? []),
       ...[...preview.trades, ...extraTrades].map((row) =>
-        eventFrom(row, currency(row.item.ticker)),
+        eventFrom(row, currency(row)),
       ),
     ],
     incomes: [
       ...(portfolio.incomes ?? []),
       ...[...preview.incomes, ...extraIncomes].map((row) =>
-        incomeFrom(row, currency(row.item.ticker)),
+        incomeFrom(row, currency(row)),
       ),
     ],
     corporateActions: [

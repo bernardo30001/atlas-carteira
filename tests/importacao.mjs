@@ -573,8 +573,8 @@ test("ativo fora da lista aguarda cadastro sem travar os demais", async () => {
     ["WEGE3"],
   );
   assert.deepEqual(preview.unknown, [
-    { ticker: "HGLG11", rows: 1, closed: false, net: 10 },
-    { ticker: "XPTO3", rows: 2, closed: true, net: 0 },
+    { ticker: "HGLG11", rows: 1, closed: false, net: 10, currency: "BRL" },
+    { ticker: "XPTO3", rows: 2, closed: true, net: 0, currency: "BRL" },
   ]);
 });
 
@@ -976,7 +976,7 @@ test("ativo encerrado fica só no histórico, com venda maior que as compras", a
   );
   const first = await buildPreview(v4({}), [parse(rows)], DAY);
   assert.deepEqual(first.unknown, [
-    { ticker: "ANTG3", rows: 2, closed: true, net: -4 },
+    { ticker: "ANTG3", rows: 2, closed: true, net: -4, currency: "BRL" },
   ]);
   const p = v4({ customAssets: [archivedAsset("ANTG3")] });
   const preview = await buildPreview(p, [parse(rows)], DAY);
