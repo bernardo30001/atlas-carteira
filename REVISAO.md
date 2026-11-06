@@ -1,6 +1,6 @@
 # Revisão do Atlas: cálculos, design e importação
 
-**Estado em 06/11/2026:** cálculos e design corrigidos. Importação de Negociação da B3 validada com um arquivo real, localmente. **Aguardando sua escolha da Camada 2 (seção 13)** e o relatório de Movimentação. Nada foi publicado: tudo está nesta branch local.
+**Estado em 06/11/2026:** cálculos e design corrigidos. Importação de Negociação da B3 validada com um arquivo real, localmente. **Decidido: o registro segue por relatórios da B3 e prints da Nomad, sem sincronização automática (seção 13).** Faltam o relatório de Movimentação e os prints. Nada foi publicado: tudo está nesta branch local.
 
 As seções 1 a 7 guardam o diagnóstico aprovado. As referências `arquivo:linha` delas valem no commit de formatação `99edf15`. O que mudou desde então está na seção 10.
 
@@ -341,8 +341,8 @@ Tela "Importar movimentações", com Excel e CSV lidos no navegador, prévia, co
 1. **Validar a Movimentação com arquivo real.** Proventos e eventos societários ainda não foram testados com um arquivo seu. Em especial: se o JCP vem líquido, como Desdobro e Grupamento aparecem, e se o Yahoo ajusta o histórico por bonificação.
 2. **Relatório de Posição da B3 (seção 3.5).** É a conferência definitiva de quantidades.
 3. **Migração sobre a carteira publicada.** Simulada na cópia local, sem nenhuma quantidade alterada e com a validação aprovada. A carteira publicada só pode ser conferida depois de publicar. Se alguma quantidade mudar, um aviso lista cada ativo com o valor antes e depois.
-4. **Nota de corretagem e Nomad (etapas 5 e 6).** Não iniciadas, conforme o checkpoint. Dependem de arquivos reais.
-5. **Camada 2 (etapa 8).** Pesquisa concluída na seção 13. Nada implementado: aguarda sua escolha.
+4. **Nota de corretagem e Nomad (etapas 5 e 6).** Não iniciadas. A Nomad será registrada a partir de prints, e o formato de importação será definido depois de vê-los.
+5. **Camada 2 (etapa 8).** Não será implementada por enquanto. A pesquisa fica na seção 13 para consulta.
 6. **Eventos que dependem de você na prévia.** Atualização, incorporação, subscrição e leilão de fração são mostrados, mas não aplicados. Falta interface para registrar troca de ticker à mão e para excluir evento societário importado depois de sair da tela. Vou definir isso com o arquivo real.
 7. **Altura no celular.** O conteúdo principal subiu, mas a página total não encurtou: visão geral de 6035 para 6189 px e carteira de 6853 para 7553 px, porque os cartões mostram mais dados à vista. Sugiro recolher os detalhes de cada cartão.
 8. **Notícias.** Ativos cadastrados ainda não aparecem nos filtros de notícias.
@@ -364,7 +364,9 @@ Executada ao fim desta etapa, na ordem pedida.
 
 ## 13. Camada 2: sincronização automática
 
-**Pesquisa concluída em 06/11/2026. Nada foi implementado nem contratado.** Preços e cobertura mudam: confirme antes de contratar.
+**Decisão:** o registro segue pelos relatórios da B3 e por prints da Nomad. O teste do Meu Pluggy não foi feito, e a sincronização não será implementada por enquanto.
+
+Pesquisa concluída em 06/11/2026, mantida para consulta. Nada foi implementado nem contratado. Preços e cobertura mudam: confirme antes de contratar.
 
 ### Para B3, BTG e Nubank
 
