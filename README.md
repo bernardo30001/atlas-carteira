@@ -12,7 +12,8 @@ Painel privado de investimentos em português, com posições e estratégia vinc
 - Extratos de referência preservados com os valores recebidos e observações de reconciliação.
 - S&P 500, Ibovespa, USD/BRL como referências.
 - Tema claro e escuro, que segue o sistema, com a fonte do sistema e sem chamadas ao Google Fonts.
-- Importar movimentações: relatórios de Negociação e Movimentação da B3, em Excel ou CSV, lidos no navegador. O arquivo não é enviado nem guardado, e nada é gravado antes da sua confirmação. Reimportar não duplica.
+- Importar movimentações: relatórios de Negociação e Movimentação da B3, em Excel ou CSV, e extratos mensais da Nomad, em PDF, lidos no navegador. O arquivo não é enviado nem guardado, e nada é gravado antes da sua confirmação. Reimportar não duplica.
+- Dividendos da Nomad ficam pelo valor líquido, com o imposto retido à parte. Os extratos não trazem o câmbio das remessas, que nunca é presumido.
 - Ativos fora da lista padrão, como FIIs, são cadastrados pela interface. FIIs entram na meta Brasil, com cartão próprio.
 - Desdobramentos, grupamentos, bonificações e trocas de ticker ajustam quantidade e preço médio.
 - Filtro de rendimento: tudo agregado, ações/ETFs americanos, ações na B3 e Bitcoin direto. O modo padrão Desde o preço médio inclui o resultado acumulado anterior ao cadastro: (saldo − custo + proventos) / custo, ponderado pelo capital investido. Custos exatos do extrato e taxas são preservados.

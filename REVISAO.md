@@ -336,12 +336,38 @@ Capturas em `outputs/revisao/antes`, `outputs/revisao/depois` e `outputs/revisao
 
 Tela "Importar movimentações", com Excel e CSV lidos no navegador, prévia, confirmação, desfazer, cadastro de ativo na própria prévia, modelo da seção 5.5 e migração. Testada em `tests/importacao.mjs`, `tests/ativos.mjs` e `tests/ledger.mjs`, e no navegador com planilhas fictícias e gravação interceptada: nenhuma gravação antes de confirmar, e reimportar deu 0 a adicionar.
 
+### Importação da Nomad (etapa 6)
+
+A tela aceita o extrato mensal em PDF, lido no navegador com a biblioteca `unpdf` (versão fixa). Ela só é carregada quando um PDF é escolhido e fica fora do pacote do servidor. O arquivo não é enviado nem guardado.
+
+| O que vem do extrato | Como entra |
+|---|---|
+| Compras e vendas | Em dólar, com a data do negócio e as taxas em `feesCurrency: "USD"`. Sem câmbio no arquivo, `fx` fica nulo e nunca é presumido |
+| Dividendos | Pelo valor líquido, com `withheldTax` e `source` |
+| Remessas e movimentações internas de saldo | Em Ignorados, com o motivo |
+| O que o leitor não entende | Em "Precisam de você". Nunca é descartado em silêncio |
+
+Pontos que os extratos reais revelaram:
+
+- **Duas versões do layout.** Há extratos em português e em inglês, com números em formatos diferentes. Os mais antigos só trazem o nome da corretora no logotipo, então o arquivo é reconhecido pela estrutura.
+- **Dividendo líquido ou bruto.** A mesma coluna traz o líquido em alguns meses e o bruto em outros. O leitor compara com taxa por cota × quantidade para saber qual é, calcula a retenção em centavos e confere a soma com o resumo do mês.
+- **Acumulado informado pelo bruto.** Os proventos acumulados da carteira estavam pelo bruto, embora o campo seja o líquido recebido. Quando os pagamentos fecham com o acumulado, a prévia mostra a substituição, com o líquido e o retido. Se não fecharem, o acumulado continua e a prévia avisa.
+- **Aviso falso de movimentações ausentes.** Um extrato em dólar apontava movimentações da B3 como ausentes. O aviso agora considera só a moeda de cada arquivo.
+
+Testada em `tests/pdf.mjs`, `tests/nomad.mjs` e `tests/nomad-previa.mjs`, com fixtures fictícias, incluindo um PDF gerado no teste. No navegador, com PDFs fictícios e gravação interceptada, em desktop e celular: nenhuma gravação antes de confirmar, um PDF de outro tipo recusado com mensagem clara, e reimportar deu 0 a adicionar. Capturas em `outputs/revisao/nomad`, que o Git ignora.
+
+Validada com os extratos reais, só em memória: todos reconhecidos, sem decisão pendente nem aviso; as operações batem com um segundo leitor, escrito à parte; o caixa do período fecha até o centavo; nenhum ativo muda de quantidade ou custo; reimportar não adiciona nada. **A carteira não foi alterada:** a importação real depende da sua confirmação na tela.
+
 ## 11. O que ficou pendente
 
 1. **Validar a Movimentação com arquivo real.** Proventos e eventos societários ainda não foram testados com um arquivo seu. Em especial: se o JCP vem líquido, como Desdobro e Grupamento aparecem, e se o Yahoo ajusta o histórico por bonificação.
 2. **Relatório de Posição da B3 (seção 3.5).** É a conferência definitiva de quantidades.
 3. **Migração sobre a carteira publicada.** Simulada na cópia local, sem nenhuma quantidade alterada e com a validação aprovada. A carteira publicada só pode ser conferida depois de publicar. Se alguma quantidade mudar, um aviso lista cada ativo com o valor antes e depois.
-4. **Nota de corretagem e Nomad (etapas 5 e 6).** Não iniciadas. A Nomad será registrada a partir de prints, e o formato de importação será definido depois de vê-los.
+4. **Nota de corretagem (etapa 5).** Não iniciada. Preciso de notas reais para conhecer o formato.
+   - **Importação real da Nomad.** O leitor está pronto e validado em memória. Falta você importar os extratos na tela e confirmar a prévia.
+   - **Câmbio das remessas da Nomad.** Nem os extratos nem os prints trazem a cotação ou o valor em reais. O custo em reais desses ativos segue como estimativa.
+   - **Compras do mês corrente na Nomad.** O extrato só sai no mês seguinte. Até lá, uma compra recente precisa ser registrada à mão, ou espera o extrato.
+   - **PDF protegido por senha.** A mensagem existe, mas não foi testada com um arquivo assim.
 5. **Camada 2 (etapa 8).** Não será implementada por enquanto. A pesquisa fica na seção 13 para consulta.
 6. **Eventos que dependem de você na prévia.** Atualização, incorporação, subscrição e leilão de fração são mostrados, mas não aplicados. Falta interface para registrar troca de ticker à mão e para excluir evento societário importado depois de sair da tela. Vou definir isso com o arquivo real.
 7. **Altura no celular.** O conteúdo principal subiu, mas a página total não encurtou: visão geral de 6035 para 6189 px e carteira de 6853 para 7553 px, porque os cartões mostram mais dados à vista. Sugiro recolher os detalhes de cada cartão.
@@ -358,13 +384,13 @@ Executada ao fim desta etapa, na ordem pedida.
 |---|---|
 | `npx tsc --noEmit` | Passa |
 | `npm run lint` | 32 erros e 6 avisos, contra 33 e 17 antes. Nenhum nos arquivos novos |
-| `npm test` | 12 de 12 arquivos, incluindo as 21 verificações de divergência |
+| `npm test` | 15 de 15 arquivos, incluindo as 21 verificações de divergência |
 | `npm run test:api` | 2 de 2, em banco temporário. O banco local não mudou, conferido por soma de verificação |
 | `npm run build` | Passa |
 
 ## 13. Camada 2: sincronização automática
 
-**Decisão:** o registro segue pelos relatórios da B3 e por prints da Nomad. O teste do Meu Pluggy não foi feito, e a sincronização não será implementada por enquanto.
+**Decisão:** o registro segue pelos relatórios da B3 e pelos extratos mensais da Nomad, em PDF. O teste do Meu Pluggy não foi feito, e a sincronização não será implementada por enquanto.
 
 Pesquisa concluída em 06/11/2026, mantida para consulta. Nada foi implementado nem contratado. Preços e cobertura mudam: confirme antes de contratar.
 
@@ -384,7 +410,7 @@ Pesquisa concluída em 06/11/2026, mantida para consulta. Nada foi implementado 
 
 | Opção | Como funciona | Avaliação |
 |---|---|---|
-| Relatório mensal, com importação | O extrato da conta de investimento fica no app, em Perfil > Documentos > Investimentos, até o quinto dia útil do mês seguinte | **Recomendada.** Semiautomática, confiável e sem credenciais. Falta um arquivo real para escrever o parser |
+| Relatório mensal, com importação | O extrato da conta de investimento fica no app, em Perfil > Documentos > Investimentos, até o quinto dia útil do mês seguinte | **Implementada.** Semiautomática, confiável e sem credenciais. Ver a seção 10 |
 | Leitura de e-mail | A exportação da conta internacional chega por e-mail. Se houver confirmações ou extratos da conta de investimento por e-mail, uma rotina poderia buscá-los | A verificar: depende do que a Nomad envia de fato |
 | Perguntar à Nomad | Pedir API ou exportação estruturada | Sem custo. Vale tentar |
 | Usar a API interna do app | Reproduzir as chamadas do aplicativo com seu login | **Não recomendo.** Exige guardar credenciais, pode violar os termos de uso e quebra sem aviso |
