@@ -26,7 +26,7 @@ assert.ok(evaluatePortfolio(p,m,undefined,1000,now,'stocks').rows.every(r=>r.tic
 const exact={...EMPTY,transactions:[tx('WEGE3',2,9.99,{costNative:20,fees:1})]};
 let market={...m,quotes:{WEGE3:quote('WEGE3',12)}};let row=positions(exact,market).find(a=>a.ticker==='WEGE3');near(row.average,10.5);near(row.primaryCost,21);near(row.result,3);
 const foreign={...EMPTY,transactions:[tx('SPHQ',2,9.99,{costNative:20,currency:'USD',fx:null,fees:1})]};
-market={...m,quotes:{SPHQ:quote('SPHQ',12,'USD'),USD:quote('USD',5)}};row=positions(foreign,market).find(a=>a.ticker==='SPHQ');assert.equal(row.average,null);
+market={...m,quotes:{SPHQ:quote('SPHQ',12,'USD'),USD:quote('USD',5)}};row=positions(foreign,market).find(a=>a.ticker==='SPHQ');near(row.average,10.1);assert.equal(row.costEstimated,true); // Taxa em reais sem câmbio de compra: usa o câmbio atual e fica marcada como estimativa, sem apagar o custo em dólar (I6 da revisão).
 row=positions({...foreign,transactions:[{...foreign.transactions[0],fx:5}]},market).find(a=>a.ticker==='SPHQ');near(row.average,10.1);
 for(const price of [0,-1,NaN,Infinity]){const invalid={...m,quotes:{WEGE3:quote('WEGE3',price)}};assert.equal(positions(exact,invalid).find(r=>r.ticker==='WEGE3').value,null);assert.equal(totals(exact,invalid).result,null);assert.deepEqual(allocationPlan(exact,invalid,1000),[]);}
 const old=capturePerformance({...EMPTY,transactions:[kept]},m,undefined,1,'2026-10-29T15:00:00Z');
@@ -41,8 +41,8 @@ for(const {saved,system,blocked,expected} of [{saved:'dark',system:false,expecte
  const root={dataset:{},style:{}};vm.runInNewContext(THEME_BOOT_SCRIPT,{localStorage:{getItem(){if(blocked)throw Error('blocked');return saved;}},matchMedia:()=>({matches:system}),document:{documentElement:root}});assert.equal(root.dataset.theme,expected);assert.equal(root.style.colorScheme,expected);
 }
 const css=await fs.readFile('app/globals.css','utf8');
-const variables=selector=>Object.fromEntries([...css.match(selector)[1].matchAll(/(--[\w-]+):([^;}]*)/g)].map(m=>[m[1],m[2]]));
-const light=variables(/:root\{(--surface:[^}]+)\}/),dark={...light,...variables(/html\[data-theme=dark\]\{([^}]+)\}/)};
+const variables=selector=>{const block=css.match(selector);return Object.fromEntries([...block[1].matchAll(/(--[\w-]+):\s*([^;}]*)/g)].map(m=>[m[1],m[2].trim()]));};
+const light=variables(/^:root\s*\{([^}]+)\}/m),dark={...light,...variables(/^html\[data-theme="?dark"?\]\s*\{([^}]+)\}/m)};
 const luminance=hex=>{const rgb=hex.slice(1).match(/.{2}/g).map(v=>parseInt(v,16)/255).map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4);return rgb[0]*.2126+rgb[1]*.7152+rgb[2]*.0722;};
 const contrast=(a,b)=>{const l=[luminance(a),luminance(b)].sort((x,y)=>y-x);return (l[0]+.05)/(l[1]+.05);};
 const color=s=>s.length===4?'#'+[...s.slice(1)].map(c=>c+c).join(''):s;

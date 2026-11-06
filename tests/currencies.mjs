@@ -1,20 +1,141 @@
-import assert from 'node:assert/strict';
-import {ASSETS,EMPTY,positions,totals} from '../app/lib/model.ts';
-import {portfolioSchema} from '../app/lib/validation.ts';
-const quote=(price,currency)=>({price,currency,previous:price,change:0,time:Date.now()/1000,history:[],volatility:null,momentum:null,drawdown:null,source:'test',delay:0});
-const market={quotes:{SPHQ:quote(110,'USD'),USD:quote(5,'BRL'),BTC:quote(60000,'USD'),AUPO11:quote(102,'BRL'),ABTC11:quote(130,'BRL')},errors:[],fetchedAt:new Date().toISOString()};
-const tx=(ticker,quantity,price,currency,fx,costNative)=>({id:crypto.randomUUID(),ticker,quantity,price,currency,fx,costNative,fees:0,date:'2026-10-01',note:'',kind:'opening'});
-const income={id:crypto.randomUUID(),ticker:'SPHQ',amount:5,currency:'USD',fx:null,date:'2026-10-01',kind:'opening',note:''};
-const p={...EMPTY,transactions:[tx('SPHQ',2,99.99,'USD',null,200)],incomes:[income]};
-let a=positions(p,market).find(a=>a.ticker==='SPHQ');assert.equal(a.primaryCost,200);assert.equal(a.primaryValue,220);assert.equal(a.result,25);assert.equal(a.value,1100);assert.equal(a.cost,null);
-let t=totals(p,market);assert.equal(t.value,1100);assert.equal(t.international.income,5);assert.equal(t.international.result,25);assert.equal(t.cost,null); // no made-up historical FX; dividends not added to holdings
-let fxChanged={...market,quotes:{...market.quotes,USD:quote(6,'BRL')}};a=positions(p,fxChanged).find(a=>a.ticker==='SPHQ');assert.equal(a.primaryCost,200);assert.equal(a.primaryValue,220);assert.equal(a.result,25);assert.equal(a.value,1320);
-let noFx={...market,quotes:{...market.quotes,USD:undefined}};a=positions(p,noFx).find(a=>a.ticker==='SPHQ');assert.equal(a.primaryValue,220);assert.equal(a.result,25);assert.equal(a.value,null);assert.equal(totals(p,noFx).international.value,220);
-const cryptoPortfolio={...EMPTY,transactions:[tx('BTC',0.02,200000,'BRL',1,4000),tx('ABTC11',2,120,'BRL',1,240),tx('AUPO11',10,100,'BRL',1,1000)],fixedIncome:[{id:crypto.randomUUID(),name:'CDB',value:2000,cost:null,date:'2026-10-01',updatedAt:'2026-10-01',ratePercent:120,index:'CDI'}]};
-t=totals(cryptoPortfolio,market);a=t.rows.find(a=>a.ticker==='BTC');assert.equal(a.primaryCost,4000);assert.equal(a.primaryCurrency,'BRL');assert.equal(a.value,6000);assert.equal(a.result,2000);assert.equal(t.byGroup.rf,3020);assert.equal(t.byGroup.crypto,6260);assert.equal(t.cost,null);
-assert.equal(ASSETS.find(a=>a.ticker==='AUPO11').group,'rf');assert.equal(ASSETS.find(a=>a.ticker==='ABTC11').group,'crypto');assert.equal(ASSETS.find(a=>a.ticker==='VOO').currency,'USD');
-assert.equal(portfolioSchema.safeParse(p).success,true);
-assert.equal(portfolioSchema.safeParse({...p,transactions:[...p.transactions,...p.transactions]}).success,false);
-assert.equal(portfolioSchema.safeParse({...p,transactions:[{...p.transactions[0],currency:'BRL',fx:1}]}).success,false);
-const mixed={...EMPTY,transactions:[tx('BTC',0.01,200000,'BRL',1,2000),tx('BTC',0.01,50000,'USD',5,500)]};a=positions(mixed,market).find(a=>a.ticker==='BTC');assert.equal(a.average,225000);assert.equal(a.averageCurrency,'BRL');
-console.log('Currency verification passed: USD preservation, live BRL equivalence, unknown historical FX, exact native costs, distributions, BTC costs and asset classifications.');
+import assert from "node:assert/strict";
+import { ASSETS, EMPTY, positions, totals } from "../app/lib/model.ts";
+import { portfolioSchema } from "../app/lib/validation.ts";
+const quote = (price, currency) => ({
+  price,
+  currency,
+  previous: price,
+  change: 0,
+  time: Date.now() / 1000,
+  history: [],
+  volatility: null,
+  momentum: null,
+  drawdown: null,
+  source: "test",
+  delay: 0,
+});
+const market = {
+  quotes: {
+    SPHQ: quote(110, "USD"),
+    USD: quote(5, "BRL"),
+    BTC: quote(60000, "USD"),
+    AUPO11: quote(102, "BRL"),
+    ABTC11: quote(130, "BRL"),
+  },
+  errors: [],
+  fetchedAt: new Date().toISOString(),
+};
+const tx = (ticker, quantity, price, currency, fx, costNative) => ({
+  id: crypto.randomUUID(),
+  ticker,
+  quantity,
+  price,
+  currency,
+  fx,
+  costNative,
+  fees: 0,
+  date: "2026-10-01",
+  note: "",
+  kind: "opening",
+});
+const income = {
+  id: crypto.randomUUID(),
+  ticker: "SPHQ",
+  amount: 5,
+  currency: "USD",
+  fx: null,
+  date: "2026-10-01",
+  kind: "opening",
+  note: "",
+};
+const p = {
+  ...EMPTY,
+  transactions: [tx("SPHQ", 2, 99.99, "USD", null, 200)],
+  incomes: [income],
+};
+let a = positions(p, market).find((a) => a.ticker === "SPHQ");
+assert.equal(a.primaryCost, 200);
+assert.equal(a.primaryValue, 220);
+assert.equal(a.result, 25);
+assert.equal(a.value, 1100);
+assert.equal(a.cost, null);
+let t = totals(p, market);
+assert.equal(t.value, 1100);
+assert.equal(t.international.income, 5);
+assert.equal(t.international.result, 25);
+assert.equal(t.cost, null); // no made-up historical FX; dividends not added to holdings
+let fxChanged = {
+  ...market,
+  quotes: { ...market.quotes, USD: quote(6, "BRL") },
+};
+a = positions(p, fxChanged).find((a) => a.ticker === "SPHQ");
+assert.equal(a.primaryCost, 200);
+assert.equal(a.primaryValue, 220);
+assert.equal(a.result, 25);
+assert.equal(a.value, 1320);
+let noFx = { ...market, quotes: { ...market.quotes, USD: undefined } };
+a = positions(p, noFx).find((a) => a.ticker === "SPHQ");
+assert.equal(a.primaryValue, 220);
+assert.equal(a.result, 25);
+assert.equal(a.value, null);
+assert.equal(totals(p, noFx).international.value, 220);
+const cryptoPortfolio = {
+  ...EMPTY,
+  transactions: [
+    tx("BTC", 0.02, 200000, "BRL", 1, 4000),
+    tx("ABTC11", 2, 120, "BRL", 1, 240),
+    tx("AUPO11", 10, 100, "BRL", 1, 1000),
+  ],
+  fixedIncome: [
+    {
+      id: crypto.randomUUID(),
+      name: "CDB",
+      value: 2000,
+      cost: null,
+      date: "2026-10-01",
+      updatedAt: "2026-10-01",
+      ratePercent: 120,
+      index: "CDI",
+    },
+  ],
+};
+t = totals(cryptoPortfolio, market);
+a = t.rows.find((a) => a.ticker === "BTC");
+assert.equal(a.primaryCost, 4000);
+assert.equal(a.primaryCurrency, "BRL");
+assert.equal(a.value, 6000);
+assert.equal(a.result, 2000);
+assert.equal(t.byGroup.rf, 3020);
+assert.equal(t.byGroup.crypto, 6260);
+assert.equal(t.cost, null);
+assert.equal(ASSETS.find((a) => a.ticker === "AUPO11").group, "rf");
+assert.equal(ASSETS.find((a) => a.ticker === "ABTC11").group, "crypto");
+assert.equal(ASSETS.find((a) => a.ticker === "VOO").currency, "USD");
+assert.equal(portfolioSchema.safeParse(p).success, true);
+assert.equal(
+  portfolioSchema.safeParse({
+    ...p,
+    transactions: [...p.transactions, ...p.transactions],
+  }).success,
+  false,
+);
+assert.equal(
+  portfolioSchema.safeParse({
+    ...p,
+    transactions: [{ ...p.transactions[0], currency: "BRL", fx: 1 }],
+  }).success,
+  false,
+);
+const mixed = {
+  ...EMPTY,
+  transactions: [
+    tx("BTC", 0.01, 200000, "BRL", 1, 2000),
+    tx("BTC", 0.01, 50000, "USD", 5, 500),
+  ],
+};
+a = positions(mixed, market).find((a) => a.ticker === "BTC");
+assert.equal(a.average, 225000);
+assert.equal(a.averageCurrency, "BRL");
+console.log(
+  "Currency verification passed: USD preservation, live BRL equivalence, unknown historical FX, exact native costs, distributions, BTC costs and asset classifications.",
+);

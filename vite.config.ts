@@ -59,6 +59,10 @@ export default defineConfig(async ({ command }) => {
       cloudflare({
         viteEnvironment: { name: "rsc", childEnvironments: ["ssr"] },
         inspectorPort: false,
+        // Só os testes de API definem esta variável. Publicação e dev normal não mudam.
+        ...(process.env.ATLAS_PERSIST_STATE
+          ? { persistState: { path: process.env.ATLAS_PERSIST_STATE } }
+          : {}),
         config: {
           ...localBindingConfig,
           ...(command === "serve"

@@ -1,2 +1,4 @@
-import Dashboard from './ui/dashboard';
-export default function Home() { return <Dashboard />; }
+import Dashboard from "./ui/dashboard";
+export default function Home() {
+  return <Dashboard />;
+}
