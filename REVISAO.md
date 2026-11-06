@@ -1,6 +1,6 @@
 # Revisão do Atlas: cálculos, design e importação
 
-**Estado em 06/11/2026:** cálculos e design corrigidos, importação da B3 pronta em dados fictícios. **Falta validar com arquivos reais** e seguir para nota de corretagem e Nomad. Nada foi publicado: tudo está nesta branch local.
+**Estado em 06/11/2026:** cálculos e design corrigidos. Importação de Negociação da B3 validada com um arquivo real, localmente. **Aguardando sua escolha da Camada 2 (seção 13)** e o relatório de Movimentação. Nada foi publicado: tudo está nesta branch local.
 
 As seções 1 a 7 guardam o diagnóstico aprovado. As referências `arquivo:linha` delas valem no commit de formatação `99edf15`. O que mudou desde então está na seção 10.
 
@@ -88,7 +88,11 @@ Os exemplos usam valores inventados. Cada linha tem um teste em `tests/auditoria
 
 ### 3.5 Comparação com a B3
 
-**Pendente.** Depende dos arquivos em `dados-privados/`. Assim que eles existirem, comparo quantidade e preço médio por ativo e registro aqui só as diferenças, sem valores reais.
+**Feita com o relatório de Negociação**, contra a cópia da carteira no banco local, somente leitura. Conforme combinado, sem valores aqui.
+
+- **Depois de uma importação simulada, todos os ativos atuais negociados na B3 ficam com a mesma quantidade e o mesmo preço médio calculados a partir do arquivo.**
+- As diferenças de antes vinham de operações recentes que a cópia local ainda não tinha. Não eram erro de cálculo.
+- **Limites:** o relatório de Negociação não traz saldo. A conferência definitiva é com o relatório de Posição da B3. A cópia local pode estar atrás da carteira publicada. O relatório também não traz taxas: o preço médio comparado não inclui a nota de corretagem.
 
 ## 4. Diagnóstico de design
 
@@ -148,6 +152,8 @@ Molas, gestos e projeção de movimento do guia Apple não se aplicam: o site n�
 | Nota do BTG | Sinacor é o sistema de origem, mas cada corretora emite a nota do seu modo. Taxas ficam no resumo financeiro. | Validar com nota real. |
 | Nota da Nu Invest | **Contraria a premissa do pedido.** Uma fonte de terceiros afirma que a Nubank emite por padrão notas fora do padrão Sinacor. | Provavelmente exige um segundo layout. Preciso de uma nota real. |
 | Nomad | Sem documentação do formato. O site cita relatórios por ano e relatórios auxiliares. A custódia remunerada gera lançamentos próprios, com imposto retido. | Só posso definir o parser com um arquivo real. |
+
+**Atualização com o arquivo real:** os cabeçalhos da Negociação foram confirmados, exatamente como esperado. Datas vêm como texto e números como números. Há três mercados: à vista, fracionário e `Renda Fixa`, usado também para ETF de renda fixa listado. A Movimentação ainda não foi validada.
 
 ### 5.2 Fluxo
 
@@ -332,11 +338,11 @@ Tela "Importar movimentações", com Excel e CSV lidos no navegador, prévia, co
 
 ## 11. O que ficou pendente
 
-1. **Validar com arquivos reais.** Sem `dados-privados/`, os cabeçalhos e rótulos da B3 vêm de importadores abertos e não foram confirmados. Em especial: se o JCP vem líquido, como Desdobro e Grupamento aparecem, e se o Yahoo ajusta o histórico por bonificação.
-2. **Comparação com a B3 (seção 3.5).** Depende dos mesmos arquivos.
-3. **Migração sobre a sua carteira.** Não li seus dados para testar. Na primeira abertura, se alguma quantidade mudar, um aviso lista cada ativo com o valor antes e depois. Se aparecer, confira antes de salvar qualquer coisa.
+1. **Validar a Movimentação com arquivo real.** Proventos e eventos societários ainda não foram testados com um arquivo seu. Em especial: se o JCP vem líquido, como Desdobro e Grupamento aparecem, e se o Yahoo ajusta o histórico por bonificação.
+2. **Relatório de Posição da B3 (seção 3.5).** É a conferência definitiva de quantidades.
+3. **Migração sobre a carteira publicada.** Simulada na cópia local, sem nenhuma quantidade alterada e com a validação aprovada. A carteira publicada só pode ser conferida depois de publicar. Se alguma quantidade mudar, um aviso lista cada ativo com o valor antes e depois.
 4. **Nota de corretagem e Nomad (etapas 5 e 6).** Não iniciadas, conforme o checkpoint. Dependem de arquivos reais.
-5. **Camada 2 (etapa 8).** Não iniciada, conforme sua ordem.
+5. **Camada 2 (etapa 8).** Pesquisa concluída na seção 13. Nada implementado: aguarda sua escolha.
 6. **Eventos que dependem de você na prévia.** Atualização, incorporação, subscrição e leilão de fração são mostrados, mas não aplicados. Falta interface para registrar troca de ticker à mão e para excluir evento societário importado depois de sair da tela. Vou definir isso com o arquivo real.
 7. **Altura no celular.** O conteúdo principal subiu, mas a página total não encurtou: visão geral de 6035 para 6189 px e carteira de 6853 para 7553 px, porque os cartões mostram mais dados à vista. Sugiro recolher os detalhes de cada cartão.
 8. **Notícias.** Ativos cadastrados ainda não aparecem nos filtros de notícias.
@@ -355,3 +361,57 @@ Executada ao fim desta etapa, na ordem pedida.
 | `npm test` | 12 de 12 arquivos, incluindo as 21 verificações de divergência |
 | `npm run test:api` | 2 de 2, em banco temporário. O banco local não mudou, conferido por soma de verificação |
 | `npm run build` | Passa |
+
+## 13. Camada 2: sincronização automática
+
+**Pesquisa concluída em 06/11/2026. Nada foi implementado nem contratado.** Preços e cobertura mudam: confirme antes de contratar.
+
+### Para B3, BTG e Nubank
+
+| Opção | Custo | Pessoa física | Instituições | Dados | Atualização | Riscos de privacidade |
+|---|---|---|---|---|---|---|
+| **Meu Pluggy** (recomendada para testar) | Grátis. As chaves saem de um painel com teste de 15 dias | Sim: portal pessoal, até 5 conexões do mesmo titular, sem contrato nem SLA | A cobertura da Pluggy lista BTG Investimentos, Nubank e corretoras como XP | Contas, cartões, transações e empréstimos confirmados. **Investimentos não confirmados nesse conector: é o que o teste precisa responder** | Diária, segundo a Pluggy | Um terceiro recebe os dados que você autorizar. Sem contrato ou garantia |
+| Pluggy Dados | A partir de R$ 2.500/mês, com até 500 conexões | Não há plano próprio. A página não cita exigência de CNPJ | As mesmas, com investimentos e transações de investimento | Posições e movimentações; a documentação lista também notas de corretagem no Open Finance | Não informada na página | Igual, com contrato |
+| Belvo | Sob proposta. Um relato público cita cerca de R$ 6 mil/mês | Não encontrei plano. Voltada a empresas | Mais de 50 instituições, sem lista confirmada | API de investimentos no Brasil, com regras próprias para renda variável | Não informada | Igual, com contrato |
+| API da B3 | Tarifa só no manual técnico, que não consegui abrir | **Não.** A B3 declara que não oferece acesso a pessoas físicas | Todas as corretoras, pois é a depositária | Os mais completos: posição, movimentação, negociação e eventos, até D-1 | Até D-1 | Contrato empresarial e seu consentimento na Área do Investidor |
+| Open Finance direto | Não se aplica | **Não.** Só instituições autorizadas pelo Banco Central | Participantes | A especificação cobre renda variável, com histórico de 12 meses | Não se aplica | Não se aplica |
+
+### Para a Nomad
+
+**Não encontrei nenhuma forma oficial de automação.** Não há API pública localizada. A Nomad não aparece na lista de participantes do Open Finance nem na cobertura da Pluggy. A custódia nos EUA é feita por DriveWealth e Apex.
+
+| Opção | Como funciona | Avaliação |
+|---|---|---|
+| Relatório mensal, com importação | O extrato da conta de investimento fica no app, em Perfil > Documentos > Investimentos, até o quinto dia útil do mês seguinte | **Recomendada.** Semiautomática, confiável e sem credenciais. Falta um arquivo real para escrever o parser |
+| Leitura de e-mail | A exportação da conta internacional chega por e-mail. Se houver confirmações ou extratos da conta de investimento por e-mail, uma rotina poderia buscá-los | A verificar: depende do que a Nomad envia de fato |
+| Perguntar à Nomad | Pedir API ou exportação estruturada | Sem custo. Vale tentar |
+| Usar a API interna do app | Reproduzir as chamadas do aplicativo com seu login | **Não recomendo.** Exige guardar credenciais, pode violar os termos de uso e quebra sem aviso |
+
+### O que muda na hospedagem
+
+| Tema | O que encontrei |
+|---|---|
+| Chamadas externas | A documentação oficial de Sites confirma HTTP e HTTPS. Atende Pluggy |
+| Segredos | A documentação oficial tem uma seção sobre isso, mas não consegui ler o conteúdo. Um blog de terceiros diz que ficam no painel de Sites, e que é preciso publicar de novo após mudar um valor. **A confirmar no painel** |
+| Cron | Sem evidência de suporte. A documentação oficial cita serviços em segundo plano entre os padrões sem suporte, e o build atual sai sem gatilhos |
+| Consequência | **Sincronizar ao abrir o site ou por um botão, sem cron.** Basta para dados com atualização diária. O resultado passa pela mesma prévia: nada é gravado sem sua aprovação |
+
+Credenciais ficam só em variáveis de ambiente do servidor: `.dev.vars` local, já ignorado pelo Git, e o painel de Sites em produção. Nunca no navegador nem no repositório.
+
+### Recomendação
+
+1. **Testar o Meu Pluggy, sem custo.** Se investimentos vierem nesse conector, implemento a sincronização de BTG e Nubank. Se não vierem, o custo de R$ 2.500/mês não se justifica para uma pessoa, e os relatórios da B3 continuam sendo o caminho.
+2. **Manter os relatórios da B3 de qualquer forma.** A especificação do Open Finance cobre 12 meses de transações, e a Negociação vai mais longe. A Movimentação é a fonte de eventos societários.
+3. **Nomad pelo relatório mensal,** verificando antes se há automação possível por e-mail.
+
+### Fontes da Camada 2
+
+- [Preços da Pluggy](https://www.pluggy.ai/precos) e [FAQ em inglês](https://www.pluggy.ai/en/pricing)
+- [Repositório oficial do Meu Pluggy](https://github.com/pluggyai/meu-pluggy)
+- [Cobertura de instituições da Pluggy](https://docs.pluggy.ai/en/docs/open-finance/institutions-coverage) e [conectores Open Finance](https://docs.pluggy.ai/pt/docs/open-finance/overview)
+- [Comparativo de preços](https://www.nortcash.com.br/blog/api-open-finance) e [relato no TabNews](https://www.tabnews.com.br/GuilhermeVieira/estou-desenvolvendo-um-app-de-financas-pessoais-e-nao-consigo-pagar-o-open-finance-pluggy-r2-5k-mes-belvo-r6k-mes-tecnospeed-r1-5k-de-entrada-r540): fontes secundárias
+- [API de investimentos da Belvo](https://developers.belvo.com/pt-br/apis/belvoopenapispec/investment-transactions-brazil/investmenttransactionbrazil) e [Belvo na Telesíntese](https://telesintese.com.br/belvo-oferece-dados-enriquecidos-no-open-finance/)
+- [APIs da Área do Investidor da B3](https://developers.b3.com.br/apis/api-area-do-investidor) e [ofício sobre a tarifação](https://www.b3.com.br/data/files/D8/E6/92/49/4BAB39107A1B8539AC094EA8/OC%20177-2024%20PRE%20Nova%20tarifacao%20-%20APIs%20Area%20do%20Investidor%20da%20B3%20(PT).pdf)
+- [Renda variável na especificação do Open Finance](https://openfinancebrasil.atlassian.net/wiki/spaces/OF/pages/144900298/Informa+es+Gerais+-+Renda+Vari+vel+-+v1.0.0-rc3.0) e [participantes](https://openfinancebrasil.org.br/quem-participa/)
+- [Parceiros da Nomad](https://benomad.zendesk.com/hc/en-us/articles/360060051573-Which-institutions-are-Nomad-s-partners) e [extratos na Nomad](https://benomad.zendesk.com/hc/en-us/articles/360042473714-Where-can-I-see-my-monthly-statements-for-my-Account)
+- [Sites na documentação da OpenAI](https://learn.chatgpt.com/docs/sites) e [segredos, em blog de terceiros](https://oran.chat/blog/codex-sites-environment-variables)
