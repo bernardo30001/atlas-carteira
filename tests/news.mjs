@@ -1,17 +1,49 @@
-import assert from 'node:assert/strict';
-import {ASSETS} from '../app/lib/model.ts';
-import {newsSelection,parseNews,NEWS_CATEGORIES} from '../app/lib/news.ts';
-for(const key of [...ASSETS.map(a=>a.ticker),...NEWS_CATEGORIES.map(c=>c.key)])assert.ok(newsSelection(key),key);
-assert.equal(newsSelection('invalid'),undefined);
-assert.ok(newsSelection('WEGE3').query.includes('"WEGE3" OR "WEG"'));
-assert.ok(newsSelection('brazil').query.includes('Ibovespa'));
-assert.ok(newsSelection('brazil').symbols.includes('^BVSP'));
-assert.ok(newsSelection('stocks').symbols.every(s=>ASSETS.some(a=>a.symbol===s&&a.group==='br')));
-assert.ok(newsSelection('us').symbols.every(s=>!s.endsWith('.SA')&&s!=='BTC-USD'));
-const item=(title,url='https://example.com/article',source='Jornal',date='Thu, 29 Oct 2026 10:00:00 GMT')=>`<item><title><![CDATA[${title} - ${source}]]></title><link>${url}</link><source url="https://example.com">${source}</source><pubDate>${date}</pubDate></item>`;
-const xml='<rss><channel>'+item('WEGE3: resultados &amp; dividendos')+item('Duplicate')+item('HTTP link','http://example.com/insecure')+item('Ibovespa em alta','https://example.com/market','Diário')+'</channel></rss>';
-const stocks=parseNews(xml,'WEGE3','Fonte');assert.equal(stocks.length,2);assert.equal(stocks[0].title,'WEGE3: resultados & dividendos');assert.equal(stocks[0].ticker,'WEGE3');assert.equal(stocks[0].source,'Jornal');
-const brazil=parseNews(xml,'brazil','Fonte');assert.equal(brazil[0].ticker,'WEGE3');assert.equal(brazil[1].ticker,'Bolsa brasileira');
-assert.deepEqual(parseNews('<rss/>','all','Fonte'),[]);
-assert.deepEqual(parseNews(xml,'invalid','Fonte'),[]);
-console.log('News passed: all categories and assets, alternative name/ticker queries, B3/US separation, Brazilian market, RSS entities, source attribution, duplicate removal and valid links.');
+import assert from "node:assert/strict";
+import { ASSETS } from "../app/lib/model.ts";
+import { newsSelection, parseNews, NEWS_CATEGORIES } from "../app/lib/news.ts";
+for (const key of [
+  ...ASSETS.map((a) => a.ticker),
+  ...NEWS_CATEGORIES.map((c) => c.key),
+])
+  assert.ok(newsSelection(key), key);
+assert.equal(newsSelection("invalid"), undefined);
+assert.ok(newsSelection("WEGE3").query.includes('"WEGE3" OR "WEG"'));
+assert.ok(newsSelection("brazil").query.includes("Ibovespa"));
+assert.ok(newsSelection("brazil").symbols.includes("^BVSP"));
+assert.ok(
+  newsSelection("stocks").symbols.every((s) =>
+    ASSETS.some((a) => a.symbol === s && a.group === "br"),
+  ),
+);
+assert.ok(
+  newsSelection("us").symbols.every(
+    (s) => !s.endsWith(".SA") && s !== "BTC-USD",
+  ),
+);
+const item = (
+  title,
+  url = "https://example.com/article",
+  source = "Jornal",
+  date = "Thu, 29 Oct 2026 10:00:00 GMT",
+) =>
+  `<item><title><![CDATA[${title} - ${source}]]></title><link>${url}</link><source url="https://example.com">${source}</source><pubDate>${date}</pubDate></item>`;
+const xml =
+  "<rss><channel>" +
+  item("WEGE3: resultados &amp; dividendos") +
+  item("Duplicate") +
+  item("HTTP link", "http://example.com/insecure") +
+  item("Ibovespa em alta", "https://example.com/market", "Diário") +
+  "</channel></rss>";
+const stocks = parseNews(xml, "WEGE3", "Fonte");
+assert.equal(stocks.length, 2);
+assert.equal(stocks[0].title, "WEGE3: resultados & dividendos");
+assert.equal(stocks[0].ticker, "WEGE3");
+assert.equal(stocks[0].source, "Jornal");
+const brazil = parseNews(xml, "brazil", "Fonte");
+assert.equal(brazil[0].ticker, "WEGE3");
+assert.equal(brazil[1].ticker, "Bolsa brasileira");
+assert.deepEqual(parseNews("<rss/>", "all", "Fonte"), []);
+assert.deepEqual(parseNews(xml, "invalid", "Fonte"), []);
+console.log(
+  "News passed: all categories and assets, alternative name/ticker queries, B3/US separation, Brazilian market, RSS entities, source attribution, duplicate removal and valid links.",
+);
