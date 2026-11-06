@@ -43,3 +43,6 @@ yarn-error.log*
 
 # OS metadata
 .DS_Store
+
+# Arquivos reais da B3 e das corretoras: nunca versionar
+dados-privados/
