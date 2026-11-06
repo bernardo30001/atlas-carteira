@@ -6594,8 +6594,12 @@ table,
 }
 .import-section td small {
   display: block;
+  /* O motivo quebra em linhas, em vez de invadir a coluna vizinha. */
+  min-width: 14rem;
+  max-width: 24rem;
   color: var(--muted);
   font-size: 0.75rem;
+  white-space: normal;
 }
 .import-section .table-wrap {
   max-height: 24rem;

@@ -3,6 +3,8 @@ import { useEffect, useMemo, useState, type DragEvent } from "react";
 import { AlertCircle, Check, ShieldCheck, Upload } from "lucide-react";
 import { money, num } from "../lib/format";
 import { parseB3Table, type ParsedFile } from "../lib/import/b3";
+import { parseNomadStatement } from "../lib/import/nomad";
+import { readPdfLines } from "../lib/import/pdf";
 import {
   applyPreview,
   archivedAsset,
@@ -17,6 +19,7 @@ const MAX_FILE = 20_000_000;
 const FORMATS: Record<string, string> = {
   "b3-negociacao": "B3 · Negociação",
   "b3-movimentacao": "B3 · Movimentação",
+  "nomad-extrato": "Nomad · Extrato mensal",
 };
 const date = (d: string | null) =>
   d ? new Date(d + "T12:00:00").toLocaleDateString("pt-BR") : "Sem data";
@@ -212,6 +215,18 @@ export function ImportPanel({
       try {
         // Os bytes ficam só nesta função. Nada é enviado nem guardado.
         const bytes = new Uint8Array(await file.arrayBuffer());
+        if (/\.pdf$/i.test(file.name)) {
+          const statement = parseNomadStatement(
+            await readPdfLines(bytes),
+            file.name,
+          );
+          if (statement) parsed.push(statement);
+          else
+            failures.push(
+              `${file.name}: não parece um extrato mensal da Nomad. Nada foi lido dele.`,
+            );
+          continue;
+        }
         const found = readTables(file.name, bytes).flatMap((table) => {
           const result = parseB3Table(table, file.name);
           return result ? [result] : [];
@@ -327,7 +342,8 @@ export function ImportPanel({
           </h2>
           <p>
             Relatórios de Negociação e Movimentação da Área do Investidor da B3,
-            em Excel ou CSV. Eles cobrem Nu Invest e BTG juntos.
+            em Excel ou CSV, que cobrem Nu Invest e BTG juntos. Extratos mensais
+            da Nomad, em PDF.
           </p>
         </div>
       </div>
@@ -351,7 +367,7 @@ export function ImportPanel({
         <input
           type="file"
           multiple
-          accept=".xlsx,.xlsm,.csv"
+          accept=".xlsx,.xlsm,.csv,.pdf"
           aria-label="Arquivos para importar"
           onChange={(event) => {
             void read(event.target.files);
@@ -519,6 +535,50 @@ export function ImportPanel({
                 : "posições iniciais, que passam a ser só um resumo"}
               . As quantidades não mudam por causa disso.
             </p>
+          )}
+          {preview.replaced.length > 0 && (
+            <details className="import-section" open>
+              <summary>
+                Acumulados substituídos por pagamentos{" "}
+                <span className="count">{preview.replaced.length}</span>
+              </summary>
+              <p className="form-note">
+                Os pagamentos do arquivo fecham com o acumulado informado. A
+                carteira passa a guardar cada pagamento pelo valor líquido, com
+                o imposto retido à parte.
+              </p>
+              <div
+                className="table-wrap"
+                tabIndex={0}
+                role="region"
+                aria-label="Acumulados substituídos por pagamentos"
+              >
+                <table>
+                  <thead>
+                    <tr>
+                      <th scope="col">Ativo</th>
+                      <th scope="col">Acumulado hoje</th>
+                      <th scope="col">Pagamentos</th>
+                      <th scope="col">Líquido</th>
+                      <th scope="col">Retido</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {preview.replaced.map((row) => (
+                      <tr key={row.id}>
+                        <td>
+                          <b>{row.ticker}</b>
+                        </td>
+                        <td>{money(row.amount, row.currency)}</td>
+                        <td>{row.payments}</td>
+                        <td>{money(row.net, row.currency)}</td>
+                        <td>{money(row.withheld, row.currency)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </details>
           )}
           <Lines title="A adicionar" lines={groups.add} open />
           <Lines
