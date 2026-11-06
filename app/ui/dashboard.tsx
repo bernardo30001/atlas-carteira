@@ -56,6 +56,7 @@ import { portfolioSchema } from "../lib/validation";
 import { ledgerIssues, migratePortfolio } from "../lib/trade-history";
 import { MovementHistory } from "./movement-history";
 import { AssetForm } from "./asset-form";
+import { ImportPanel } from "./import-panel";
 import { Change } from "./change";
 import { ContributionPreview } from "./contribution-preview";
 import { ValidatedForm, FormInput } from "./validated-form";
@@ -81,6 +82,7 @@ const nav = [
   { id: "overview", label: "Visão geral", icon: LayoutDashboard },
   { id: "portfolio", label: "Minha carteira", icon: Wallet },
   { id: "contributions", label: "Aportes", icon: ArrowDownLeft },
+  { id: "import", label: "Importar movimentações", icon: Upload },
   { id: "news", label: "Notícias", icon: Newspaper },
 ];
 function Mark({ ticker, size = 36 }: { ticker: string; size?: number }) {
@@ -803,9 +805,11 @@ export default function Dashboard() {
                     ? "Cada ativo, em perspectiva."
                     : page === "contributions"
                       ? "Seu próximo passo."
-                      : page === "news"
-                        ? "O mercado no seu radar."
-                        : "Uma direção para investir."}
+                      : page === "import"
+                        ? "Seu histórico, sem digitar."
+                        : page === "news"
+                          ? "O mercado no seu radar."
+                          : "Uma direção para investir."}
               </h1>
               <p>
                 {overview
@@ -814,9 +818,11 @@ export default function Dashboard() {
                     ? "Acompanhe suas posições e a distribuição do seu patrimônio."
                     : page === "contributions"
                       ? "Planeje, registre e acompanhe a construção do seu patrimônio."
-                      : page === "news"
-                        ? "Notícias recentes sobre os ativos que você escolheu."
-                        : "Seu patrimônio distribuído de acordo com as suas metas."}
+                      : page === "import"
+                        ? "Envie os relatórios e confira tudo antes de salvar."
+                        : page === "news"
+                          ? "Notícias recentes sobre os ativos que você escolheu."
+                          : "Seu patrimônio distribuído de acordo com as suas metas."}
               </p>
             </div>
             <div className="heading-actions">
@@ -1449,6 +1455,16 @@ export default function Dashboard() {
                 onExport={exportData}
               />
             </>
+          )}
+          {portfolioReady && page === "import" && (
+            <ImportPanel
+              portfolio={p}
+              hidden={hidden}
+              busy={saveBusy}
+              save={save}
+              onAddAsset={(ticker) => setModal({ kind: "asset-new", ticker })}
+              onShowValues={() => setHidden(false)}
+            />
           )}
           {page === "news" && newsBlock(true)}
           {portfolioReady && page === "strategy" && (

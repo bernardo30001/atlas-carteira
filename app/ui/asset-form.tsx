@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Check } from "lucide-react";
 import { money } from "../lib/format";
-import type { Asset, Currency, Group } from "../lib/model";
+import type { Asset, Currency, Group, Market } from "../lib/model";
 import { FormInput, ValidatedForm } from "./validated-form";
 
 const CLASSES: {
@@ -103,7 +103,7 @@ export function AssetForm({
       const r = await fetch(
         "/api/market?assets=" + encodeURIComponent(`${ticker}:${symbol}`),
       );
-      const j: any = await r.json();
+      const j = (await r.json()) as Market;
       const q = j.quotes?.[ticker];
       if (!q) {
         setError(`O Yahoo Finance não encontrou o símbolo ${symbol}.`);
@@ -129,6 +129,8 @@ export function AssetForm({
         busy={busy}
         onValidSubmit={async (e) => {
           e.preventDefault();
+          // O evento perde o formulário depois da espera pelo teste do símbolo.
+          const form = e.currentTarget;
           setError("");
           if (!/^[A-Z0-9]{2,12}$/.test(ticker)) {
             setError("Informe o código do ativo, como HGLG11.");
@@ -139,7 +141,7 @@ export function AssetForm({
             return;
           }
           if (!archived && !(await testSymbol())) return;
-          const name = String(new FormData(e.currentTarget).get("name"));
+          const name = String(new FormData(form).get("name"));
           await onSubmit({
             ticker,
             symbol,
