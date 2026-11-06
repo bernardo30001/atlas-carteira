@@ -431,7 +431,17 @@ export function totals(p: Portfolio, m: Market) {
       ...rows.map((r) => r.cost),
       ...p.fixedIncome.map((r) => r.cost),
     ]);
-  const result = cost !== null ? value - cost : null;
+  const income = sumNullable(
+    rows.flatMap((r) =>
+      r.incomes.map((i) =>
+        i.currency === "BRL" ? i.amount : i.fx ? i.amount * i.fx : null,
+      ),
+    ),
+  );
+  const result =
+    cost !== null && income !== null && !missing.length
+      ? value - cost + income
+      : null;
   const regional = (currency: Currency, segment?: "stocks" | "etfs") => {
     const owned = rows.filter(
       (r) =>
