@@ -490,12 +490,20 @@ export function allocationPlan(p: Portfolio, m: Market, budget: number) {
 export function assetPlan(p: Portfolio, m: Market, budget: number) {
   const t = totals(p, m),
     groups = allocationPlan(p, m, budget),
-    fx = m.quotes.USD?.price;
+    fx = m.quotes.USD && !m.quotes.USD.stale ? m.quotes.USD.price : undefined;
   return groups
     .flatMap((g) => {
       if (g.amount < 0.01 || g.group === "rf") return [];
       const assets = t.rows.filter((a) => a.group === g.group);
       const sum = assets.reduce((s, a) => s + (p.weights[a.ticker] ?? 1), 0);
+      // Sem histórico, o ativo recebe a qualidade média da classe: ajuste neutro.
+      const qualityOf = (volatility: number) => 1 / (1 + volatility / 100);
+      const known = assets.flatMap((a) =>
+        a.quote?.volatility != null ? [qualityOf(a.quote.volatility)] : [],
+      );
+      const neutral = known.length
+        ? known.reduce((s, x) => s + x, 0) / known.length
+        : 0.5;
       const scored = assets.map((a) => {
         const target = sum ? (p.weights[a.ticker] ?? 1) / sum : 0;
         const gap = Math.max(
@@ -504,7 +512,7 @@ export function assetPlan(p: Portfolio, m: Market, budget: number) {
         );
         const q = a.quote;
         const quality =
-          q?.volatility != null ? 1 / (1 + q.volatility / 100) : 0.5;
+          q?.volatility != null ? qualityOf(q.volatility) : neutral;
         const momentum =
           q?.momentum != null ? Math.max(-1, Math.min(1, q.momentum / 100)) : 0;
         return {
