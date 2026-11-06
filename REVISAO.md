@@ -468,6 +468,10 @@ A base desta revisão estava atrás do que está no ar: a versão 16 do Sites j�
 
 `tests/integracao-versao-16.mjs` cobre a carteira salva na versão 16: pesos e teses sobrevivem à migração. As 7 páginas foram medidas no build de produção, em desktop e celular, nos dois temas: nenhuma falha de contraste, nenhuma rolagem horizontal e nenhum erro de página.
 
+### Publicação
+
+Publicada em 06/11/2026 como **versão 17** do Sites, com o público privado preservado. O código publicado é o desta integração, conferido por comparação de árvore, e a origem estava na versão 16. Uma entrada `node_modules` rastreada por engano no repositório do Sites, um atalho para uma pasta local, deixou de existir. **A carteira não foi alterada:** a importação continua dependendo da sua confirmação na tela.
+
 ### O que a publicação muda
 
 | Tema | Situação |
@@ -481,7 +485,7 @@ A base desta revisão estava atrás do que está no ar: a versão 16 do Sites j�
 ### Passos
 
 1. **Exportar o backup no site atual, antes de publicar.** Guarde o arquivo fora da pasta do projeto: ele contém seus dados reais.
-2. **Publicar pelo fluxo do Sites**, a partir da integração.
+2. **Publicar pelo fluxo do Sites**, a partir da integração. Feito: versão 17.
 3. **Abrir o site sem importar nada.** Conferir se há aviso de migração e se as quantidades continuam iguais.
 4. **Importar os extratos da Nomad.** Conferir a prévia e confirmar. As quantidades não devem mudar.
 5. **Importar a Negociação da B3.** Conferir "Como as posições vão mudar", decidir os ativos fora da lista e confirmar. Aqui as quantidades podem mudar, porque o relatório traz operações que a carteira ainda não tem.
