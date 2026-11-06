@@ -1,8 +1,8 @@
 # Revisão do Atlas: cálculos, design e importação
 
-**Estado em 06/11/2026:** diagnóstico entregue, aguardando aprovação. Nenhum cálculo, tela ou modelo foi alterado.
+**Estado em 06/11/2026:** cálculos e design corrigidos, importação da B3 pronta em dados fictícios. **Falta validar com arquivos reais** e seguir para nota de corretagem e Nomad. Nada foi publicado: tudo está nesta branch local.
 
-Nesta branch até aqui: `.gitignore`, formatação com Prettier (sem mudança de lógica), testes de auditoria e este documento. Todas as referências `arquivo:linha` valem a partir do commit de formatação `99edf15`.
+As seções 1 a 7 guardam o diagnóstico aprovado. As referências `arquivo:linha` delas valem no commit de formatação `99edf15`. O que mudou desde então está na seção 10.
 
 ## 1. Resumo
 
@@ -11,7 +11,6 @@ Nesta branch até aqui: `.gitignore`, formatação com Prettier (sem mudança de
 - **A hierarquia visual é o maior problema de design.** O resultado da carteira só aparece fora da primeira tela. O modo escuro não existe. O contraste do modo claro passou nas medições.
 - **A importação depende de arquivos reais.** Os cabeçalhos da B3 e o formato da Nomad não têm documentação pública, e `dados-privados/` não existe neste computador.
 
-Você precisa decidir os itens da seção 7 antes de eu implementar.
 
 ## 2. Avisos encontrados durante a revisão
 
@@ -236,11 +235,13 @@ node --experimental-strip-types --no-warnings tests/auditoria-calculos.mjs
 node --experimental-strip-types --no-warnings tests/auditoria-divergencias.mjs
 ```
 
-O primeiro passa. O segundo **falha de propósito** com 20 erros até as correções, e a saída mostra o valor exibido e o correto.
+Antes das correções, o segundo falhava de propósito em 20 testes, mostrando o valor exibido e o correto. Agora os dois passam. `npm test` roda todos.
 
-**Linha de base:** os 8 arquivos de teste existentes passam e `npx tsc --noEmit` passa. `npm run build` passa depois da formatação. `npm run lint` já tinha 33 erros e 17 avisos antes desta revisão, e os novos testes não acrescentam nenhum.
+**Linha de base antes das mudanças:** os 8 arquivos de teste existentes e `npx tsc --noEmit` passavam. `npm run lint` tinha 33 erros e 17 avisos.
 
-## 7. Decisões necessárias
+## 7. Decisões
+
+Todas as recomendações abaixo foram aprovadas. Na D7 a resposta sobre day trade não veio explícita, e segui sem day trade: se você faz, o preço médio precisa separar as operações do dia.
 
 | ID | Pergunta | Recomendação | Por quê |
 |---|---|---|---|
@@ -252,7 +253,7 @@ O primeiro passa. O segundo **falha de propósito** com 20 erros até as correç
 | D6 | Implementar modo escuro agora? | **Sim, em commits próprios** | Exige tokens de cor, que também facilitam o resto da revisão. O tema claro não muda. |
 | D7 | Você faz day trade? | **Se não, basta ordenar compras antes de vendas no dia** | Se fizer, o preço médio precisa separar as operações do dia, e o escopo aumenta. |
 
-**Também preciso de:** arquivos reais em `dados-privados/`: B3 Negociação e Movimentação, uma nota do BTG, uma da Nu Invest e um relatório da Nomad, de preferência com venda, desdobro e dividendo.
+**Ainda preciso de:** arquivos reais em `dados-privados/`: B3 Negociação e Movimentação, uma nota do BTG, uma da Nu Invest e um relatório da Nomad, de preferência com venda, desdobro e dividendo.
 
 ## 8. Ordem de execução após aprovação
 
@@ -283,4 +284,74 @@ Não vou alterar `.openai/hosting.json` nem `app/chatgpt-auth.ts`. Os 33 erros d
 - [Taxa de liquidação, C6 Bank](https://www.c6bank.com.br/blog/taxa-de-liquidacao-b3): localização das taxas no resumo financeiro.
 - [Imposto de Renda na Nomad](https://www.nomadglobal.com/imposto-de-renda) e [Custódia remunerada na Nomad](https://www.nomadglobal.com/portal/artigos/custodia-remunerada-nomad): relatórios e imposto retido.
 - [Área do Investidor da B3](https://b3.com.br/pt_br/produtos-e-servicos/central-depositaria/canal-com-investidores/area-do-investidor/): extratos disponíveis.
+- [Importador de Negociação, Sergiovalle3121/quant-trade](https://github.com/Sergiovalle3121/quant-trade/pull/327): `Data do Negócio`, `Tipo de Movimentação`, `Instituição` e sufixo `F` vêm de importadores de arquivos reais; `Mercado` e `Código de Negociação` são inferidos.
+- [Importação da Movimentação em CSV, DanielPitthan/OrcaFacil](https://github.com/DanielPitthan/OrcaFacil/issues/30) e [reconciliação em DavidSilva32/investlab](https://github.com/DavidSilva32/investlab/issues/212): colunas do extrato, formato CSV e divergência sobre `Transferência - Liquidação`.
+- [Relatórios auxiliares da B3, Warren](https://faq.warren.com.br/hc/pt-br/articles/34668377679515-Como-encontrar-os-relat%C3%B3rios-auxiliares-da-B3-para-a-minha-declara%C3%A7%C3%A3o-de-imposto-de-renda) e [material de IR da B3](https://midia.b3.com.br/aIVRig): campos da Movimentação e coluna `Valor da Operação`.
 - API de gráficos do Yahoo Finance, consultada em 06/11/2026: horários reais das barras em I4. É uma interface não oficial.
+
+## 10. O que foi feito
+
+### Cálculos
+
+Todas as 20 divergências foram corrigidas, cada uma com teste antes da correção. `tests/auditoria-divergencias.mjs` agora passa inteiro.
+
+| Mudança | Resolve | Commit |
+|---|---|---|
+| Histórico como fonte única da posição, com migração e aviso de conferência | C1, C2, I1, I2, I8, M1, D1, D2, D7 | `0ac0167` |
+| Preço médio com taxas e custo em dólar preservado | I5, I6, D3 | `fd0e157` |
+| CDI no acompanhamento real e janela de acumulação | I3, M4 | `d907582` |
+| Datas no fuso da bolsa e cotação antiga identificada | I4, M7 | `c6a4799` |
+| Donut e proventos sem estado falso | I7, I10 | `549d79d` |
+| Planejador sem câmbio antigo e com volatilidade neutra | I9, M3 | `9d687fc` |
+| Resultado total com proventos | M2 | `ab6f13b` |
+| Simulação na data de Brasília | M5 | `cf1fa41` |
+| Formatação pt-BR única e metas reais na metodologia | M6, M8 | `05a3661` |
+| Venda manual e resultado realizado à parte | C1, D4 | `c179a57` |
+
+### Design
+
+Medido em 16 telas: 4 páginas, em desktop e celular, nos temas claro e escuro.
+
+| Medição | Antes | Depois |
+|---|---|---|
+| Modo escuro | Não existia | Segue o sistema |
+| Falhas de contraste de texto | 0 no claro, escuro inexistente | 0 nos dois |
+| Alvos de toque abaixo de 44 px | 3 | 0 |
+| Fontes | Sistema, Manrope, DM Sans e Georgia, com Google Fonts | Só a do sistema |
+| Espaçamentos em múltiplos de 4 px | 57% a 80% | 100% |
+| Resultado no bloco principal | Não aparecia | Patrimônio, resultado e hoje juntos |
+| Gráfico no desktop | y=1530 | y=1096 |
+| Gráfico no celular | y=2280 | y=1484 |
+| Carteira no desktop, altura | 4979 px | 3649 px |
+
+Capturas em `outputs/revisao/antes`, `outputs/revisao/depois` e `outputs/revisao/importacao`, pasta que o Git ignora. Todas usam dados fictícios.
+
+### Importação da B3 (Camada 1, primeira parte)
+
+Tela "Importar movimentações", com Excel e CSV lidos no navegador, prévia, confirmação, desfazer, cadastro de ativo na própria prévia, modelo da seção 5.5 e migração. Testada em `tests/importacao.mjs`, `tests/ativos.mjs` e `tests/ledger.mjs`, e no navegador com planilhas fictícias e gravação interceptada: nenhuma gravação antes de confirmar, e reimportar deu 0 a adicionar.
+
+## 11. O que ficou pendente
+
+1. **Validar com arquivos reais.** Sem `dados-privados/`, os cabeçalhos e rótulos da B3 vêm de importadores abertos e não foram confirmados. Em especial: se o JCP vem líquido, como Desdobro e Grupamento aparecem, e se o Yahoo ajusta o histórico por bonificação.
+2. **Comparação com a B3 (seção 3.5).** Depende dos mesmos arquivos.
+3. **Migração sobre a sua carteira.** Não li seus dados para testar. Na primeira abertura, se alguma quantidade mudar, um aviso lista cada ativo com o valor antes e depois. Se aparecer, confira antes de salvar qualquer coisa.
+4. **Nota de corretagem e Nomad (etapas 5 e 6).** Não iniciadas, conforme o checkpoint. Dependem de arquivos reais.
+5. **Camada 2 (etapa 8).** Não iniciada, conforme sua ordem.
+6. **Eventos que dependem de você na prévia.** Atualização, incorporação, subscrição e leilão de fração são mostrados, mas não aplicados. Falta interface para registrar troca de ticker à mão e para excluir evento societário importado depois de sair da tela. Vou definir isso com o arquivo real.
+7. **Altura no celular.** O conteúdo principal subiu, mas a página total não encurtou: visão geral de 6035 para 6189 px e carteira de 6853 para 7553 px, porque os cartões mostram mais dados à vista. Sugiro recolher os detalhes de cada cartão.
+8. **Notícias.** Ativos cadastrados ainda não aparecem nos filtros de notícias.
+9. **Não testado:** site publicado, aparelho físico, VoiceOver e zoom de 200%.
+10. **Lint.** Restam erros anteriores a esta revisão, fora do escopo. Os números finais estão na seção 12.
+11. **Publicação.** Nada foi publicado. O checkout não tem remote, e `.openai/hosting.json` e `app/chatgpt-auth.ts` não foram alterados.
+
+## 12. Verificação final
+
+Executada ao fim desta etapa, na ordem pedida.
+
+| Verificação | Resultado |
+|---|---|
+| `npx tsc --noEmit` | Passa |
+| `npm run lint` | 32 erros e 6 avisos, contra 33 e 17 antes. Nenhum nos arquivos novos |
+| `npm test` | 12 de 12 arquivos, incluindo as 21 verificações de divergência |
+| `npm run test:api` | 2 de 2, em banco temporário. O banco local não mudou, conferido por soma de verificação |
+| `npm run build` | Passa |

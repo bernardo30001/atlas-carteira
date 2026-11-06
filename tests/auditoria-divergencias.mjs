@@ -1,6 +1,6 @@
-// Reproduz as divergências listadas no REVISAO.md. Cada teste afirma o valor CORRETO,
-// então FALHA até a correção ser aprovada e aplicada. A mensagem de falha mostra o
-// valor exibido hoje e o correto. Todos os valores são inventados.
+// Divergências listadas no REVISAO.md. Cada teste afirma o valor CORRETO: todos falhavam
+// antes das correções e agora protegem contra a volta do erro. A mensagem de falha mostra
+// o valor exibido e o correto. Todos os valores são inventados.
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
