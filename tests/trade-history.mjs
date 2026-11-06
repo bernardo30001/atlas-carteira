@@ -166,3 +166,104 @@ near(replayTrades([exact]).costNative, 20);
 console.log(
   "Trade history passed: moving average on partial sales, excluded closed cycles, historical quantity and cost, purchase markers by group/date, no invented opening markers, same-day grouping, later manual buys, exact operation totals and validation round-trip.",
 );
+// A posição inicial vale na sua data de referência: o que veio antes já está contido
+// nela, e só o que vem depois soma. Com a referência depois das compras, a posição
+// consolidada é preservada e a curva termina no acumulado.
+const REFERENCE = "2026-10-29";
+const partial = {
+  ...portfolio,
+  transactions: [
+    {
+      ...portfolio.transactions[0],
+      quantity: 20,
+      costNative: 208,
+      price: 10.4,
+      date: REFERENCE,
+    },
+  ],
+};
+const partialResult = costPerformance(
+  partial,
+  market,
+  "br",
+  365,
+  Date.parse("2026-10-28T18:00:00Z"),
+);
+near(partialResult.value, 280);
+near(partialResult.cost, 208);
+near(partialResult.points.at(-1).value, 280);
+near(partialResult.points.at(-1).portfolio, partialResult.returnPercent);
+assert.equal(partialResult.partialHistoryCount, 0);
+assert.equal(
+  purchasesForPoints(partial, partialResult.points).flatMap((p) => p.purchases)
+    .length,
+  0,
+);
+// Com a referência antes das compras, parte da posição segue sem datas: histórico parcial.
+const openThenBought = costPerformance(
+  {
+    ...portfolio,
+    transactions: [
+      {
+        ...portfolio.transactions[0],
+        quantity: 20,
+        costNative: 208,
+        price: 10.4,
+        date: "2026-10-01",
+      },
+    ],
+  },
+  market,
+  "br",
+  365,
+  Date.parse("2026-10-28T18:00:00Z"),
+);
+assert.equal(openThenBought.partialHistoryCount, 1);
+const feesOutsideHistory = {
+  ...portfolio,
+  transactions: [
+    {
+      ...portfolio.transactions[0],
+      costNative: 110,
+      price: 11,
+      date: REFERENCE,
+    },
+  ],
+};
+const withCostAdjustment = costPerformance(
+  feesOutsideHistory,
+  market,
+  "br",
+  365,
+  Date.parse("2026-10-28T18:00:00Z"),
+);
+near(
+  withCostAdjustment.points.at(-1).portfolio,
+  withCostAdjustment.returnPercent,
+);
+assert.equal(withCostAdjustment.partialHistoryCount, 0);
+const excessHistory = {
+  ...portfolio,
+  transactions: [
+    {
+      ...portfolio.transactions[0],
+      quantity: 5,
+      costNative: 54,
+      price: 10.8,
+      date: REFERENCE,
+    },
+  ],
+};
+const conservative = costPerformance(
+  excessHistory,
+  market,
+  "br",
+  365,
+  Date.parse("2026-10-28T18:00:00Z"),
+);
+near(conservative.points.at(-1).value, 70);
+near(conservative.points.at(-1).portfolio, conservative.returnPercent);
+assert.equal(conservative.partialHistoryCount, 0);
+console.log(
+  "Partial-history regression passed: consolidated quantities/costs preserved, final chart equals accumulated result, only documented buys receive markers, and excess history falls back to the consolidated basis.",
+);

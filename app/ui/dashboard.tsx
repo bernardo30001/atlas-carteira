@@ -29,6 +29,7 @@ import {
   ExternalLink,
   Compass,
   AlertCircle,
+  Scale,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -43,6 +44,8 @@ import {
   ASSETS,
   GROUPS,
   EMPTY,
+  isTrackedTicker,
+  trackedPortfolio,
   today,
   totals,
   allocationPlan,
@@ -67,6 +70,9 @@ import { AssetTable } from "./asset-table";
 import { IncomePanel } from "./income-panel";
 import { StatementPanel } from "./statement-panel";
 import { NewsFilters } from "./news-filters";
+import { ThemeToggle } from "./theme-toggle";
+import { EvaluationPanel } from "./evaluation-panel";
+import { evaluationSettings } from "../lib/evaluation";
 import { TransactionForm, FixedForm, IncomeForm } from "./investment-forms";
 const groups = Object.keys(GROUPS) as Group[];
 const blankMarket: Market = { quotes: {}, errors: [], fetchedAt: "" };
@@ -81,6 +87,7 @@ const datetime = (n: number) =>
 const nav = [
   { id: "overview", label: "Visão geral", icon: LayoutDashboard },
   { id: "portfolio", label: "Minha carteira", icon: Wallet },
+  { id: "evaluation", label: "Avaliação", icon: Scale },
   { id: "contributions", label: "Aportes", icon: ArrowDownLeft },
   { id: "import", label: "Importar movimentações", icon: Upload },
   { id: "news", label: "Notícias", icon: Newspaper },
@@ -202,6 +209,7 @@ export default function Dashboard() {
     [newsError, setNewsError] = useState(""),
     [newsTime, setNewsTime] = useState(""),
     [newsProvider, setNewsProvider] = useState("Google Notícias");
+  const [evaluationTicker, setEvaluationTicker] = useState<string>();
   const dialogRef = useRef<HTMLDialogElement>(null),
     lastFocus = useRef<HTMLElement | null>(null),
     marketBusy = useRef(false),
@@ -212,16 +220,18 @@ export default function Dashboard() {
   const p = demo ?? portfolio,
     t = useMemo(() => totals(p, market), [p, market]),
     classPlan = allocationPlan(p, market, budget),
-    suggestions = assetPlan(p, market, budget),
     fx = market.quotes.USD?.price;
   const displayMoney = (v: number | null) =>
     hidden ? "••••••" : v === null ? "Não informado" : money(v);
   const portfolioReady = !!demo || account === "ready";
   const hasPositions =
-    p.transactions.length > 0 ||
+    p.transactions.some((t) => isTrackedTicker(t.ticker)) ||
     p.fixedIncome.length > 0 ||
-    (p.tradeHistory?.length ?? 0) > 0;
+    (p.tradeHistory ?? []).some((t) => isTrackedTicker(t.ticker));
   const navigate = (id: string) => {
+    const url = new URL(window.location.href);
+    url.searchParams.set("tab", id);
+    window.history.pushState({}, "", url);
     setPage(id);
     setMobile(false);
     setFilter(
@@ -242,6 +252,19 @@ export default function Dashboard() {
     setMobile(false);
     if (restore) requestAnimationFrame(() => menuRef.current?.focus());
   };
+  useEffect(() => {
+    const sync = () => {
+      const tab = new URLSearchParams(window.location.search).get("tab");
+      setPage(
+        tab && [...nav.map((n) => n.id), "strategy"].includes(tab)
+          ? tab
+          : "overview",
+      );
+    };
+    sync();
+    window.addEventListener("popstate", sync);
+    return () => window.removeEventListener("popstate", sync);
+  }, []);
   useEffect(() => {
     const query = window.matchMedia("(max-width: 980px)"),
       sync = () => {
@@ -728,6 +751,7 @@ export default function Dashboard() {
             </b>
           </div>
           <div className="top-actions">
+            <ThemeToggle />
             <button
               className="currency-button"
               onClick={() => setModal({ kind: "sources" })}
@@ -803,26 +827,30 @@ export default function Dashboard() {
                   ? "Sua carteira, por inteiro."
                   : page === "portfolio"
                     ? "Cada ativo, em perspectiva."
-                    : page === "contributions"
-                      ? "Seu próximo passo."
-                      : page === "import"
-                        ? "Seu histórico, sem digitar."
-                        : page === "news"
-                          ? "O mercado no seu radar."
-                          : "Uma direção para investir."}
+                    : page === "evaluation"
+                      ? "Decisões com fundamento."
+                      : page === "contributions"
+                        ? "Seu próximo passo."
+                        : page === "import"
+                          ? "Seu histórico, sem digitar."
+                          : page === "news"
+                            ? "O mercado no seu radar."
+                            : "Uma direção para investir."}
               </h1>
               <p>
                 {overview
                   ? "Clareza para acompanhar. Estratégia para crescer."
                   : page === "portfolio"
                     ? "Acompanhe suas posições e a distribuição do seu patrimônio."
-                    : page === "contributions"
-                      ? "Planeje, registre e acompanhe a construção do seu patrimônio."
-                      : page === "import"
-                        ? "Envie os relatórios e confira tudo antes de salvar."
-                        : page === "news"
-                          ? "Notícias recentes sobre os ativos que você escolheu."
-                          : "Seu patrimônio distribuído de acordo com as suas metas."}
+                    : page === "evaluation"
+                      ? "Sua carteira, os preços e os motivos para agir ou esperar."
+                      : page === "contributions"
+                        ? "Planeje, registre e acompanhe a construção do seu patrimônio."
+                        : page === "import"
+                          ? "Envie os relatórios e confira tudo antes de salvar."
+                          : page === "news"
+                            ? "Notícias recentes sobre os ativos que você escolheu."
+                            : "Seu patrimônio distribuído de acordo com as suas metas."}
               </p>
             </div>
             <div className="heading-actions">
@@ -1212,242 +1240,44 @@ export default function Dashboard() {
               <StatementPanel portfolio={p} hidden={hidden} />
             </>
           )}
+          {portfolioReady && page === "evaluation" && (
+            <EvaluationPanel
+              portfolio={p}
+              market={market}
+              hidden={hidden}
+              budget={budget}
+              setBudget={setBudget}
+              save={save}
+              busy={saveBusy}
+              initialTicker={evaluationTicker}
+              onRegister={(ticker, quantity) =>
+                setModal({ kind: "transaction", ticker, quantity })
+              }
+            />
+          )}
           {portfolioReady && page === "contributions" && (
             <>
-              <div className="planner-grid">
-                <section className="panel planner">
-                  <div className="panel-title">
-                    <div>
-                      <span className="eyebrow">SIMULADOR DE APORTES</span>
-                      <h2>Onde investir agora?</h2>
-                      <p>Suas metas são o ponto de partida.</p>
-                    </div>
-                    <Target size={23} />
-                  </div>
-                  <label className="field">
-                    Valor disponível (R$)
-                    <input
-                      type={hidden ? "text" : "number"}
-                      readOnly={hidden}
-                      min="0"
-                      max="1000000000"
-                      value={hidden ? "••••••" : budget}
-                      onChange={(e) =>
-                        setBudget(
-                          Math.min(1e9, Math.max(0, Number(e.target.value))),
-                        )
-                      }
-                    />
-                  </label>
-                  <div
-                    className="quick-budgets"
-                    role="group"
-                    aria-label="Valores de aporte sugeridos"
-                  >
-                    {[500, 1000, 2500, 5000].map((v) => (
-                      <button
-                        aria-pressed={budget === v}
-                        className={budget === v ? "chip active" : "chip"}
-                        key={v}
-                        onClick={() => setBudget(v)}
-                      >
-                        {money(v)}
-                      </button>
-                    ))}
-                  </div>
-                  {t.missing.length ? (
-                    <div className="notice warn">
-                      Aguarde as cotações ausentes para calcular a distribuição.
-                    </div>
-                  ) : (
-                    <div className="class-plan">
-                      {classPlan.map((g) => (
-                        <div key={g.group}>
-                          <span>
-                            <i style={{ background: GROUPS[g.group].color }} />
-                            {GROUPS[g.group].name}
-                          </span>
-                          <b>{displayMoney(g.amount)}</b>
-                          <small>
-                            {budget ? fixed((g.amount / budget) * 100, 1) : 0}%
-                            do aporte
-                          </small>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  <button
-                    className="text-button"
-                    onClick={() => setModal({ kind: "method" })}
-                  >
-                    Como a sugestão é calculada <Info size={15} />
-                  </button>
-                </section>
-                <section className="panel planner-summary">
-                  <span className="eyebrow">SUA BÚSSOLA</span>
-                  <h2>
-                    Consistência antes
-                    <br />
-                    de adivinhação.
-                  </h2>
-                  <p>
-                    O aporte prioriza as classes abaixo do objetivo. Dentro de
-                    cada classe, o desvio de peso recebe um ajuste moderado por
-                    volatilidade e tendência.
-                  </p>
-                  <div>
-                    <ShieldCheck size={18} />
-                    <span>Sem vendas automáticas</span>
-                  </div>
-                  <div>
-                    <Activity size={18} />
-                    <span>Métricas calculadas com até 1 ano de histórico</span>
-                  </div>
-                  <div>
-                    <Info size={18} />
-                    <span>Renda fixa exige escolha e cotação no seu banco</span>
-                  </div>
-                  <small>
-                    Não considera objetivos pessoais, tributação, liquidez ou
-                    análise de fundamentos. A decisão final é sua.
-                  </small>
-                </section>
-              </div>
-              <section className="panel">
-                <div className="panel-title">
-                  <div>
-                    <h2>Distribuição sugerida por ativo</h2>
-                    <p>
-                      Pesos iguais dentro de cada classe por padrão; ajuste em
-                      Estratégia e metas.
-                    </p>
-                  </div>
-                  <button
-                    className="text-button"
-                    onClick={() => navigate("strategy")}
-                  >
-                    Ajustar pesos <ArrowRight size={15} />
-                  </button>
-                </div>
-                <div className="table-wrap">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Ativo</th>
-                        <th>Orçamento</th>
-                        <th>Quantidade estimada</th>
-                        <th>Volatilidade anual</th>
-                        <th>Queda máx. em 1 ano</th>
-                        <th />
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {suggestions.map((s) => (
-                        <tr key={s.ticker}>
-                          <td>
-                            <div className="asset-name">
-                              <Mark ticker={s.ticker} />
-                              <span>
-                                <b>{s.ticker}</b>
-                                <small>{GROUPS[s.group].short}</small>
-                              </span>
-                            </div>
-                          </td>
-                          <td>
-                            <b>{displayMoney(s.amount)}</b>
-                          </td>
-                          <td>
-                            {hidden
-                              ? "••••••"
-                              : s.quantity > 0
-                                ? num(s.quantity, 8)
-                                : s.quote
-                                  ? "Saldo insuficiente"
-                                  : "Sem cotação"}
-                            <small>
-                              {s.quantity > 0
-                                ? displayMoney(s.executable) + " estimados"
-                                : "Aguarde ou ajuste o valor"}
-                            </small>
-                          </td>
-                          <td>
-                            {s.quote?.volatility != null
-                              ? plainPercent(s.quote.volatility)
-                              : "—"}
-                          </td>
-                          <td className="negative">
-                            {s.quote?.drawdown != null
-                              ? plainPercent(s.quote.drawdown)
-                              : "—"}
-                          </td>
-                          <td>
-                            <button
-                              disabled={!s.quantity}
-                              className="text-button"
-                              onClick={() =>
-                                setModal({
-                                  kind: "transaction",
-                                  ticker: s.ticker,
-                                  quantity: s.quantity,
-                                })
-                              }
-                            >
-                              Registrar <Plus size={14} />
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                      {(classPlan.find((g) => g.group === "rf")?.amount ?? 0) >
-                        0 && (
-                        <tr>
-                          <td>
-                            <div className="asset-name">
-                              <Mark ticker="RF" />
-                              <span>
-                                <b>Renda fixa</b>
-                                <small>Escolha o título no seu banco</small>
-                              </span>
-                            </div>
-                          </td>
-                          <td>
-                            <b>
-                              {displayMoney(
-                                classPlan.find((g) => g.group === "rf")!.amount,
-                              )}
-                            </b>
-                          </td>
-                          <td colSpan={3}>
-                            Compare taxa líquida, emissor, vencimento e
-                            liquidez.
-                          </td>
-                          <td>
-                            <button
-                              className="text-button"
-                              onClick={() => setModal({ kind: "fixed" })}
-                            >
-                              Registrar <Plus size={14} />
-                            </button>
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                  {!classPlan.length && (
-                    <Empty
-                      icon={Target}
-                      title="Defina um valor para simular"
-                      text="Informe um aporte positivo e aguarde as cotações."
-                    />
-                  )}
-                </div>
-                <div className="panel-foot">
-                  Ativos da B3 em unidades inteiras; ETFs americanos com frações
-                  de até 6 casas; BTC até 8. Confira a aceitação de frações na
-                  corretora. Valores estimados sem taxas.
-                </div>
-              </section>
-              <MovementHistory
+              <EvaluationPanel
+                plannerOnly
+                defaultBudgetScope="portfolio"
                 portfolio={p}
+                market={market}
+                hidden={hidden}
+                budget={budget}
+                setBudget={setBudget}
+                save={save}
+                busy={saveBusy}
+                onInspect={(ticker) => {
+                  setEvaluationTicker(ticker);
+                  navigate("evaluation");
+                }}
+                onRegister={(ticker, quantity) =>
+                  setModal({ kind: "transaction", ticker, quantity })
+                }
+                onFixed={() => setModal({ kind: "fixed" })}
+              />
+              <MovementHistory
+                portfolio={trackedPortfolio(p)}
                 hidden={hidden}
                 onAdd={() => setModal({ kind: "transaction" })}
                 onSell={() => setModal({ kind: "transaction", mode: "sell" })}
@@ -1506,9 +1336,10 @@ export default function Dashboard() {
                     <span>03</span>
                     <h3>Sem falsas garantias</h3>
                     <p>
-                      Histórico não prevê retorno. O painel não avalia preço
-                      justo, fundamentos, impostos, perfil de risco ou recomenda
-                      um produto de renda fixa.
+                      Histórico não prevê retorno. Aportes usa os pesos que você
+                      definiu. A aba Avaliação acrescenta comparação de preço e
+                      fundamentos para ações brasileiras. Impostos, perfil e
+                      produtos de renda fixa exigem análise própria.
                     </p>
                   </div>
                 </div>
@@ -1941,8 +1772,10 @@ export default function Dashboard() {
                 <p>
                   Déficit por classe = máximo entre zero e (patrimônio + aporte)
                   × meta − posição atual. O orçamento é dividido
-                  proporcionalmente aos déficits. Dentro da classe, o déficit
-                  por ativo recebe ajuste moderado por risco e tendência.
+                  proporcionalmente aos déficits. Nas ações brasileiras, preço,
+                  fundamentos e limites da Avaliação definem as compras. Nas
+                  outras classes, os pesos recebem ajuste moderado por risco e
+                  tendência.
                 </p>
                 <p>
                   Fator = 0,80 + 0,15/(1 + volatilidade anual/100) + 0,05 ×
@@ -2030,21 +1863,47 @@ function Strategy({
 }) {
   const assets = allAssets(portfolio).filter((a) => !a.archived);
   const [targets, setTargets] = useState(portfolio.targets),
-    [weights, setWeights] = useState(portfolio.weights),
+    [weights, setWeights] = useState({
+      ...portfolio.weights,
+      ...evaluationSettings(portfolio).baseWeights,
+    }),
     [dirty, setDirty] = useState(false);
   useEffect(() => {
     setTargets(portfolio.targets);
-    setWeights(portfolio.weights);
+    setWeights({
+      ...portfolio.weights,
+      ...evaluationSettings(portfolio).baseWeights,
+    });
     setDirty(false);
   }, [portfolio]);
   const sum = Object.values(targets).reduce((a, b) => a + b, 0),
-    valid = Math.abs(sum - 100) < 0.001;
+    targetsValid = Math.abs(sum - 100) < 0.001,
+    weightsValid = groups
+      .filter((g) => g !== "rf")
+      .every((g) =>
+        ASSETS.some((a) => a.group === g && (weights[a.ticker] ?? 1) > 0),
+      ),
+    valid = targetsValid && weightsValid;
   return (
     <ValidatedForm
       busy={busy}
       onValidSubmit={async (e) => {
         e.preventDefault();
-        if (valid) await save({ ...portfolio, targets, weights });
+        if (valid)
+          await save({
+            ...portfolio,
+            targets,
+            weights,
+            evaluation: {
+              ...evaluationSettings(portfolio),
+              baseWeights: Object.fromEntries(
+                ASSETS.filter((a) => a.group === "br").map((a) => [
+                  a.ticker,
+                  weights[a.ticker] ?? 0,
+                ]),
+              ),
+            },
+          });
       }}
     >
       <section className="panel target-panel">
@@ -2155,7 +2014,9 @@ function Strategy({
               ? dirty
                 ? "Você tem alterações para salvar."
                 : "Metas alinhadas com sua estratégia."
-              : "Ajuste as metas para somar 100%."}
+              : !targetsValid
+                ? "Ajuste as metas para somar 100%."
+                : "Defina pelo menos um peso positivo em cada classe."}
           </span>
           <button
             className="button primary"
@@ -2223,8 +2084,8 @@ function AssetDetail({
               <Area
                 type="monotone"
                 dataKey="close"
-                stroke={a.color}
-                fill={a.color + "15"}
+                stroke="var(--positive)"
+                fill="var(--chart-area)"
                 strokeWidth={2}
                 isAnimationActive={false}
               />

@@ -43,7 +43,6 @@ export const ASSETS: Asset[] = (
     ["WEGE3", "WEG", "Indústria", "#377fc1", "WEG WEGE3"],
     ["ITUB4", "Itaú Unibanco", "Bancos", "#d67e2f", "Itaú ITUB4"],
     ["KLBN4", "Klabin", "Papel e celulose", "#5a8c64", "Klabin KLBN4"],
-    ["KLBN11", "Klabin Units", "Papel e celulose", "#5a8c64", "Klabin KLBN11"],
     ["EGIE3", "Engie Brasil", "Energia", "#1e8ba8", "Engie EGIE3"],
     ["BPAC11", "BTG Pactual", "Bancos", "#344c7c", "BTG Pactual BPAC11"],
     ["BBSE3", "BB Seguridade", "Seguros", "#b6a143", "BB Seguridade BBSE3"],
@@ -157,6 +156,37 @@ export const ASSETS: Asset[] = (
       currency: "USD",
     },
   ] as Asset[]);
+// Keep legacy records importable, while excluding this ticker from every current view/model.
+export const LEGACY_ASSETS: Asset[] = [
+  {
+    ticker: "KLBN11",
+    symbol: "KLBN11.SA",
+    name: "Klabin Units · fora do acompanhamento",
+    sector: "Papel e celulose",
+    color: "#5a8c64",
+    query: "Klabin KLBN11",
+    group: "br",
+    currency: "BRL",
+  },
+];
+export const KNOWN_ASSETS = [...ASSETS, ...LEGACY_ASSETS];
+/** Só os ativos legados ficam fora: os que você cadastrou também são acompanhados. */
+export const isTrackedTicker = (ticker: string) =>
+  !LEGACY_ASSETS.some((a) => a.ticker === ticker);
+export function trackedPortfolio(p: Portfolio): Portfolio {
+  if (
+    [...p.transactions, ...(p.incomes ?? []), ...(p.tradeHistory ?? [])].every(
+      (t) => isTrackedTicker(t.ticker),
+    )
+  )
+    return p;
+  return {
+    ...p,
+    transactions: p.transactions.filter((t) => isTrackedTicker(t.ticker)),
+    incomes: p.incomes?.filter((i) => isTrackedTicker(i.ticker)),
+    tradeHistory: p.tradeHistory?.filter((t) => isTrackedTicker(t.ticker)),
+  };
+}
 export type Transaction = {
   id: string;
   ticker: string;
@@ -278,6 +308,7 @@ export type Portfolio = {
   /** Ativos cadastrados por você, além da lista padrão. */
   customAssets?: Asset[];
   corporateActions?: CorporateAction[];
+  evaluation?: import("./evaluation-config").EvaluationSettings;
 };
 export const EMPTY: Portfolio = {
   transactions: [],
@@ -350,7 +381,9 @@ export const allAssets = (p: Pick<Portfolio, "customAssets">): Asset[] =>
 export const assetOf = (p: Pick<Portfolio, "customAssets">, ticker: string) =>
   allAssets(p).find((a) => a.ticker === ticker);
 export const transactionCurrency = (tx: Transaction): Currency =>
-  tx.currency ?? ASSETS.find((a) => a.ticker === tx.ticker)?.currency ?? "BRL";
+  tx.currency ??
+  KNOWN_ASSETS.find((a) => a.ticker === tx.ticker)?.currency ??
+  "BRL";
 export const transactionCost = (tx: Transaction) =>
   tx.costNative ?? tx.quantity * tx.price;
 export const wholeUnits = (a: Asset) =>
@@ -359,11 +392,12 @@ const sumNullable = (xs: (number | null)[]) =>
   xs.some((x) => x === null)
     ? null
     : xs.reduce<number>((s, x) => s + (x ?? 0), 0);
+export const usableQuote = (q: Quote | undefined): q is Quote =>
+  !!q && !q.stale && Number.isFinite(q.price) && q.price > 0;
 export function positions(portfolio: Portfolio, market: Market) {
-  const fx =
-    market.quotes.USD && !market.quotes.USD.stale
-      ? market.quotes.USD.price
-      : undefined;
+  const fx = usableQuote(market.quotes.USD)
+    ? market.quotes.USD.price
+    : undefined;
   return allAssets(portfolio).map((a) => {
     const ledger = ledgerFor(portfolio, a.ticker),
       state = replayLedger(ledger),
@@ -371,7 +405,7 @@ export function positions(portfolio: Portfolio, market: Market) {
       income = attributeIncomes(ledger, incomesFor(portfolio, a.ticker)).kept;
     const quantity = state.quantity,
       q = market.quotes[a.ticker],
-      quoteValid = !!q && !q.stale;
+      quoteValid = usableQuote(q) && q.currency === a.currency;
     const nativeValue =
       quantity === 0 || a.archived ? 0 : quoteValid ? quantity * q.price : null;
     const value =
@@ -437,6 +471,22 @@ export function positions(portfolio: Portfolio, market: Market) {
         : tx[0]
           ? transactionCurrency(tx[0])
           : primaryCurrency;
+    const averageCost =
+      currencies.size > 1
+        ? primaryCost
+        : sumNullable(
+            tx.map((t) => {
+              const fee =
+                t.fees === 0
+                  ? 0
+                  : averageCurrency === "BRL"
+                    ? t.fees
+                    : t.fx
+                      ? t.fees / t.fx
+                      : null;
+              return fee === null ? null : transactionCost(t) + fee;
+            }),
+          );
     const average = quantity
       ? currencies.size > 1
         ? primaryCost === null
@@ -473,6 +523,7 @@ export function positions(portfolio: Portfolio, market: Market) {
   });
 }
 export function totals(p: Portfolio, m: Market) {
+  p = trackedPortfolio(p);
   const rows = positions(p, m),
     missing = rows.filter((r) => r.quantity > 0 && r.value === null);
   const byGroup: Record<Group, number> = {
@@ -568,7 +619,7 @@ export function dayChange(p: Portfolio, m: Market) {
 }
 export function allocationPlan(p: Portfolio, m: Market, budget: number) {
   const t = totals(p, m);
-  if (t.missing.length || !(budget > 0)) return [];
+  if (t.missing.length || !Number.isFinite(budget) || !(budget > 0)) return [];
   const gaps = (Object.keys(GROUPS) as Group[]).map((group) => ({
     group,
     gap: Math.max(

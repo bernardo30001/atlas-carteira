@@ -28,6 +28,7 @@ import type { Portfolio, Market } from "../lib/model";
 import { costPerformance } from "../lib/cost-performance";
 import { CostReturnSummary, CostReturnMethod } from "./cost-return";
 import { hasHolding, purchasesForPoints } from "../lib/trade-history";
+import { purchaseLabelLayout } from "../lib/purchase-label-layout";
 import {
   PurchaseDot,
   PurchaseTooltipHeader,
@@ -77,6 +78,7 @@ export function PerformanceChart({
       "sp500",
       "cdi",
     ]);
+  const [chartSize, setChartSize] = useState({ width: 720, height: 288 });
   const simulation = useMemo(
     () =>
       simulateComposition(
@@ -114,6 +116,10 @@ export function PerformanceChart({
     last = points.at(-1),
     first = points[0],
     returnValue = mode === "cost" ? accumulated.returnPercent : last?.portfolio;
+  const labelLayout = useMemo(
+    () => purchaseLabelLayout(points, chartSize.width, chartSize.height),
+    [points, chartSize],
+  );
   const visiblePurchases = points.flatMap((point) => point.purchases);
   const shownReferences = mode === "cost" ? [] : references;
   const warnings =
@@ -160,11 +166,13 @@ export function PerformanceChart({
       scoped.fixedIncome.length > 0 ||
       (scoped.tradeHistory?.length ?? 0) > 0;
   const seriesName =
-    scope === "all"
-      ? mode === "simulation"
-        ? "Carteira simulada"
-        : "Minha carteira"
-      : scopeInfo.name;
+    mode === "cost" && accumulated.manualFixedCount > 0
+      ? "Ativos com cotação"
+      : scope === "all"
+        ? mode === "simulation"
+          ? "Carteira simulada"
+          : "Minha carteira"
+        : scopeInfo.name;
   const labels: Record<string, string> = {
     portfolio: seriesName,
     ...Object.fromEntries(references.map((r) => [r.key, r.name])),
@@ -454,7 +462,17 @@ export function PerformanceChart({
         )}
       <div className="performance-chart">
         {points.length > 0 ? (
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer
+            width="100%"
+            height="100%"
+            onResize={(width, height) =>
+              setChartSize((old) =>
+                old.width === width && old.height === height
+                  ? old
+                  : { width, height },
+              )
+            }
+          >
             <ComposedChart
               accessibilityLayer
               data={points}
@@ -476,7 +494,7 @@ export function PerformanceChart({
               </defs>
               <CartesianGrid
                 vertical={false}
-                stroke="var(--line)"
+                stroke="var(--chart-grid)"
                 strokeDasharray="3 5"
               />
               <ReferenceLine
@@ -492,7 +510,7 @@ export function PerformanceChart({
                 minTickGap={55}
                 axisLine={false}
                 tickLine={false}
-                tick={{ fontSize: "0.75rem", fill: "var(--muted)" }}
+                tick={{ fontSize: "0.75rem", fill: "var(--text-secondary)" }}
                 tickFormatter={(v) =>
                   new Date(v).toLocaleDateString("pt-BR", {
                     day: "2-digit",
@@ -504,7 +522,7 @@ export function PerformanceChart({
                 axisLine={false}
                 tickLine={false}
                 width={60}
-                tick={{ fontSize: "0.75rem", fill: "var(--muted)" }}
+                tick={{ fontSize: "0.75rem", fill: "var(--text-secondary)" }}
                 tickFormatter={(v) => `${num(Number(v), 2)}%`}
                 domain={axis.domain}
                 ticks={axis.ticks}
@@ -557,6 +575,7 @@ export function PerformanceChart({
                         <PurchaseDot
                           key={props.index}
                           {...props}
+                          labelPlacement={labelLayout[props.index]}
                           hidden={hidden}
                           fallback={points.length < 3}
                         />

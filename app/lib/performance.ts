@@ -1,5 +1,13 @@
 import { currentTicker, hasHolding } from "./trade-history.ts";
-import { assetOf, totals, type Portfolio, type Market } from "./model.ts";
+import {
+  assetOf,
+  totals,
+  trackedPortfolio,
+  isTrackedTicker,
+  usableQuote,
+  type Portfolio,
+  type Market,
+} from "./model.ts";
 export const PERFORMANCE_SCOPES = [
   {
     key: "all",
@@ -30,6 +38,7 @@ export function performancePortfolio(
   p: Portfolio,
   scope: PerformanceScope,
 ): Portfolio {
+  p = trackedPortfolio(p);
   if (scope === "all") return p;
   const matches = (record: { ticker: string; date: string }) => {
     const ticker = currentTicker(p, record.ticker, record.date),
@@ -87,6 +96,7 @@ export type PerformanceData = {
   startedAt: string;
   updatedAt: string;
   warnings: string[];
+  pendingScopes?: PerformanceScope[];
   error?: string;
 };
 export type ChartPoint = {
@@ -111,10 +121,10 @@ export const brDate = (d: Date) =>
 function priceBRL(p: Portfolio, ticker: string, m: Market): number | null {
   const a = assetOf(p, ticker),
     q = m.quotes[ticker];
-  if (!a || !q || q.stale) return null;
+  if (!a || !usableQuote(q) || q.currency !== a.currency) return null;
   if (a.currency === "BRL") return q.price;
   const fx = m.quotes.USD;
-  return fx && !fx.stale ? q.price * fx.price : null;
+  return usableQuote(fx) ? q.price * fx.price : null;
 }
 export function benchmarkLevels(m: Market): Benchmarks {
   const fx =
@@ -136,6 +146,11 @@ function captureSnapshot(
   revision: number,
   at: string,
 ) {
+  p = trackedPortfolio(p);
+  const changedUniverse = !!previous?.holdings.some(
+    (h) => !isTrackedTicker(h.ticker),
+  );
+  if (changedUniverse) previous = undefined;
   const t = totals(p, m);
   if (t.missing.length)
     throw new Error(
@@ -146,7 +161,11 @@ function captureSnapshot(
   let unitIndex = previous?.unitIndex ?? 100,
     flow = 0,
     income = 0;
-  const warnings: string[] = [];
+  const warnings: string[] = changedUniverse
+    ? [
+        "O acompanhamento registrado recomeçou após a exclusão de um ativo. As observações anteriores foram preservadas e não são ligadas à nova composição como ganho ou perda.",
+      ]
+    : [];
   if (previous) {
     let beforeChange = previous.fixed.reduce((s, r) => s + r.value, 0);
     for (const a of previous.holdings) {
@@ -254,14 +273,20 @@ export function recordedChart(
   now = Date.now(),
   scope: PerformanceScope = "all",
 ): ChartPoint[] {
-  const points = (data?.points ?? [])
+  if (data?.pendingScopes?.includes(scope)) return [];
+  const observations = (data?.points ?? [])
     .flatMap((p) => {
       if (scope === "all") return [p];
       const segment = p.segments?.[scope];
       return segment ? [{ ...p, ...segment }] : [];
     })
-    .filter((p) => Date.parse(p.time) >= now - days * 86400000)
     .sort((a, b) => a.time.localeCompare(b.time));
+  const latestBaseline = observations.findLast((p) => p.baseline)?.time;
+  const points = observations.filter(
+    (p) =>
+      Date.parse(p.time) >= now - days * 86400000 &&
+      (!latestBaseline || p.time >= latestBaseline),
+  );
   const first = points[0];
   if (!first || first.index <= 0) return [];
   const start = brDate(new Date(first.time));

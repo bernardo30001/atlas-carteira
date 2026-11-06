@@ -5,7 +5,13 @@ import { useMemo } from "react";
 import { percent, signedMoney, tone } from "../lib/format";
 import { costPerformance } from "../lib/cost-performance";
 import { realizedResults } from "../lib/trade-history";
-import { dayChange, totals, type Portfolio, type Market } from "../lib/model";
+import {
+  dayChange,
+  totals,
+  usableQuote,
+  type Portfolio,
+  type Market,
+} from "../lib/model";
 export function CurrencySummary({
   portfolio,
   market,
@@ -18,10 +24,7 @@ export function CurrencySummary({
   compact?: boolean;
 }) {
   const t = totals(portfolio, market),
-    fx =
-      market.quotes.USD && !market.quotes.USD.stale
-        ? market.quotes.USD
-        : undefined;
+    fx = usableQuote(market.quotes.USD) ? market.quotes.USD : undefined;
   const fmt = (v: number | null, c = "BRL") =>
     hidden ? "••••••" : v === null ? "Não informado" : money(v, c);
   const br = t.brazilStocks,
@@ -34,7 +37,9 @@ export function CurrencySummary({
     us = t.international,
     btc = t.rows.find((a) => a.ticker === "BTC")!,
     realized = realizedResults(portfolio),
-    sold = realized.BRL.count + realized.USD.count;
+    sold = realized.BRL.count + realized.USD.count,
+    manualBalance = portfolio.fixedIncome.reduce((sum, r) => sum + r.value, 0),
+    manualDate = portfolio.fixedIncome.map((r) => r.updatedAt).sort()[0];
   // A janela de 1 dia dispensa reconstruir a curva: aqui só importa o acumulado.
   const accumulated = useMemo(
       () => costPerformance(portfolio, market, "all", 1),
@@ -85,7 +90,7 @@ export function CurrencySummary({
               ? "Valor parcial · cotação ou câmbio pendente"
               : accumulated.excluded.length
                 ? `Resultado sem ${accumulated.excluded.length} ${accumulated.excluded.length === 1 ? "posição pendente" : "posições pendentes"} · detalhes no gráfico`
-                : "Posições + renda fixa · exterior convertido hoje"}
+                : "Inclui CDB, Bitcoin e exterior convertido hoje"}
           </div>
           <div className="wealth-decoration" />
         </section>
@@ -130,11 +135,44 @@ export function CurrencySummary({
             {us.missing ? "Cotação pendente" : fmt(us.value, "USD")}
           </div>
           <div className="stat-foot">
-            {fx ? (
+            {us.missing ? (
+              "Saldo parcial · cotação pendente"
+            ) : fx ? (
               <>≈ {fmt(us.value * fx.price)} ao câmbio atual</>
             ) : (
               "Conversão indisponível · saldo em US$ preservado"
             )}
+          </div>
+        </section>
+        <section className="stat-card">
+          <div className="stat-label">
+            CDB e títulos manuais <Landmark size={16} />
+          </div>
+          <div className="stat-value">{fmt(manualBalance)}</div>
+          <div className="stat-foot">
+            {manualDate
+              ? "Saldo de " +
+                new Date(manualDate + "T12:00:00Z").toLocaleDateString(
+                  "pt-BR",
+                ) +
+                " · incluído no total"
+              : "Nenhum título manual cadastrado"}
+          </div>
+        </section>
+        <section className="stat-card">
+          <div className="stat-label">
+            Bitcoin direto <Coins size={16} />
+          </div>
+          <div className="stat-value">
+            {btc.value === null ? "Cotação pendente" : fmt(btc.value)}
+          </div>
+          <div className="stat-foot">
+            {hidden
+              ? "Quantidade oculta"
+              : btc.quantity.toLocaleString("pt-BR", {
+                  maximumFractionDigits: 8,
+                }) + " BTC"}{" "}
+            · ABTC11 nos ETFs B3
           </div>
         </section>
       </div>

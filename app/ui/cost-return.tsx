@@ -44,6 +44,26 @@ export function CostReturnSummary({
           </div>
         </div>
       )}
+      {data.manualFixedCount > 0 && (
+        <div className="coverage-note" role="status">
+          <b>Curva somente dos ativos com cotação</b>
+          <span>
+            O resultado acumulado acima inclui a renda fixa com capital inicial
+            informado. A curva mostra os ativos cotados; o saldo manual do CDB
+            não tem histórico diário para entrar no gráfico.
+          </span>
+        </div>
+      )}
+      {data.partialHistoryCount > 0 && (
+        <div className="coverage-note partial" role="status">
+          <b>Histórico de compras parcial</b>
+          <span>
+            O acumulado considera todas as quantidades e os custos consolidados.
+            O gráfico combina as compras documentadas com estimativas das
+            parcelas sem datas. Os pontos mostram somente as compras conhecidas.
+          </span>
+        </div>
+      )}
       {data.excluded.length > 0 && (
         <div className="coverage-note partial" role="status">
           <b>
@@ -110,11 +130,13 @@ export function CostReturnMethod({
           avaliada e são identificadas como estimativas.
         </p>
         <p>
-          Com movimentações importadas, a curva usa as quantidades e os custos
-          disponíveis em cada data. Vendas parciais abatem o custo pelo preço
-          médio; posições e ciclos já encerrados não entram na carteira atual. O
-          resultado de vendas realizadas não se mistura ao rendimento da posição
-          que permanece em carteira.
+          Com movimentações importadas, a curva usa as operações documentadas e
+          preserva a posição consolidada. Se o extrato cobre apenas parte da
+          carteira, a parcela sem datas continua estimada pelo custo informado.
+          Vendas parciais abatem o custo pelo preço médio; posições e ciclos já
+          encerrados não entram na carteira atual. O resultado de vendas
+          realizadas não se mistura ao rendimento da posição que permanece em
+          carteira.
         </p>
         <p>
           Para posições sem movimentações, a curva usa o preço médio informado.

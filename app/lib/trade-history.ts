@@ -3,6 +3,7 @@ import {
   transactionCost,
   transactionCurrency,
   type CorporateAction,
+  isTrackedTicker,
   type Currency,
   type Income,
   type Portfolio,
@@ -358,9 +359,9 @@ export const hasHolding = (p: Portfolio) =>
 /** Movimentações do ciclo aberto de cada posição. Ciclos encerrados ficam fora. */
 export function datedTrades(p: Portfolio): TradeEvent[] {
   return ordered(
-    [...allTickers(p)].flatMap(
-      (ticker) => replayLedger(ledgerFor(p, ticker)).cycle,
-    ),
+    [...allTickers(p)]
+      .filter((ticker) => isTrackedTicker(ticker))
+      .flatMap((ticker) => replayLedger(ledgerFor(p, ticker)).cycle),
   );
 }
 
@@ -643,7 +644,8 @@ export function ledgerIssues(p: Portfolio): string[] {
   );
   return [...new Set((p.tradeHistory ?? []).map((e) => e.ticker))].filter(
     (ticker) => {
-      if (historical.has(ticker)) return false;
+      // Ativo fora do acompanhamento também não entra em nenhuma conta.
+      if (historical.has(ticker) || !isTrackedTicker(ticker)) return false;
       if (!replayLedger(ledgerFor(p, ticker)).oversold) return false;
       try {
         replayTrades((p.tradeHistory ?? []).filter((e) => e.ticker === ticker));

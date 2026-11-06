@@ -6,7 +6,7 @@ import {
   type PerformanceState,
   type RecordedPoint,
 } from "../../lib/performance";
-import type { Portfolio } from "../../lib/model";
+import { isTrackedTicker, type Portfolio } from "../../lib/model";
 function database() {
   if (!env.DB) throw new Error("Histórico indisponível");
   return env.DB;
@@ -39,11 +39,25 @@ async function history(userId: string, warnings: string[] = []) {
   const parsed: PerformanceState | undefined = state
     ? JSON.parse(state.payload)
     : undefined;
+  const pendingScopes = (["all", "us", "br", "btc"] as const).filter(
+    (scope) => {
+      const tracked = scope === "all" ? parsed : parsed?.segments?.[scope];
+      return tracked?.holdings.some((h) => !isTrackedTicker(h.ticker));
+    },
+  );
   return {
     points,
     startedAt: parsed?.startedAt ?? "",
     updatedAt: parsed?.capturedAt ?? "",
-    warnings,
+    pendingScopes,
+    warnings: [
+      ...warnings,
+      ...(pendingScopes.length
+        ? [
+            "O histórico da composição atual aguarda uma nova observação após a exclusão de um ativo. O retroativo por preço médio continua disponível.",
+          ]
+        : []),
+    ],
   };
 }
 export async function GET() {
@@ -129,7 +143,7 @@ export async function POST(request: Request) {
           (p) => p.baseline,
         ),
         id = point.baseline
-          ? user.userId + ":initial"
+          ? user.userId + ":initial:" + state.startedAt
           : segmentBaseline
             ? user.userId + ":segments:" + at
             : user.userId + ":" + bucket;

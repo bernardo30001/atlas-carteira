@@ -46,7 +46,11 @@ async function quote(ticker: string, symbol: string): Promise<Quote> {
       const data = (await r.json()) as any,
         result = data.chart?.result?.[0],
         meta = result?.meta;
-      if (!(meta?.regularMarketPrice > 0)) throw new Error("Sem cotação");
+      if (
+        !Number.isFinite(meta?.regularMarketPrice) ||
+        !(meta.regularMarketPrice > 0)
+      )
+        throw new Error("Sem cotação");
       const zone: string = meta.exchangeTimezoneName ?? "UTC";
       const closes =
         result.indicators?.adjclose?.[0]?.adjclose ??

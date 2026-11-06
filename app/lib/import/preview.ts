@@ -1,6 +1,7 @@
 // Monta a prévia da importação e aplica só o que você confirmar. Nada aqui grava.
 import {
   allAssets,
+  LEGACY_ASSETS,
   type Asset,
   type CorporateAction,
   type Income,
@@ -267,7 +268,10 @@ export async function buildPreview(
   importDate: string,
 ): Promise<ImportPreview> {
   const portfolio = migratePortfolio(current);
-  const known = new Set(allAssets(portfolio).map((a) => a.ticker));
+  // Ativos legados ficam fora das telas, mas o histórico deles continua importável.
+  const known = new Set(
+    [...allAssets(portfolio), ...LEGACY_ASSETS].map((a) => a.ticker),
+  );
   const existingKeys = new Set(
     [
       ...(portfolio.tradeHistory ?? []),
@@ -528,9 +532,9 @@ export async function buildPreview(
   // Cada ativo precisa fechar: uma venda não pode superar o saldo daquela data.
   const blocked = new Set<string>();
   const historical = new Set(
-    allAssets(portfolio)
-      .filter((a) => a.archived)
-      .map((a) => a.ticker),
+    [...allAssets(portfolio).filter((a) => a.archived), ...LEGACY_ASSETS].map(
+      (a) => a.ticker,
+    ),
   );
   const refreshed = withMatched(portfolio, preview.matched);
   const candidate = (rows: Row<ParsedTrade>[]): Portfolio => ({
@@ -761,9 +765,9 @@ function impactOf(before: Portfolio, after: Portfolio) {
     ),
   );
   const historical = new Set(
-    allAssets(after)
-      .filter((a) => a.archived)
-      .map((a) => a.ticker),
+    [...allAssets(after).filter((a) => a.archived), ...LEGACY_ASSETS].map(
+      (a) => a.ticker,
+    ),
   );
   return [...tickers].flatMap((ticker) => {
     if (historical.has(ticker)) return [];

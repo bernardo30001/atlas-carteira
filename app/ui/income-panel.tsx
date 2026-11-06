@@ -1,7 +1,7 @@
 "use client";
 import { money } from "../lib/format";
 import { Plus, Coins } from "lucide-react";
-import { assetOf, type Portfolio } from "../lib/model";
+import { assetOf, isTrackedTicker, type Portfolio } from "../lib/model";
 export function IncomePanel({
   portfolio,
   hidden,
@@ -31,7 +31,8 @@ export function IncomePanel({
           Registrar provento
         </button>
       </div>
-      {(portfolio.incomes ?? []).length ? (
+      {(portfolio.incomes ?? []).filter((i) => isTrackedTicker(i.ticker))
+        .length ? (
         <div className="table-wrap">
           <table>
             <thead>
@@ -43,39 +44,41 @@ export function IncomePanel({
               </tr>
             </thead>
             <tbody>
-              {(portfolio.incomes ?? []).map((i) => (
-                <tr key={i.id}>
-                  <td>
-                    <b>{i.ticker}</b>
-                    <small>{assetOf(portfolio, i.ticker)?.name}</small>
-                  </td>
-                  <td>
-                    <b>{hidden ? "••••••" : money(i.amount, i.currency)}</b>
-                  </td>
-                  <td>
-                    {i.kind === "opening"
-                      ? "Acumulado informado"
-                      : "Pagamento registrado"}
-                    <small>
-                      {new Date(i.date + "T12:00:00").toLocaleDateString(
-                        "pt-BR",
-                      )}{" "}
-                      · {hidden ? "Observação oculta" : i.note}
-                      {!hidden && i.withheldTax
-                        ? ` · ${money(i.withheldTax, i.currency)} retidos na fonte`
-                        : ""}
-                    </small>
-                  </td>
-                  <td>
-                    <button
-                      className="text-button negative"
-                      onClick={() => onDelete(i.id)}
-                    >
-                      Excluir
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {(portfolio.incomes ?? [])
+                .filter((i) => isTrackedTicker(i.ticker))
+                .map((i) => (
+                  <tr key={i.id}>
+                    <td>
+                      <b>{i.ticker}</b>
+                      <small>{assetOf(portfolio, i.ticker)?.name}</small>
+                    </td>
+                    <td>
+                      <b>{hidden ? "••••••" : money(i.amount, i.currency)}</b>
+                    </td>
+                    <td>
+                      {i.kind === "opening"
+                        ? "Acumulado informado"
+                        : "Pagamento registrado"}
+                      <small>
+                        {new Date(i.date + "T12:00:00").toLocaleDateString(
+                          "pt-BR",
+                        )}{" "}
+                        · {hidden ? "Observação oculta" : i.note}
+                        {!hidden && i.withheldTax
+                          ? ` · ${money(i.withheldTax, i.currency)} retidos na fonte`
+                          : ""}
+                      </small>
+                    </td>
+                    <td>
+                      <button
+                        className="text-button negative"
+                        onClick={() => onDelete(i.id)}
+                      >
+                        Excluir
+                      </button>
+                    </td>
+                  </tr>
+                ))}
             </tbody>
           </table>
         </div>

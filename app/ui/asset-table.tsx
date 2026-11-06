@@ -2,7 +2,13 @@
 import { Search, Plus, ArrowRight, Coins } from "lucide-react";
 import { money, num, plainPercent, signedMoney, tone } from "../lib/format";
 import { Change } from "./change";
-import { GROUPS, totals, type Portfolio, type Market } from "../lib/model";
+import {
+  GROUPS,
+  totals,
+  usableQuote,
+  type Portfolio,
+  type Market,
+} from "../lib/model";
 export function AssetTable({
   portfolio,
   market,
@@ -31,14 +37,12 @@ export function AssetTable({
   onPortfolio: () => void;
 }) {
   const t = totals(portfolio, market),
-    fx =
-      market.quotes.USD && !market.quotes.USD.stale
-        ? market.quotes.USD.price
-        : undefined;
+    fx = usableQuote(market.quotes.USD) ? market.quotes.USD.price : undefined;
   const hasFiis = t.rows.some((a) => a.segment === "fii" && !a.archived);
   const rows = t.rows.filter(
     (a) =>
       !a.archived &&
+      (full || a.quantity > 0) &&
       (filter === "all" ||
         (filter === "brazil" && a.currency === "BRL") ||
         (filter === "fii" && a.segment === "fii") ||
@@ -48,10 +52,7 @@ export function AssetTable({
       (!query ||
         `${a.ticker} ${a.name}`.toLowerCase().includes(query.toLowerCase())),
   );
-  // A prévia mostra primeiro o que você tem, do maior para o menor saldo.
-  const shown = full
-    ? rows
-    : [...rows].sort((a, b) => (b.value ?? 0) - (a.value ?? 0)).slice(0, 5);
+  const shown = rows;
   const segments = [
     {
       id: "stocks",
@@ -93,13 +94,13 @@ export function AssetTable({
       <div className="panel-title">
         <div>
           <h2>
-            {full ? "Seus ativos" : "Ativos no radar"}{" "}
+            {full ? "Seus ativos" : "Minha carteira"}{" "}
             <span className="count">{rows.length}</span>
           </h2>
           <p>
             {full
               ? "Custos, proventos e resultados preservados na moeda de cada posição."
-              : "Ações, ETFs, renda fixa em bolsa e criptomoedas."}
+              : "Todos os ativos em carteira, com suas quantidades e saldos."}
           </p>
         </div>
         {full ? (
@@ -202,6 +203,12 @@ export function AssetTable({
                     ) : (
                       <>
                         <th role="columnheader" scope="col">
+                          Quantidade
+                        </th>
+                        <th role="columnheader" scope="col">
+                          Saldo atual
+                        </th>
+                        <th role="columnheader" scope="col">
                           Variação do dia
                         </th>
                         <th role="columnheader" scope="col">
@@ -217,13 +224,14 @@ export function AssetTable({
                 </thead>
                 <tbody role="rowgroup">
                   {segment.rows.map((a) => {
-                    const quotePrimary = a.quote
-                      ? a.ticker === "BTC"
-                        ? fx
-                          ? a.quote.price * fx
-                          : null
-                        : a.quote.price
-                      : null;
+                    const validQuote = usableQuote(a.quote),
+                      quotePrimary = validQuote
+                        ? a.ticker === "BTC"
+                          ? fx
+                            ? a.quote.price * fx
+                            : null
+                          : a.quote.price
+                        : null;
                     return (
                       <tr role="row" key={a.ticker}>
                         <td role="cell" className="sticky-asset">
@@ -360,8 +368,27 @@ export function AssetTable({
                           </>
                         ) : (
                           <>
+                            <td role="cell" data-label="Quantidade">
+                              {hidden ? "•••" : num(a.quantity, 8)}
+                            </td>
+                            <td role="cell" data-label="Saldo atual">
+                              <b>
+                                {a.primaryValue === null
+                                  ? "Cotação pendente"
+                                  : fmt(a.primaryValue, a.primaryCurrency)}
+                              </b>
+                              {a.primaryCurrency === "USD" && (
+                                <small>
+                                  {a.value === null
+                                    ? "Conversão pendente"
+                                    : "≈ " + fmt(a.value)}
+                                </small>
+                              )}
+                            </td>
                             <td role="cell" data-label="Variação do dia">
-                              <Change value={a.quote?.change} />
+                              <Change
+                                value={validQuote ? a.quote?.change : undefined}
+                              />
                             </td>
                             <td role="cell" data-label="Volatilidade anual">
                               {a.quote?.volatility != null
@@ -394,15 +421,21 @@ export function AssetTable({
       </>
       {!rows.length && (
         <div className="empty">
-          <h3>Nenhum ativo encontrado</h3>
-          <p>Altere a categoria ou a busca.</p>
+          <h3>
+            {full ? "Nenhum ativo encontrado" : "Nenhuma posição neste filtro"}
+          </h3>
+          <p>
+            {full
+              ? "Altere a categoria ou a busca."
+              : "Altere os filtros ou cadastre uma posição na carteira completa."}
+          </p>
         </div>
       )}
       <div className="panel-foot">
         {!full && (
           <span>
-            Exibindo {shown.length} de {rows.length} ativos. Use a busca ou abra
-            a carteira completa.
+            {shown.length} posições exibidas. Abra a carteira completa para
+            consultar custos e proventos.
           </span>
         )}
         <span>

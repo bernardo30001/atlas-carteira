@@ -38,6 +38,8 @@ export type CostPerformance = {
   points: ChartPoint[];
   warnings: string[];
   datedPositionCount: number;
+  partialHistoryCount: number;
+  manualFixedCount: number;
 };
 const add = (values: (number | null)[]) =>
   values.some((v) => v === null)
@@ -164,6 +166,11 @@ export function costPerformance(
     includedCount++;
   }
   const result = value - cost + income;
+  // Histórico parcial: há compras datadas, mas parte da posição segue sem datas.
+  const partialHistoryCount = included.filter((row) => {
+    const ledger = ledgers.get(row.ticker)!;
+    return ledger.dated && ledger.baseline.length > 0;
+  }).length;
   const response: CostPerformance = {
     currency,
     cost,
@@ -178,6 +185,9 @@ export function costPerformance(
     points: [],
     warnings,
     datedPositionCount: included.filter((row) => ledgers.get(row.ticker)!.dated)
+      .length,
+    partialHistoryCount,
+    manualFixedCount: p.fixedIncome.filter((r) => r.cost !== null && r.cost > 0)
       .length,
   };
   if (estimatedFX)
@@ -269,9 +279,15 @@ export function costPerformance(
   }
   if (response.datedPositionCount)
     warnings.push(
-      "O extrato fornece compras e vendas do ciclo ainda aberto de " +
+      "As movimentações documentadas de " +
         response.datedPositionCount +
-        " posições. Cada compra entra na data informada; vendas reduzem a quantidade e o custo pelo preço médio, sem somar o valor da venda ao capital investido. Ciclos encerrados ficam fora da carteira atual.",
+        " posições entram nas datas informadas. Vendas reduzem quantidade e custo pelo preço médio. O extrato de operações não substitui a posição consolidada. Ciclos encerrados ficam fora da carteira atual.",
+    );
+  if (partialHistoryCount)
+    warnings.push(
+      "Histórico parcial em " +
+        partialHistoryCount +
+        " posições: quantidades e custos consolidados são preservados. Parcelas sem datas são estimadas pelo custo informado, sem criar pontos de compra. Ajustes de custo sem quantidade adicional entram na data de referência do cadastro.",
     );
   if (included.some((row) => ledgers.get(row.ticker)!.baseline.length > 0))
     warnings.push(

@@ -2,6 +2,8 @@ import { z } from "zod";
 import {
   allAssets,
   ASSETS,
+  KNOWN_ASSETS,
+  LEGACY_ASSETS,
   today,
   wholeUnits,
   type Portfolio,
@@ -56,6 +58,13 @@ const reportTotals = z.object({
   cost: amount,
   dividends: amount,
   result: signed,
+});
+const earningsScenario = z.object({
+  growth: signed.min(-20).max(30),
+  discountRate: amount.min(5).max(40),
+  terminalPE: amount.min(2).max(50),
+  payout: amount.max(100),
+  years: z.number().int().min(1).max(10),
 });
 const tradeEvent = z.object({
   id: z.string().uuid(),
@@ -180,6 +189,44 @@ export const portfolioSchema = z
     schemaVersion: z.number().int().positive().optional(),
     customAssets: z.array(customAsset).max(200).optional(),
     corporateActions: z.array(corporateAction).max(1000).optional(),
+    evaluation: z
+      .object({
+        baseWeights: z
+          .record(amount.max(100))
+          .refine(
+            (w) =>
+              Object.keys(w).every((t) =>
+                KNOWN_ASSETS.some((a) => a.ticker === t && a.group === "br"),
+              ) &&
+              ASSETS.some((a) => a.group === "br" && (w[a.ticker] ?? 0) > 0),
+            "Informe pesos válidos para as ações brasileiras.",
+          ),
+        margin: amount.min(5).max(50),
+        maxIssuerWeight: amount.min(5).max(50),
+        maxSectorWeight: amount.min(10).max(100),
+        scenario: earningsScenario.optional(),
+        overrides: z
+          .record(
+            z.object({
+              referencePrice: amount.positive().nullable(),
+              thesis: z.enum(["unreviewed", "intact", "review", "broken"]),
+              note: z.string().max(1000),
+              updatedAt: date,
+              method: z
+                .enum(["auto", "peers", "scenario", "manual"])
+                .optional(),
+              scenario: earningsScenario.optional(),
+            }),
+          )
+          .refine(
+            (w) =>
+              Object.keys(w).every((t) =>
+                KNOWN_ASSETS.some((a) => a.ticker === t && a.group === "br"),
+              ),
+            "Ativo inválido na avaliação",
+          ),
+      })
+      .optional(),
   })
   .superRefine((p, c) => {
     const ids = [
@@ -194,7 +241,9 @@ export const portfolioSchema = z
     if (new Set(history.map((e) => e.id)).size !== history.length)
       c.addIssue({ code: "custom", message: "Movimentações duplicadas" });
     const portfolio = p as Portfolio,
-      known = new Map(allAssets(portfolio).map((a) => [a.ticker, a]));
+      known = new Map(
+        [...allAssets(portfolio), ...LEGACY_ASSETS].map((a) => [a.ticker, a]),
+      );
     const issue = (message: string) => c.addIssue({ code: "custom", message });
     const custom = p.customAssets ?? [];
     if (new Set(custom.map((a) => a.ticker)).size !== custom.length)

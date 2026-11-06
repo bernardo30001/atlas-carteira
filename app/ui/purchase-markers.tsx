@@ -1,4 +1,5 @@
 import type { TradeEvent } from "../lib/model";
+import type { PurchaseLabelPlacement } from "../lib/purchase-label-layout";
 const quantity = (value: number) =>
   value.toLocaleString("pt-BR", { maximumFractionDigits: 8 });
 const money = (value: number, currency: string) =>
@@ -14,12 +15,14 @@ export function PurchaseDot({
   payload,
   hidden,
   fallback,
+  labelPlacement,
 }: {
   cx?: number;
   cy?: number;
   payload?: { purchases?: TradeEvent[] };
   hidden: boolean;
   fallback: boolean;
+  labelPlacement?: PurchaseLabelPlacement;
 }) {
   if (cx === undefined || cy === undefined) return <g />;
   const purchases = payload?.purchases ?? [];
@@ -30,6 +33,13 @@ export function PurchaseDot({
       <g />
     );
   const label = purchases.map((e) => description(e, hidden)).join("\n");
+  const placement = labelPlacement ?? {
+    dx: 0,
+    dy: cy < 38 ? 13 : -32,
+    width: Math.max(24, String(purchases.length).length * 7.5 + 10),
+  };
+  const x = cx + placement.dx,
+    y = cy + placement.dy;
   return (
     <g
       tabIndex={0}
@@ -38,27 +48,49 @@ export function PurchaseDot({
       className="purchase-dot"
     >
       <title>{label}</title>
+      {purchases.length > 1 && (
+        <g
+          className="purchase-count-badge"
+          aria-hidden="true"
+          pointerEvents="none"
+        >
+          <line
+            x1={cx}
+            y1={cy}
+            x2={x}
+            y2={placement.dy < 0 ? y + 19 : y}
+            stroke="var(--purchase-label-border)"
+            strokeWidth={1}
+          />
+          <rect
+            x={x - placement.width / 2}
+            y={y}
+            width={placement.width}
+            height={19}
+            rx={4}
+            fill="var(--purchase-label-bg)"
+            stroke="var(--purchase-label-border)"
+          />
+          <text
+            x={x}
+            y={y + 13.5}
+            textAnchor="middle"
+            fill="var(--purchase-label-text)"
+            fontSize={12.5}
+            fontWeight={750}
+          >
+            {purchases.length}
+          </text>
+        </g>
+      )}
       <circle
         cx={cx}
         cy={cy}
         r={6}
-        fill="var(--chart-bitcoin)"
-        stroke="var(--surface)"
+        fill="var(--purchase-marker)"
+        stroke="var(--purchase-marker-border)"
         strokeWidth={2}
       />
-      {purchases.length > 1 && (
-        <text
-          x={cx}
-          y={cy - 10}
-          textAnchor="middle"
-          fill="var(--warn-text)"
-          fontSize={11}
-          fontWeight={700}
-          aria-hidden="true"
-        >
-          {purchases.length}
-        </text>
-      )}
     </g>
   );
 }

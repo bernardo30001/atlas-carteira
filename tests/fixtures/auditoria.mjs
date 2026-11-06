@@ -57,7 +57,7 @@ export const quote = (ticker, price, extra = {}) => ({
   price,
   previous: price,
   change: 0,
-  currency: "BRL",
+  currency: assetOf(ticker).currency,
   time: 1793000000,
   source: "fixture",
   delay: null,
