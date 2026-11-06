@@ -33,10 +33,10 @@ import {
   PurchaseTable,
 } from "./purchase-markers";
 const references: { key: BenchmarkKey; name: string; color: string }[] = [
-  { key: "ibov", name: "Ibovespa", color: "#3d7180" },
-  { key: "sp500", name: "S&P 500 em R$", color: "#78609d" },
-  { key: "cdi", name: "CDI", color: "#887229" },
-  { key: "bitcoin", name: "Bitcoin em R$", color: "#9d6219" },
+  { key: "ibov", name: "Ibovespa", color: "var(--chart-ibov)" },
+  { key: "sp500", name: "S&P 500 em R$", color: "var(--chart-sp500)" },
+  { key: "cdi", name: "CDI", color: "var(--chart-cdi)" },
+  { key: "bitcoin", name: "Bitcoin em R$", color: "var(--chart-bitcoin)" },
 ];
 const pct = (v: number | undefined) => (v === undefined ? "—" : percent(v));
 const date = (d: string) =>
@@ -376,7 +376,7 @@ export function PerformanceChart({
         }
       >
         <span>
-          <i style={{ background: "#26775d" }} />
+          <i style={{ background: "var(--chart-line)" }} />
           {seriesName}
         </span>
         {shownReferences.map((r) => (
@@ -462,16 +462,28 @@ export function PerformanceChart({
             >
               <defs>
                 <linearGradient id="portfolioFill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#26775d" stopOpacity={0.15} />
-                  <stop offset="100%" stopColor="#26775d" stopOpacity={0.015} />
+                  <stop
+                    offset="0%"
+                    stopColor="var(--chart-line)"
+                    stopOpacity={0.15}
+                  />
+                  <stop
+                    offset="100%"
+                    stopColor="var(--chart-line)"
+                    stopOpacity={0.015}
+                  />
                 </linearGradient>
               </defs>
               <CartesianGrid
                 vertical={false}
-                stroke="#dce5d5"
+                stroke="var(--line)"
                 strokeDasharray="3 5"
               />
-              <ReferenceLine y={0} stroke="#75866b" strokeDasharray="4 4" />
+              <ReferenceLine
+                y={0}
+                stroke="var(--chart-axis)"
+                strokeDasharray="4 4"
+              />
               <XAxis
                 dataKey="time"
                 type="number"
@@ -480,7 +492,7 @@ export function PerformanceChart({
                 minTickGap={55}
                 axisLine={false}
                 tickLine={false}
-                tick={{ fontSize: "0.75rem", fill: "#53654b" }}
+                tick={{ fontSize: "0.75rem", fill: "var(--muted)" }}
                 tickFormatter={(v) =>
                   new Date(v).toLocaleDateString("pt-BR", {
                     day: "2-digit",
@@ -492,7 +504,7 @@ export function PerformanceChart({
                 axisLine={false}
                 tickLine={false}
                 width={60}
-                tick={{ fontSize: "0.75rem", fill: "#53654b" }}
+                tick={{ fontSize: "0.75rem", fill: "var(--muted)" }}
                 tickFormatter={(v) =>
                   `${Number(v).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`
                 }
@@ -504,10 +516,11 @@ export function PerformanceChart({
               <Tooltip
                 contentStyle={{
                   borderRadius: 9,
-                  border: "1px solid #75866b",
+                  border: "1px solid var(--line-strong)",
+                  background: "var(--surface)",
                   fontSize: "0.875rem",
-                  color: "#253831",
-                  boxShadow: "0 8px 24px #293d3210",
+                  color: "var(--ink)",
+                  boxShadow: "0 8px 24px var(--shadow-soft)",
                 }}
                 labelFormatter={(v, items) => (
                   <PurchaseTooltipHeader
@@ -539,7 +552,7 @@ export function PerformanceChart({
               <Area
                 dataKey="portfolio"
                 type="linear"
-                stroke="#26775d"
+                stroke="var(--chart-line)"
                 fill="url(#portfolioFill)"
                 strokeWidth={2.6}
                 dot={

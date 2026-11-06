@@ -970,7 +970,7 @@ export default function Dashboard() {
                       <div
                         className="donut"
                         style={{
-                          background: `conic-gradient(${t.missing.length ? "#e7ebe5 0% 100%" : donutSegments})`,
+                          background: `conic-gradient(${t.missing.length ? "var(--surface-4) 0% 100%" : donutSegments})`,
                         }}
                       >
                         <div>

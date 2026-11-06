@@ -24,7 +24,11 @@ export function PurchaseDot({
   if (cx === undefined || cy === undefined) return <g />;
   const purchases = payload?.purchases ?? [];
   if (!purchases.length)
-    return fallback ? <circle cx={cx} cy={cy} r={4} fill="#26775d" /> : <g />;
+    return fallback ? (
+      <circle cx={cx} cy={cy} r={4} fill="var(--chart-line)" />
+    ) : (
+      <g />
+    );
   const label = purchases.map((e) => description(e, hidden)).join("\n");
   return (
     <g
@@ -38,8 +42,8 @@ export function PurchaseDot({
         cx={cx}
         cy={cy}
         r={6}
-        fill="#ac7420"
-        stroke="#fff"
+        fill="var(--chart-bitcoin)"
+        stroke="var(--surface)"
         strokeWidth={2}
       />
       {purchases.length > 1 && (
@@ -47,7 +51,7 @@ export function PurchaseDot({
           x={cx}
           y={cy - 10}
           textAnchor="middle"
-          fill="#6c501b"
+          fill="var(--warn-text)"
           fontSize={11}
           fontWeight={700}
           aria-hidden="true"

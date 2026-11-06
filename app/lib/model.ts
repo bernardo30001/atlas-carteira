@@ -15,10 +15,18 @@ export const GROUPS: Record<
   Group,
   { name: string; short: string; color: string }
 > = {
-  br: { name: "Ações brasileiras", short: "Brasil", color: "#1f7761" },
-  rf: { name: "Renda fixa", short: "Renda fixa", color: "#b7c9b2" },
-  etf: { name: "ETFs internacionais", short: "Exterior", color: "#577ca3" },
-  crypto: { name: "Criptomoedas", short: "Cripto", color: "#d7a65d" },
+  br: { name: "Ações brasileiras", short: "Brasil", color: "var(--group-br)" },
+  rf: { name: "Renda fixa", short: "Renda fixa", color: "var(--group-rf)" },
+  etf: {
+    name: "ETFs internacionais",
+    short: "Exterior",
+    color: "var(--group-etf)",
+  },
+  crypto: {
+    name: "Criptomoedas",
+    short: "Cripto",
+    color: "var(--group-crypto)",
+  },
 };
 export const ASSETS: Asset[] = (
   [
