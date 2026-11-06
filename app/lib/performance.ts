@@ -350,8 +350,8 @@ export function simulateComposition(
   for (const r of p.fixedIncome)
     if (!modeledFixed.some((x) => x.id === r.id)) excluded.push(r.name);
   const series = new Map<string, Map<string, number>>();
-  let start = new Date(now - days * 86400000).toISOString().slice(0, 10),
-    end = new Date(now).toISOString().slice(0, 10);
+  let start = brDate(new Date(now - days * 86400000)),
+    end = brDate(new Date(now));
   const include = (key: string) => {
     const h = m.quotes[key]!.history;
     series.set(key, new Map(h.map((x) => [x.date, x.close])));
@@ -509,7 +509,7 @@ export function simulateComposition(
         excluded.join(", ") +
         ".",
     );
-  const requested = new Date(now - days * 86400000).toISOString().slice(0, 10);
+  const requested = brDate(new Date(now - days * 86400000));
   if (initial.date > requested)
     warnings.push(
       "O período começa em " +
