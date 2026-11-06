@@ -6241,3 +6241,87 @@ table,
     display: none;
   }
 }
+
+/* Celular: cada ativo vira um cartão com os números à vista (D-6). */
+@media (max-width: 760px) {
+  .table-scroll-hint {
+    display: none;
+  }
+  .asset-segment .table-wrap {
+    overflow: visible;
+  }
+  .asset-table,
+  .asset-table tbody {
+    display: block;
+    width: 100%;
+    min-width: 0;
+  }
+  .asset-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .asset-table tr {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem 1rem;
+    padding: 1rem;
+    border-bottom: 1px solid var(--line);
+  }
+  .asset-table td,
+  .asset-segment .asset-table .sticky-asset {
+    display: block;
+    position: static;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    white-space: normal;
+  }
+  .asset-table td::before {
+    content: attr(data-label);
+    display: block;
+    color: var(--muted);
+    font-size: 0.75rem;
+    font-weight: 500;
+    margin-bottom: 0.125rem;
+  }
+  .asset-table td.sticky-asset,
+  .asset-segment .asset-table .sticky-asset {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .asset-table td.sticky-asset::before,
+  .asset-table td.asset-action::before {
+    content: none;
+  }
+  .asset-table td.asset-action {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+  }
+
+  /* Faixa de mercado rolável, com indicação de que há mais conteúdo (D-11). */
+  .market-strip {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-right: 2.5rem;
+    scrollbar-width: none;
+    mask-image: linear-gradient(to right, #000 calc(100% - 2rem), transparent);
+  }
+  .market-strip > * {
+    flex: 0 0 auto;
+  }
+  .notice {
+    flex-wrap: wrap;
+  }
+  .notice > span {
+    flex: 1 1 100%;
+  }
+}
+.button {
+  min-height: 2.75rem;
+}

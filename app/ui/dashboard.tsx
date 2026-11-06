@@ -219,7 +219,9 @@ export default function Dashboard() {
   const navigate = (id: string) => {
     setPage(id);
     setMobile(false);
-    setFilter("all");
+    setFilter(
+      id === "portfolio" && t.rows.some((r) => r.quantity > 0) ? "held" : "all",
+    );
     setQuery("");
     window.scrollTo({
       top: 0,

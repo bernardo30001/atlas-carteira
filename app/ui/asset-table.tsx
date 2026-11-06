@@ -45,7 +45,10 @@ export function AssetTable({
       (!query ||
         `${a.ticker} ${a.name}`.toLowerCase().includes(query.toLowerCase())),
   );
-  const shown = full ? rows : rows.slice(0, 5);
+  // A prévia mostra primeiro o que você tem, do maior para o menor saldo.
+  const shown = full
+    ? rows
+    : [...rows].sort((a, b) => (b.value ?? 0) - (a.value ?? 0)).slice(0, 5);
   const segments = [
     {
       id: "stocks",
@@ -146,7 +149,7 @@ export function AssetTable({
               <span>{segment.text}</span>
             </div>
             <p className="table-scroll-hint">
-              Deslize para ver todas as colunas. O ativo permanece à esquerda.
+              Deslize para ver todas as colunas.
             </p>
             <div
               className="table-wrap"
@@ -154,30 +157,53 @@ export function AssetTable({
               role="region"
               aria-label={segment.title + " · tabela com rolagem horizontal"}
             >
-              <table className={full ? "portfolio-table" : ""}>
-                <thead>
-                  <tr>
-                    <th scope="col">Ativo / Classe</th>
-                    <th>Cotação</th>
+              <table
+                role="table"
+                className={"asset-table " + (full ? "portfolio-table" : "")}
+              >
+                <thead role="rowgroup">
+                  <tr role="row">
+                    <th role="columnheader" scope="col">
+                      Ativo / Classe
+                    </th>
+                    <th role="columnheader" scope="col">
+                      Cotação
+                    </th>
                     {full ? (
                       <>
-                        <th>Quantidade / PM</th>
-                        <th>Investido</th>
-                        <th>Proventos</th>
-                        <th>Saldo atual</th>
-                        <th>Resultado c/ proventos</th>
+                        <th role="columnheader" scope="col">
+                          Quantidade / PM
+                        </th>
+                        <th role="columnheader" scope="col">
+                          Investido
+                        </th>
+                        <th role="columnheader" scope="col">
+                          Proventos
+                        </th>
+                        <th role="columnheader" scope="col">
+                          Saldo atual
+                        </th>
+                        <th role="columnheader" scope="col">
+                          Resultado c/ proventos
+                        </th>
                       </>
                     ) : (
                       <>
-                        <th>Variação do dia</th>
-                        <th>Volatilidade anual</th>
-                        <th>Tendência 6 meses</th>
+                        <th role="columnheader" scope="col">
+                          Variação do dia
+                        </th>
+                        <th role="columnheader" scope="col">
+                          Volatilidade anual
+                        </th>
+                        <th role="columnheader" scope="col">
+                          Tendência 6 meses
+                        </th>
                       </>
                     )}
-                    <th aria-label="Ações" />
+                    <th role="columnheader" scope="col" aria-label="Ações" />
                   </tr>
                 </thead>
-                <tbody>
+                <tbody role="rowgroup">
                   {segment.rows.map((a) => {
                     const quotePrimary = a.quote
                       ? a.ticker === "BTC"
@@ -187,8 +213,8 @@ export function AssetTable({
                         : a.quote.price
                       : null;
                     return (
-                      <tr key={a.ticker}>
-                        <td className="sticky-asset">
+                      <tr role="row" key={a.ticker}>
+                        <td role="cell" className="sticky-asset">
                           <button
                             className="asset-name"
                             onClick={() => onAsset(a.ticker)}
@@ -216,7 +242,7 @@ export function AssetTable({
                             </span>
                           </button>
                         </td>
-                        <td>
+                        <td role="cell" data-label="Cotação">
                           <b>
                             {quotePrimary === null
                               ? "Cotação pendente"
@@ -255,13 +281,13 @@ export function AssetTable({
                         </td>
                         {full ? (
                           <>
-                            <td>
+                            <td role="cell" data-label="Quantidade / PM">
                               <b>{hidden ? "•••" : num(a.quantity, 8)}</b>
                               <small>
                                 PM {fmt(a.average, a.averageCurrency)}
                               </small>
                             </td>
-                            <td>
+                            <td role="cell" data-label="Investido">
                               <b>{fmt(a.primaryCost, a.primaryCurrency)}</b>
                               {a.currency === "USD" &&
                                 a.ticker !== "BTC" &&
@@ -276,8 +302,10 @@ export function AssetTable({
                                 <small>Taxa convertida pelo câmbio atual</small>
                               )}
                             </td>
-                            <td>{fmt(a.nativeIncome, a.primaryCurrency)}</td>
-                            <td>
+                            <td role="cell" data-label="Proventos">
+                              {fmt(a.nativeIncome, a.primaryCurrency)}
+                            </td>
+                            <td role="cell" data-label="Saldo atual">
                               <b>
                                 {a.primaryValue === null
                                   ? "Cotação pendente"
@@ -299,7 +327,7 @@ export function AssetTable({
                                     : "Peso pendente"}
                               </small>
                             </td>
-                            <td>
+                            <td role="cell" data-label="Resultado c/ proventos">
                               <b
                                 className={
                                   a.result !== null && a.result < 0
@@ -324,20 +352,20 @@ export function AssetTable({
                           </>
                         ) : (
                           <>
-                            <td>
+                            <td role="cell" data-label="Variação do dia">
                               <Change value={a.quote?.change} />
                             </td>
-                            <td>
+                            <td role="cell" data-label="Volatilidade anual">
                               {a.quote?.volatility != null
                                 ? plainPercent(a.quote.volatility)
                                 : "—"}
                             </td>
-                            <td>
+                            <td role="cell" data-label="Tendência 6 meses">
                               <Change value={a.quote?.momentum} />
                             </td>
                           </>
                         )}
-                        <td>
+                        <td role="cell" className="asset-action">
                           <button
                             className="icon-button"
                             title={`Registrar ${a.ticker}`}
