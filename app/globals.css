@@ -6110,3 +6110,7 @@ textarea::placeholder {
     max-width: 17rem;
   }
 }
+
+.neutral {
+  color: var(--muted);
+}

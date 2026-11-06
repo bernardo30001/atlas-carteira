@@ -6,6 +6,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { registerHooks } from "node:module";
 import { assetPlan, positions, totals } from "../app/lib/model.ts";
+import { percent, tone } from "../app/lib/format.ts";
 import {
   cdiFactor,
   recordedChart,
@@ -352,11 +353,13 @@ test("M5 simulação não termina em data futura às 22h de Brasília", () => {
 });
 
 test("M6 percentual arredondado a zero não exibe sinal", () => {
-  // Cópia de dashboard.tsx até existir um formatador compartilhado.
-  const num = (n) =>
-    new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 2 }).format(n);
-  const percent = (n) => `${n >= 0 ? "+" : ""}${num(n)}%`;
-  assert.equal(percent(-0.001), "0%");
+  assert.equal(percent(-0.001), "0,00%");
+  assert.equal(percent(1.5), "+1,50%");
+  assert.equal(percent(-1.5), "-1,50%");
+  assert.equal(tone(-0.001), "neutral");
+  assert.equal(tone(0), "neutral");
+  assert.equal(tone(0.01), "positive");
+  assert.equal(tone(-0.01), "negative");
 });
 
 test("M7 cotação antiga é identificada", () => {

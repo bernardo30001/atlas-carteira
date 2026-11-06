@@ -1,8 +1,7 @@
 "use client";
+import { money } from "../lib/format";
 import { FileCheck2, Info } from "lucide-react";
 import { ASSETS, type Portfolio } from "../lib/model";
-const money = (v: number, c = "BRL") =>
-  new Intl.NumberFormat("pt-BR", { style: "currency", currency: c }).format(v);
 export function StatementPanel({
   portfolio,
   hidden,

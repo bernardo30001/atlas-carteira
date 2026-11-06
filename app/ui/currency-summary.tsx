@@ -1,4 +1,5 @@
 "use client";
+import { money } from "../lib/format";
 import {
   Wallet,
   Globe2,
@@ -8,8 +9,6 @@ import {
   Info,
 } from "lucide-react";
 import { totals, type Portfolio, type Market } from "../lib/model";
-const money = (v: number, currency = "BRL") =>
-  new Intl.NumberFormat("pt-BR", { style: "currency", currency }).format(v);
 export function CurrencySummary({
   portfolio,
   market,

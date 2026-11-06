@@ -1,5 +1,6 @@
 "use client";
 import { useMemo, useState } from "react";
+import { fixed, percent } from "../lib/format";
 import {
   ResponsiveContainer,
   ComposedChart,
@@ -37,13 +38,7 @@ const references: { key: BenchmarkKey; name: string; color: string }[] = [
   { key: "cdi", name: "CDI", color: "#887229" },
   { key: "bitcoin", name: "Bitcoin em R$", color: "#9d6219" },
 ];
-const number = (v: number) =>
-  v.toLocaleString("pt-BR", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-const pct = (v: number | undefined) =>
-  v === undefined ? "—" : `${v >= 0 ? "+" : ""}${number(v)}%`;
+const pct = (v: number | undefined) => (v === undefined ? "—" : percent(v));
 const date = (d: string) =>
   new Date(d + "T12:00:00Z").toLocaleDateString("pt-BR");
 type Props = {
@@ -300,7 +295,7 @@ export function PerformanceChart({
           role="status"
         >
           <b>
-            {number(simulation.coverage)}%{" "}
+            {fixed(simulation.coverage)}%{" "}
             {scope === "all" ? "do patrimônio" : "do grupo selecionado"}{" "}
             incluído
           </b>
@@ -652,7 +647,7 @@ export function PerformanceChart({
                     ? "Sem dado comum no período"
                     : hidden
                       ? "Comparação pessoal oculta"
-                      : `${scopeInfo.name}: ${gap >= 0 ? "+" : ""}${number(gap)} p.p.`}
+                      : `${scopeInfo.name}: ${percent(gap).replace("%", "")} p.p.`}
                 </small>
               </div>
             );

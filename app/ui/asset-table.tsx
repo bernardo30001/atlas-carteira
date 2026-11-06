@@ -7,6 +7,8 @@ import {
   ArrowDownRight,
   Coins,
 } from "lucide-react";
+import { money, num, plainPercent, tone } from "../lib/format";
+import { Change } from "./change";
 import {
   ASSETS,
   GROUPS,
@@ -14,21 +16,6 @@ import {
   type Portfolio,
   type Market,
 } from "../lib/model";
-const money = (v: number, c = "BRL") =>
-  new Intl.NumberFormat("pt-BR", { style: "currency", currency: c }).format(v);
-const num = (v: number, d = 2) =>
-  new Intl.NumberFormat("pt-BR", { maximumFractionDigits: d }).format(v);
-function Change({ v }: { v: number | null | undefined }) {
-  return v == null ? (
-    <span className="muted">—</span>
-  ) : (
-    <span className={v < 0 ? "change negative" : "change positive"}>
-      {v < 0 ? <ArrowDownRight size={13} /> : <ArrowUpRight size={13} />}{" "}
-      {v >= 0 ? "+" : ""}
-      {num(v)}%
-    </span>
-  );
-}
 export function AssetTable({
   portfolio,
   market,
@@ -342,7 +329,7 @@ export function AssetTable({
                                   "•••"
                                 ) : a.primaryCost && a.result !== null ? (
                                   <Change
-                                    v={(a.result / a.primaryCost) * 100}
+                                    value={(a.result / a.primaryCost) * 100}
                                   />
                                 ) : null}
                               </small>
@@ -351,15 +338,15 @@ export function AssetTable({
                         ) : (
                           <>
                             <td>
-                              <Change v={a.quote?.change} />
+                              <Change value={a.quote?.change} />
                             </td>
                             <td>
                               {a.quote?.volatility != null
-                                ? num(a.quote.volatility) + "%"
+                                ? plainPercent(a.quote.volatility)
                                 : "—"}
                             </td>
                             <td>
-                              <Change v={a.quote?.momentum} />
+                              <Change value={a.quote?.momentum} />
                             </td>
                           </>
                         )}

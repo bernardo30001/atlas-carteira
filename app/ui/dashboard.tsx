@@ -61,8 +61,10 @@ import {
   type Portfolio,
   type Market,
 } from "../lib/model";
+import { fixed, money, num, plainPercent } from "../lib/format";
 import { portfolioSchema } from "../lib/validation";
 import { migratePortfolio } from "../lib/trade-history";
+import { Change } from "./change";
 import { ContributionPreview } from "./contribution-preview";
 import { ValidatedForm, FormInput } from "./validated-form";
 import { PerformanceChart } from "./performance-chart";
@@ -75,15 +77,6 @@ import { NewsFilters } from "./news-filters";
 import { TransactionForm, FixedForm, IncomeForm } from "./investment-forms";
 const groups = Object.keys(GROUPS) as Group[];
 const blankMarket: Market = { quotes: {}, errors: [], fetchedAt: "" };
-const money = (n: number, currency = "BRL") =>
-  new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency,
-    maximumFractionDigits: 2,
-  }).format(n);
-const num = (n: number, d = 2) =>
-  new Intl.NumberFormat("pt-BR", { maximumFractionDigits: d }).format(n);
-const percent = (n: number) => `${n >= 0 ? "+" : ""}${num(n)}%`;
 const datetime = (n: number) =>
   new Date(n * 1000).toLocaleString("pt-BR", {
     timeZone: "America/Sao_Paulo",
@@ -98,16 +91,6 @@ const nav = [
   { id: "contributions", label: "Aportes", icon: ArrowDownLeft },
   { id: "news", label: "Notícias", icon: Newspaper },
 ];
-function Change({ value }: { value: number | undefined }) {
-  return value === undefined ? (
-    <span className="muted">—</span>
-  ) : (
-    <span className={value >= 0 ? "positive change" : "negative change"}>
-      {value >= 0 ? <ArrowUpRight size={13} /> : <ArrowDownRight size={13} />}{" "}
-      {percent(value)}
-    </span>
-  );
-}
 function Mark({ ticker, size = 36 }: { ticker: string; size?: number }) {
   const a = ASSETS.find((a) => a.ticker === ticker);
   return (
@@ -1029,7 +1012,7 @@ export default function Dashboard() {
                             {hasPositions && t.value > 0 && !t.missing.length
                               ? hidden
                                 ? "•••"
-                                : num((t.byGroup[g] / t.value) * 100, 1)
+                                : fixed((t.byGroup[g] / t.value) * 100, 1)
                               : p.targets[g]}
                             %
                           </b>
@@ -1180,7 +1163,7 @@ export default function Dashboard() {
                     </div>
                     <b>
                       {!t.missing.length && t.value
-                        ? num((t.byGroup[g] / t.value) * 100, 1) + "%"
+                        ? plainPercent((t.byGroup[g] / t.value) * 100, 1)
                         : "—"}
                     </b>
                     <small>Meta {p.targets[g]}%</small>
@@ -1261,8 +1244,8 @@ export default function Dashboard() {
                           </span>
                           <b>{displayMoney(g.amount)}</b>
                           <small>
-                            {budget ? num((g.amount / budget) * 100, 1) : 0}% do
-                            aporte
+                            {budget ? fixed((g.amount / budget) * 100, 1) : 0}%
+                            do aporte
                           </small>
                         </div>
                       ))}
@@ -1364,12 +1347,12 @@ export default function Dashboard() {
                           </td>
                           <td>
                             {s.quote?.volatility != null
-                              ? num(s.quote.volatility) + "%"
+                              ? plainPercent(s.quote.volatility)
                               : "—"}
                           </td>
                           <td className="negative">
                             {s.quote?.drawdown != null
-                              ? num(s.quote.drawdown) + "%"
+                              ? plainPercent(s.quote.drawdown)
                               : "—"}
                           </td>
                           <td>
@@ -1944,9 +1927,10 @@ export default function Dashboard() {
               <div className="prose">
                 <h3>Suas metas vêm primeiro</h3>
                 <p>
-                  Brasil 35%, renda fixa 35%, exterior 22% e Bitcoin 8%,
-                  conforme você definiu. Metas editáveis. Na ausência de pesos
-                  específicos, os ativos de uma classe têm pesos iguais.
+                  Brasil {p.targets.br}%, renda fixa {p.targets.rf}%, exterior{" "}
+                  {p.targets.etf}% e Bitcoin {p.targets.crypto}%, conforme você
+                  definiu. Metas editáveis. Na ausência de pesos específicos, os
+                  ativos de uma classe têm pesos iguais.
                 </p>
                 <h3>Como o valor é distribuído</h3>
                 <p>
@@ -2240,7 +2224,9 @@ function AssetDetail({
         ].map(([l, v]) => (
           <div key={String(l)}>
             <small>{l}</small>
-            <b>{v !== null && v !== undefined ? num(Number(v)) + "%" : "—"}</b>
+            <b>
+              {v !== null && v !== undefined ? plainPercent(Number(v)) : "—"}
+            </b>
           </div>
         ))}
       </div>
