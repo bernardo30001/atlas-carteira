@@ -394,17 +394,17 @@ export async function buildPreview(
     });
     return false;
   });
-  if (trades.length && lines.free.size) {
-    const first = allTrades.unique.reduce(
+  // Cada arquivo só responde pela sua moeda: um extrato em dólar não cobre a B3.
+  for (const currency of new Set(allTrades.unique.map((r) => r.currency))) {
+    const mine = allTrades.unique.filter((r) => r.currency === currency);
+    const first = mine.reduce(
         (d, r) => (r.item.date < d ? r.item.date : d),
         "9999-12-31",
       ),
-      last = allTrades.unique.reduce(
-        (d, r) => (r.item.date > d ? r.item.date : d),
-        "",
-      );
+      last = mine.reduce((d, r) => (r.item.date > d ? r.item.date : d), "");
     const missing = [...lines.free].filter(
       (e) =>
+        e.currency === currency &&
         e.date >= first &&
         dayNumber(e.date) <= dayNumber(last) + MAX_SETTLEMENT_DAYS,
     ).length;

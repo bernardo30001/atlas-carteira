@@ -26,6 +26,7 @@ import {
   lot,
   near,
   portfolio,
+  trade,
 } from "./fixtures/auditoria.mjs";
 
 const DAY = "2026-11-06";
@@ -187,3 +188,30 @@ test("prévia não altera a carteira original", async () => {
   applyPreview(p, preview);
   assert.equal(JSON.stringify(p), before);
 });
+test("extrato em dólar não acusa movimentações da B3", async () => {
+  const p = v4({
+    transactions: [],
+    tradeHistory: [
+      trade("WEGE3", "buy", 10, 30, "2026-03-11"),
+      trade(FUNDO, "buy", 9, 10, "2026-03-11", {
+        currency: "USD",
+        fx: null,
+      }),
+    ],
+  });
+  const preview = await buildPreview(
+    p,
+    [
+      parse(
+        statementEn({
+          trades: [buyEn("2026-03-10", FUNDO, "2", "50.00", "100.00")],
+        }),
+      ),
+    ],
+    DAY,
+  );
+  const warning = preview.warnings.find((w) => /não aparece/.test(w));
+  assert.ok(warning, "a movimentação em dólar continua sendo avisada");
+  assert.match(warning, /^1 movimentação/);
+});
+
