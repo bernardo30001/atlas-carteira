@@ -62,6 +62,7 @@ import {
   type Market,
 } from "../lib/model";
 import { portfolioSchema } from "../lib/validation";
+import { migratePortfolio } from "../lib/trade-history";
 import { ContributionPreview } from "./contribution-preview";
 import { ValidatedForm, FormInput } from "./validated-form";
 import { PerformanceChart } from "./performance-chart";
@@ -192,6 +193,9 @@ export default function Dashboard() {
   const [page, setPage] = useState("overview"),
     [portfolio, setPortfolio] = useState<Portfolio>(EMPTY),
     [revision, setRevision] = useState(0),
+    [changes, setChanges] = useState<
+      { ticker: string; before: number; after: number }[]
+    >([]),
     [market, setMarket] = useState<Market>(blankMarket),
     [marketLoading, setMarketLoading] = useState(true),
     [marketError, setMarketError] = useState(""),
@@ -234,7 +238,10 @@ export default function Dashboard() {
   const displayMoney = (v: number | null) =>
     hidden ? "••••••" : v === null ? "Não informado" : money(v);
   const portfolioReady = !!demo || account === "ready";
-  const hasPositions = p.transactions.length > 0 || p.fixedIncome.length > 0;
+  const hasPositions =
+    p.transactions.length > 0 ||
+    p.fixedIncome.length > 0 ||
+    (p.tradeHistory?.length ?? 0) > 0;
   const navigate = (id: string) => {
     setPage(id);
     setMobile(false);
@@ -311,6 +318,7 @@ export default function Dashboard() {
           return;
         }
         setPortfolio(j.portfolio);
+        setChanges(j.changes ?? []);
         setRevision(j.revision);
         setName(j.name);
         setAccount("ready");
@@ -486,7 +494,9 @@ export default function Dashboard() {
         !Array.isArray(j.portfolio.fixedIncome)
       )
         throw Error();
-      (window as any).__atlasImport = portfolioSchema.parse(j.portfolio);
+      (window as any).__atlasImport = migratePortfolio(
+        portfolioSchema.parse(j.portfolio),
+      );
       setModal({ kind: "import" });
     } catch {
       setToast("Esse arquivo não é um backup válido do Atlas.");
@@ -879,6 +889,24 @@ export default function Dashboard() {
             <div className="notice warn">
               <AlertCircle size={17} />
               <span>{marketError}</span>
+            </div>
+          )}
+          {!demo && changes.length > 0 && (
+            <div className="notice warn">
+              <AlertCircle size={17} />
+              <span>
+                <b>Confira estas posições.</b> Agora a quantidade segue o
+                histórico de movimentações.{" "}
+                {hidden
+                  ? `${changes.length} posições mudaram.`
+                  : changes
+                      .map(
+                        (c) =>
+                          `${c.ticker}: ${num(c.before, 8)} → ${num(c.after, 8)}`,
+                      )
+                      .join("; ") + "."}
+              </span>
+              <button onClick={() => setChanges([])}>Entendi</button>
             </div>
           )}
           {portfolioReady && market.fetchedAt && t.missing.length > 0 && (

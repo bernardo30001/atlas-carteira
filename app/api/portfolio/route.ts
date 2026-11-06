@@ -2,7 +2,8 @@ import { getChatGPTUser } from "../../chatgpt-auth";
 import { getDb } from "../../../db";
 import { portfolios } from "../../../db/schema";
 import { eq, and, sql } from "drizzle-orm";
-import { EMPTY } from "../../lib/model";
+import { EMPTY, type Portfolio } from "../../lib/model";
+import { migratePortfolio, migrationChanges } from "../../lib/trade-history";
 import { requestSchema as schema } from "../../lib/validation";
 const respond = (data: unknown, status = 200) =>
   Response.json(data, { status, headers: { "Cache-Control": "no-store" } });
@@ -19,8 +20,10 @@ export async function GET() {
       .from(portfolios)
       .where(eq(portfolios.userId, user.userId))
       .get();
+    const stored: Portfolio = row ? JSON.parse(row.payload) : EMPTY;
     return respond({
-      portfolio: row ? JSON.parse(row.payload) : EMPTY,
+      portfolio: migratePortfolio(stored),
+      changes: stored.schemaVersion ? [] : migrationChanges(stored),
       revision: row?.revision ?? 0,
       name: user.displayName,
     });

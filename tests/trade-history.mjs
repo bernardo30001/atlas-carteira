@@ -106,8 +106,12 @@ assert.equal(
     .success,
   false,
 );
-const closed = { ...oldBuy, ticker: "VALE3" };
-const owned = datedTrades({ ...portfolio, tradeHistory: [...events, closed] });
+const closed = { ...oldBuy, ticker: "VALE3" },
+  closedSale = { ...oldSale, ticker: "VALE3" };
+const owned = datedTrades({
+  ...portfolio,
+  tradeHistory: [...events, closed, closedSale],
+});
 assert.ok(owned.every((e) => e.ticker === "WEGE3"));
 const marked = purchasesForPoints(portfolio, r.points);
 assert.equal(marked.flatMap((p) => p.purchases).length, 2);

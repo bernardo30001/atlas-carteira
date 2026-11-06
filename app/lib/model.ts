@@ -1,3 +1,4 @@
+import { attributeIncomes, ledgerFor, replayLedger } from "./trade-history.ts";
 export type Currency = "BRL" | "USD";
 export type Group = "br" | "rf" | "etf" | "crypto";
 export type Asset = {
@@ -151,6 +152,8 @@ export type Transaction = {
   note: string;
   currency?: Currency;
   costNative?: number;
+  /** Posição inicial que o histórico de movimentações já explica por inteiro. */
+  reconciled?: boolean;
 };
 export type TradeEvent = {
   id: string;
@@ -223,6 +226,7 @@ export type Portfolio = {
   incomes?: Income[];
   statements?: Statement[];
   tradeHistory?: TradeEvent[];
+  schemaVersion?: number;
 };
 export const EMPTY: Portfolio = {
   transactions: [],
@@ -303,9 +307,14 @@ export function positions(portfolio: Portfolio, market: Market) {
       ? market.quotes.USD.price
       : undefined;
   return ASSETS.map((a) => {
-    const tx = portfolio.transactions.filter((t) => t.ticker === a.ticker),
-      income = (portfolio.incomes ?? []).filter((i) => i.ticker === a.ticker);
-    const quantity = tx.reduce((s, t) => s + t.quantity, 0),
+    const ledger = ledgerFor(portfolio, a.ticker),
+      state = replayLedger(ledger),
+      tx = state.lots,
+      income = attributeIncomes(
+        ledger,
+        (portfolio.incomes ?? []).filter((i) => i.ticker === a.ticker),
+      ).kept;
+    const quantity = state.quantity,
       q = market.quotes[a.ticker],
       quoteValid = !!q && !q.stale;
     const nativeValue =
@@ -390,6 +399,7 @@ export function positions(portfolio: Portfolio, market: Market) {
       averageCurrency,
       feesBRL: tx.reduce((s, t) => s + t.fees, 0),
       transactions: tx,
+      incomes: income,
     };
   });
 }

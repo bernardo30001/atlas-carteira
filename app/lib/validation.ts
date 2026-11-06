@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { ASSETS, today, wholeUnits } from "./model.ts";
-import { replayTrades } from "./trade-history.ts";
+import { ASSETS, today, wholeUnits, type Portfolio } from "./model.ts";
+import { ledgerIssues } from "./trade-history.ts";
 const date = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/)
@@ -30,6 +30,7 @@ const transaction = z
     note: z.string().max(500),
     currency: currency.optional(),
     costNative: amount.optional(),
+    reconciled: z.boolean().optional(),
   })
   .superRefine((t, c) => {
     const a = ASSETS.find((a) => a.ticker === t.ticker);
@@ -92,7 +93,7 @@ const tradeEvent = z
   })
   .superRefine((t, c) => {
     const a = ASSETS.find((a) => a.ticker === t.ticker);
-    if (a && t.currency !== a.currency)
+    if (a && a.ticker !== "BTC" && t.currency !== a.currency)
       c.addIssue({
         code: "custom",
         message: "Moeda da movimentação incompatível com o ativo.",
@@ -188,6 +189,7 @@ export const portfolioSchema = z
     incomes: z.array(income).max(10000).optional(),
     statements: z.array(statement).max(100).optional(),
     tradeHistory: z.array(tradeEvent).max(10000).optional(),
+    schemaVersion: z.number().int().positive().optional(),
   })
   .superRefine((p, c) => {
     const ids = [
@@ -201,16 +203,11 @@ export const portfolioSchema = z
     const history = p.tradeHistory ?? [];
     if (new Set(history.map((e) => e.id)).size !== history.length)
       c.addIssue({ code: "custom", message: "Movimentações duplicadas" });
-    for (const ticker of new Set(history.map((e) => e.ticker))) {
-      try {
-        replayTrades(history.filter((e) => e.ticker === ticker));
-      } catch {
-        c.addIssue({
-          code: "custom",
-          message: "Histórico de vendas sem posição suficiente para " + ticker,
-        });
-      }
-    }
+    for (const ticker of ledgerIssues(p as Portfolio))
+      c.addIssue({
+        code: "custom",
+        message: "Histórico de vendas sem posição suficiente para " + ticker,
+      });
   });
 export const requestSchema = z.object({
   revision: z.number().int().min(0),

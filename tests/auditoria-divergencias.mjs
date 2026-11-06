@@ -139,12 +139,13 @@ test("I1 curva não some quando há ciclo encerrado e posição inicial", () => 
 
 test("I2 curva termina no mesmo valor do acumulado com histórico parcial", () => {
   // Saldo inicial de 50 mais compra posterior de 10: a curva deve enxergar as 60.
+  const id = crypto.randomUUID();
   const p = portfolio({
     transactions: [
       lot("WEGE3", 50, 20, { date: "2026-01-05" }),
-      lot("WEGE3", 10, 10, { kind: "buy", date: "2026-06-01" }),
+      lot("WEGE3", 10, 10, { id, kind: "buy", date: "2026-06-01" }),
     ],
-    tradeHistory: [trade("WEGE3", "buy", 10, 10, "2026-06-01")],
+    tradeHistory: [trade("WEGE3", "buy", 10, 10, "2026-06-01", { id })],
   });
   const m = market(
     quote("WEGE3", 30, {
@@ -371,27 +372,23 @@ test("M8 metodologia não repete metas fixas no texto", () => {
   );
 });
 
-// ------------------------------------------------- AGUARDA SUA DECISÃO (D2)
+// ------------------------------------------------------- DECISÃO D2 (aprovada)
 
-test(
-  "D2 venda parcial reduz os proventos na mesma proporção do custo",
-  { todo: "regra a decidir no REVISAO.md" },
-  () => {
-    // Compra 100 a 10, recebe 100, vende 90. Restam 10: custo 100, saldo 100.
-    // Hoje: 100 de provento sobre 100 de custo = +100%. Proposta: 10% do provento = +10%.
-    const p = portfolio({
-      transactions: [lot("WEGE3", 10, 10, { date: "2026-06-01" })],
-      tradeHistory: [
-        trade("WEGE3", "buy", 100, 10, "2026-01-05"),
-        trade("WEGE3", "sell", 90, 12, "2026-06-01"),
-      ],
-      incomes: [income("WEGE3", 100, "2026-03-02")],
-    });
-    near(
-      costPerformance(p, market(quote("WEGE3", 10)), "br", 365, NOW)
-        .returnPercent,
-      10,
-      "rendimento acumulado",
-    );
-  },
-);
+test("D2 venda parcial reduz os proventos na mesma proporção do custo", () => {
+  // Compra 100 a 10, recebe 100, vende 90. Restam 10: custo 100, saldo 100.
+  // Sem a regra seriam 100 de provento sobre 100 de custo (+100%). Com ela, 10 (+10%).
+  const p = portfolio({
+    transactions: [lot("WEGE3", 10, 10, { date: "2026-06-01" })],
+    tradeHistory: [
+      trade("WEGE3", "buy", 100, 10, "2026-01-05"),
+      trade("WEGE3", "sell", 90, 12, "2026-06-01"),
+    ],
+    incomes: [income("WEGE3", 100, "2026-03-02")],
+  });
+  near(
+    costPerformance(p, market(quote("WEGE3", 10)), "br", 365, NOW)
+      .returnPercent,
+    10,
+    "rendimento acumulado",
+  );
+});

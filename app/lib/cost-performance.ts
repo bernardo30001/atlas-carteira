@@ -15,7 +15,12 @@ import {
   type ChartPoint,
   type PerformanceScope,
 } from "./performance.ts";
-import { datedTrades, datedCost } from "./trade-history.ts";
+import {
+  attributeIncomes,
+  datedTrades,
+  ledgerFor,
+  replayLedger,
+} from "./trade-history.ts";
 
 export type CostPerformance = {
   currency: Currency;
@@ -94,7 +99,7 @@ export function costPerformance(
   const rows = positions(p, market).filter((r) => r.quantity > 0),
     excluded: string[] = [],
     warnings: string[] = [];
-  const knownTickers = new Set((p.tradeHistory ?? []).map((e) => e.ticker)),
+  const ledgers = new Map(rows.map((r) => [r.ticker, ledgerFor(p, r.ticker)])),
     events = datedTrades(p);
   const fxQuote = market.quotes.USD,
     fx =
@@ -109,11 +114,7 @@ export function costPerformance(
   const included: typeof rows = [];
   for (const row of rows) {
     const rowCost = add(row.transactions.map((tx) => costOf(tx, currency, fx)));
-    const rowIncome = add(
-      (p.incomes ?? [])
-        .filter((i) => i.ticker === row.ticker)
-        .map((i) => incomeOf(i, currency, fx)),
-    );
+    const rowIncome = add(row.incomes.map((i) => incomeOf(i, currency, fx)));
     const rowValue =
       row.nativeValue === null
         ? null
@@ -142,13 +143,7 @@ export function costPerformance(
     included.push(row);
     if (
       row.transactions.some((tx) => needsEstimatedFX(tx, currency)) ||
-      (p.incomes ?? []).some(
-        (i) =>
-          i.ticker === row.ticker &&
-          i.amount > 0 &&
-          i.currency !== currency &&
-          !i.fx,
-      )
+      row.incomes.some((i) => i.amount > 0 && i.currency !== currency && !i.fx)
     )
       estimatedFX = true;
   }
@@ -175,7 +170,7 @@ export function costPerformance(
     estimatedFX,
     points: [],
     warnings,
-    datedPositionCount: included.filter((row) => knownTickers.has(row.ticker))
+    datedPositionCount: included.filter((row) => ledgers.get(row.ticker)!.dated)
       .length,
   };
   if (estimatedFX)
@@ -218,29 +213,15 @@ export function costPerformance(
       received = 0,
       complete = true;
     for (const row of included) {
-      // Opening records contain an average cost, not the dates of the original buys.
-      const lots = row.transactions.filter(
-        (tx) => tx.kind === "opening" || tx.date <= date,
-      );
-      const recorded = knownTickers.has(row.ticker)
-        ? datedCost(
-            events.filter((e) => e.ticker === row.ticker),
-            date,
-            currency,
-            dayFx,
-          )
-        : undefined;
-      const quantity =
-        recorded?.quantity ?? lots.reduce((s, tx) => s + tx.quantity, 0);
-      if (quantity === 0) continue;
+      // Saldos iniciais contêm um custo médio, sem as datas das compras originais.
+      const state = replayLedger(ledgers.get(row.ticker)!, date);
+      if (state.quantity === 0) continue;
       const price = atDate(series.get(row.ticker)!, date);
-      const lotCost = recorded
-        ? recorded.cost
-        : add(lots.map((tx) => costOf(tx, currency, dayFx)));
+      const lotCost = add(state.lots.map((tx) => costOf(tx, currency, dayFx)));
       const lotValue =
         price === null
           ? null
-          : convert(quantity * price, row.currency, currency, dayFx);
+          : convert(state.quantity * price, row.currency, currency, dayFx);
       if (lotCost === null || lotValue === null) {
         complete = false;
         break;
@@ -249,14 +230,20 @@ export function costPerformance(
       balance += lotValue;
     }
     if (!complete || invested <= 0) continue;
-    for (const i of incomes) {
-      if (i.date > date) continue;
-      const amount = incomeOf(i, currency, dayFx);
-      if (amount === null) {
-        complete = false;
-        break;
+    for (const row of included) {
+      const { kept } = attributeIncomes(
+        ledgers.get(row.ticker)!,
+        incomes.filter((i) => i.ticker === row.ticker),
+        date,
+      );
+      for (const i of kept) {
+        const amount = incomeOf(i, currency, dayFx);
+        if (amount === null) {
+          complete = false;
+          break;
+        }
+        received += amount;
       }
-      received += amount;
     }
     if (complete)
       response.points.push({
@@ -272,11 +259,7 @@ export function costPerformance(
         response.datedPositionCount +
         " posições. Cada compra entra na data informada; vendas reduzem a quantidade e o custo pelo preço médio, sem somar o valor da venda ao capital investido. Ciclos encerrados ficam fora da carteira atual.",
     );
-  if (
-    p.transactions.some(
-      (tx) => tx.kind === "opening" && !knownTickers.has(tx.ticker),
-    )
-  )
+  if (included.some((row) => ledgers.get(row.ticker)!.baseline.length > 0))
     warnings.push(
       "Posições sem histórico de operações continuam reconstruídas com a quantidade e o preço médio informados. Não presumimos datas de compra para essas posições.",
     );

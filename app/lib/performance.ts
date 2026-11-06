@@ -1,3 +1,4 @@
+import { hasHolding } from "./trade-history.ts";
 import { ASSETS, totals, type Portfolio, type Market } from "./model.ts";
 export const PERFORMANCE_SCOPES = [
   {
@@ -229,7 +230,7 @@ export function capturePerformance(
   for (const scope of ["us", "br", "btc"] as const) {
     const subset = performancePortfolio(p, scope),
       prior = previous?.segments?.[scope];
-    if (!prior && !subset.transactions.some((t) => t.quantity > 0)) continue;
+    if (!prior && !hasHolding(subset)) continue;
     const segment = captureSnapshot(subset, m, prior, revision, at);
     captured.state.segments[scope] = segment.state;
     const { value, index, flow, income, baseline } = segment.point;

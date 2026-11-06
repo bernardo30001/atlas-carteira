@@ -25,7 +25,7 @@ import {
 import type { Portfolio, Market } from "../lib/model";
 import { costPerformance } from "../lib/cost-performance";
 import { CostReturnSummary, CostReturnMethod } from "./cost-return";
-import { purchasesForPoints } from "../lib/trade-history";
+import { hasHolding, purchasesForPoints } from "../lib/trade-history";
 import {
   PurchaseDot,
   PurchaseTooltipHeader,
@@ -144,7 +144,9 @@ export function PerformanceChart({
   const scopeInfo = PERFORMANCE_SCOPES.find((s) => s.key === scope)!;
   const scoped = performancePortfolio(portfolio, scope),
     hasPositions =
-      scoped.transactions.length > 0 || scoped.fixedIncome.length > 0;
+      scoped.transactions.length > 0 ||
+      scoped.fixedIncome.length > 0 ||
+      (scoped.tradeHistory?.length ?? 0) > 0;
   const seriesName =
     scope === "all"
       ? mode === "simulation"
@@ -587,7 +589,7 @@ export function PerformanceChart({
               {mode === "cost"
                 ? !hasPositions
                   ? "Nenhuma posição neste grupo"
-                  : scoped.transactions.length === 0
+                  : !hasHolding(scoped)
                     ? "Renda fixa usa saldos manuais"
                     : "Aguardando cotações para reconstruir a curva"
                 : mode === "recorded"
