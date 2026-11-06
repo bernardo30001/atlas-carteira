@@ -325,4 +325,3 @@ test("importar de novo não duplica nem desfaz nada", async () => {
   assert.equal(again.duplicates.length, 5);
   assert.deepEqual(applyPreview(first, again).incomes, first.incomes);
 });
-

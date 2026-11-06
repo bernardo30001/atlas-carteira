@@ -265,4 +265,3 @@ test("do PDF ao extrato, nas duas versões", async () => {
   );
   assert.equal(pt.incomes[0].withheldTax, 0.6);
 });
-

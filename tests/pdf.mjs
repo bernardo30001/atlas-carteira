@@ -32,4 +32,3 @@ test("PDF inválido dá mensagem clara e não quebra", async () => {
     /não foi possível ler este PDF/,
   );
 });
-
