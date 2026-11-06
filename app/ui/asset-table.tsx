@@ -1,21 +1,8 @@
 "use client";
-import {
-  Search,
-  Plus,
-  ArrowRight,
-  ArrowUpRight,
-  ArrowDownRight,
-  Coins,
-} from "lucide-react";
+import { Search, Plus, ArrowRight, Coins } from "lucide-react";
 import { money, num, plainPercent, tone } from "../lib/format";
 import { Change } from "./change";
-import {
-  ASSETS,
-  GROUPS,
-  totals,
-  type Portfolio,
-  type Market,
-} from "../lib/model";
+import { GROUPS, totals, type Portfolio, type Market } from "../lib/model";
 export function AssetTable({
   portfolio,
   market,

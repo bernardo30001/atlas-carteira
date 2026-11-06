@@ -1,11 +1,14 @@
 "use client";
 import { ValidatedForm, FormInput } from "./validated-form";
 import { useState } from "react";
+import { saleIssue } from "../lib/trade-history";
 import { Check, Trash2 } from "lucide-react";
 import {
   ASSETS,
   today,
   wholeUnits,
+  type Portfolio,
+  type TradeEvent,
   type Transaction,
   type FixedIncome,
   type Income,
@@ -15,18 +18,24 @@ import {
 export function TransactionForm({
   ticker,
   quantity,
+  initialKind = "buy",
+  portfolio,
   market,
   busy,
   onSubmit,
+  onSell,
 }: {
   ticker?: string;
   quantity?: number;
+  initialKind?: "buy" | "sell";
+  portfolio: Portfolio;
   market: Market;
   busy: boolean;
   onSubmit: (t: Transaction) => Promise<void>;
+  onSell: (sale: TradeEvent) => Promise<void>;
 }) {
   const [selected, setSelected] = useState(ticker ?? "ALUP11"),
-    [kind, setKind] = useState<"buy" | "opening">("buy"),
+    [kind, setKind] = useState<"buy" | "opening" | "sell">(initialKind),
     [currency, setCurrency] = useState<Currency>(
       ASSETS.find((a) => a.ticker === ticker)?.ticker === "BTC"
         ? "BRL"
@@ -68,6 +77,28 @@ export function TransactionForm({
             );
             return;
           }
+          if (kind === "sell") {
+            const sale: TradeEvent = {
+              id: crypto.randomUUID(),
+              ticker: selected,
+              kind: "sell",
+              quantity: qty,
+              price,
+              total: costNative ?? qty * price,
+              currency,
+              fx,
+              fees,
+              date,
+              source: "Registro no Atlas",
+            };
+            const issue = saleIssue(portfolio, sale);
+            if (issue) {
+              setError(issue);
+              return;
+            }
+            await onSell(sale);
+            return;
+          }
           await onSubmit({
             id: crypto.randomUUID(),
             ticker: selected,
@@ -91,6 +122,14 @@ export function TransactionForm({
             onClick={() => setKind("buy")}
           >
             Novo aporte
+          </button>
+          <button
+            type="button"
+            aria-pressed={kind === "sell"}
+            className={kind === "sell" ? "active" : ""}
+            onClick={() => setKind("sell")}
+          >
+            Venda
           </button>
           <button
             type="button"
@@ -120,7 +159,7 @@ export function TransactionForm({
         </label>
         {selected === "BTC" && (
           <label className="field">
-            Moeda do custo de compra
+            {kind === "sell" ? "Moeda da venda" : "Moeda do custo de compra"}
             <select
               value={currency}
               onChange={(e) => setCurrency(e.target.value as Currency)}
@@ -147,7 +186,12 @@ export function TransactionForm({
             />
           </label>
           <label className="field">
-            {kind === "opening" ? "Preço médio" : "Preço unitário"} ({currency})
+            {kind === "opening"
+              ? "Preço médio"
+              : kind === "sell"
+                ? "Preço de venda"
+                : "Preço unitário"}{" "}
+            ({currency})
             <FormInput
               key={selected + currency}
               name="price"
@@ -159,7 +203,11 @@ export function TransactionForm({
             />
           </label>
           <label className="field">
-            {kind === "opening" ? "Data de referência" : "Data da compra"}
+            {kind === "opening"
+              ? "Data de referência"
+              : kind === "sell"
+                ? "Data da venda"
+                : "Data da compra"}
             <FormInput
               type="date"
               name="date"
@@ -194,7 +242,9 @@ export function TransactionForm({
         )}
         {currency === "USD" && (
           <label className="field">
-            Câmbio efetivamente pago (R$ por US$) · opcional
+            {kind === "sell"
+              ? "Câmbio da venda (R$ por US$) · opcional"
+              : "Câmbio efetivamente pago (R$ por US$) · opcional"}
             <FormInput
               type="number"
               step="any"
@@ -205,14 +255,22 @@ export function TransactionForm({
             />
           </label>
         )}
-        <label className="field">
-          Observação · opcional
-          <FormInput
-            name="note"
-            maxLength={500}
-            placeholder="Ex.: aporte do mês"
-          />
-        </label>
+        {kind !== "sell" && (
+          <label className="field">
+            Observação · opcional
+            <FormInput
+              name="note"
+              maxLength={500}
+              placeholder="Ex.: aporte do mês"
+            />
+          </label>
+        )}
+        {kind === "sell" && (
+          <p className="form-note">
+            A venda reduz a quantidade e o custo pelo preço médio. O lucro
+            aparece à parte, em Resultado realizado.
+          </p>
+        )}
         {kind === "opening" && (
           <p className="form-note">
             O registro inicial preserva sua posição atual e não reconstrói as

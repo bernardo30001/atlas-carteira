@@ -126,7 +126,8 @@ export function CostReturnMethod({
           Os índices de referência continuam disponíveis em Acompanhamento real
           e Simular histórico, que comparam retornos a partir da mesma data.
           Proventos são somados uma vez ao resultado e não aumentam novamente o
-          saldo em custódia. Não inclui vendas, impostos ou ganhos realizados.
+          saldo em custódia. Vendas ficam em Resultado realizado, e impostos não
+          são calculados.
         </p>
         <p>
           Cotações e histórico: Yahoo Finance. A reconstrução não altera as

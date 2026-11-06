@@ -6,10 +6,8 @@ import {
   ArrowDownLeft,
   Newspaper,
   SlidersHorizontal,
-  Search,
   Plus,
   ArrowUpRight,
-  ArrowDownRight,
   ChevronRight,
   ChevronDown,
   RefreshCw,
@@ -23,16 +21,12 @@ import {
   Upload,
   Info,
   Target,
-  TrendingUp,
   Activity,
   ArrowRight,
-  Trash2,
   Menu,
   Bitcoin,
   Landmark,
-  Building2,
   ExternalLink,
-  HelpCircle,
   Compass,
   AlertCircle,
 } from "lucide-react";
@@ -40,11 +34,8 @@ import {
   ResponsiveContainer,
   AreaChart,
   Area,
-  LineChart,
-  Line,
   XAxis,
   YAxis,
-  CartesianGrid,
   Tooltip,
 } from "recharts";
 import {
@@ -55,15 +46,14 @@ import {
   totals,
   allocationPlan,
   assetPlan,
-  transactionCurrency,
-  transactionCost,
   type Group,
   type Portfolio,
   type Market,
 } from "../lib/model";
 import { fixed, money, num, plainPercent } from "../lib/format";
 import { portfolioSchema } from "../lib/validation";
-import { migratePortfolio } from "../lib/trade-history";
+import { ledgerIssues, migratePortfolio } from "../lib/trade-history";
+import { MovementHistory } from "./movement-history";
 import { Change } from "./change";
 import { ContributionPreview } from "./contribution-preview";
 import { ValidatedForm, FormInput } from "./validated-form";
@@ -195,6 +185,7 @@ export default function Dashboard() {
     [budget, setBudget] = useState(1000),
     [modal, setModal] = useState<{
       kind: string;
+      mode?: "buy" | "sell";
       ticker?: string;
       quantity?: number;
       id?: string;
@@ -1421,103 +1412,14 @@ export default function Dashboard() {
                   corretora. Valores estimados sem taxas.
                 </div>
               </section>
-              <section className="panel history-panel">
-                <div className="panel-title">
-                  <div>
-                    <h2>Histórico de registros</h2>
-                    <p>Posições iniciais e novos aportes na sua carteira.</p>
-                  </div>
-                  <button
-                    className="icon-button"
-                    aria-label="Exportar histórico"
-                    onClick={exportData}
-                  >
-                    <Download size={17} />
-                  </button>
-                </div>
-                {p.transactions.length ? (
-                  <div className="table-wrap">
-                    <table>
-                      <thead>
-                        <tr>
-                          <th>Data</th>
-                          <th>Ativo / Tipo</th>
-                          <th>Quantidade</th>
-                          <th>Preço unitário</th>
-                          <th>Investido · moeda de origem</th>
-                          <th />
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {[...p.transactions]
-                          .sort((a, b) => b.date.localeCompare(a.date))
-                          .map((tx) => (
-                            <tr key={tx.id}>
-                              <td>
-                                {new Date(
-                                  tx.date + "T12:00:00",
-                                ).toLocaleDateString("pt-BR")}
-                              </td>
-                              <td>
-                                <b>{tx.ticker}</b>
-                                <small>
-                                  {tx.kind === "opening"
-                                    ? "Posição inicial"
-                                    : "Aporte"}
-                                  {tx.note
-                                    ? hidden
-                                      ? " · Observação oculta"
-                                      : " · " + tx.note
-                                    : ""}
-                                </small>
-                              </td>
-                              <td>{hidden ? "•••" : num(tx.quantity, 8)}</td>
-                              <td>
-                                {hidden
-                                  ? "•••"
-                                  : money(tx.price, transactionCurrency(tx))}
-                              </td>
-                              <td>
-                                {hidden
-                                  ? "••••••"
-                                  : money(
-                                      transactionCost(tx),
-                                      transactionCurrency(tx),
-                                    )}
-                              </td>
-                              <td>
-                                <button
-                                  className="icon-button"
-                                  aria-label={`Excluir registro de ${tx.ticker}`}
-                                  onClick={() =>
-                                    setModal({ kind: "delete", id: tx.id })
-                                  }
-                                >
-                                  <Trash2 size={15} />
-                                </button>
-                              </td>
-                            </tr>
-                          ))}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  <Empty
-                    icon={ArrowDownLeft}
-                    title="O primeiro registro é o começo"
-                    text="Cadastre uma posição atual ou registre uma nova compra."
-                    action={
-                      <button
-                        className="button primary"
-                        onClick={() => setModal({ kind: "transaction" })}
-                      >
-                        <Plus size={15} />
-                        Adicionar registro
-                      </button>
-                    }
-                  />
-                )}
-              </section>
+              <MovementHistory
+                portfolio={p}
+                hidden={hidden}
+                onAdd={() => setModal({ kind: "transaction" })}
+                onSell={() => setModal({ kind: "transaction", mode: "sell" })}
+                onDelete={(id) => setModal({ kind: "delete", id })}
+                onExport={exportData}
+              />
             </>
           )}
           {page === "news" && newsBlock(true)}
@@ -1666,13 +1568,24 @@ export default function Dashboard() {
             )}
           {modal?.kind === "transaction" && !hidden && (
             <TransactionForm
-              key={modal.ticker ?? "new"}
+              key={(modal.ticker ?? "new") + (modal.mode ?? "")}
               ticker={modal.ticker}
               quantity={modal.quantity}
+              initialKind={modal.mode}
+              portfolio={p}
               market={market}
               busy={saveBusy}
               onSubmit={async (tx) => {
                 if (await save({ ...p, transactions: [...p.transactions, tx] }))
+                  setModal(null);
+              }}
+              onSell={async (sale) => {
+                if (
+                  await save({
+                    ...p,
+                    tradeHistory: [...(p.tradeHistory ?? []), sale],
+                  })
+                )
                   setModal(null);
               }}
             />
@@ -1721,6 +1634,13 @@ export default function Dashboard() {
               onAdd={() =>
                 setModal({ kind: "transaction", ticker: modal.ticker })
               }
+              onSell={() =>
+                setModal({
+                  kind: "transaction",
+                  mode: "sell",
+                  ticker: modal.ticker,
+                })
+              }
               onNews={() => {
                 setNewsTicker(modal.ticker!);
                 navigate("news");
@@ -1733,8 +1653,8 @@ export default function Dashboard() {
               <span className="eyebrow">CORRIGIR REGISTRO</span>
               <h2 id="modal-title">Excluir este registro?</h2>
               <p>
-                A quantidade e o custo desse registro deixarão de compor a
-                carteira. Esta ação não representa uma venda.
+                Este registro deixará de compor a carteira. Para registrar uma
+                venda, use Registrar venda: excluir uma compra não é uma venda.
               </p>
               <div className="dialog-actions">
                 <button
@@ -1747,15 +1667,22 @@ export default function Dashboard() {
                   className="button danger"
                   disabled={saveBusy}
                   onClick={async () => {
-                    if (
-                      await save({
-                        ...p,
-                        transactions: p.transactions.filter(
-                          (t) => t.id !== modal.id,
-                        ),
-                      })
-                    )
-                      setModal(null);
+                    const next = {
+                      ...p,
+                      transactions: p.transactions.filter(
+                        (t) => t.id !== modal.id,
+                      ),
+                      tradeHistory: p.tradeHistory?.filter(
+                        (e) => e.id !== modal.id,
+                      ),
+                    };
+                    if (ledgerIssues(next).length) {
+                      setToast(
+                        "Essa exclusão deixaria uma venda sem saldo. Exclua a venda primeiro.",
+                      );
+                      return;
+                    }
+                    if (await save(next)) setModal(null);
                   }}
                 >
                   Excluir registro
@@ -1975,12 +1902,13 @@ export default function Dashboard() {
                   de origem menos custo mais proventos registrados. Dividendos
                   não são adicionados novamente ao patrimônio. Bitcoin direto
                   pode ter custo informado em reais. Renda fixa usa o saldo
-                  manual do extrato; custo ausente permanece desconhecido. Não
-                  inclui impostos, vendas ou ganhos realizados. AUPO11 entra em
-                  renda fixa; ABTC11 entra em criptomoedas para as metas, sem
-                  presumir exposição 100% a BTC em seu fundo. Valores e
-                  rendimentos do extrato recebido ficam preservados
-                  separadamente das cotações atuais.
+                  manual do extrato; custo ausente permanece desconhecido. O
+                  resultado das posições em carteira não inclui vendas, que
+                  aparecem à parte em Resultado realizado. Impostos não são
+                  calculados. AUPO11 entra em renda fixa; ABTC11 entra em
+                  criptomoedas para as metas, sem presumir exposição 100% a BTC
+                  em seu fundo. Valores e rendimentos do extrato recebido ficam
+                  preservados separadamente das cotações atuais.
                 </p>
                 <h3>Limites</h3>
                 <p>
@@ -2161,6 +2089,7 @@ function AssetDetail({
   position,
   hidden,
   onAdd,
+  onSell,
   onNews,
 }: {
   ticker: string;
@@ -2168,6 +2097,7 @@ function AssetDetail({
   position: any;
   hidden: boolean;
   onAdd: () => void;
+  onSell: () => void;
   onNews: () => void;
 }) {
   const a = ASSETS.find((a) => a.ticker === ticker)!,
@@ -2279,6 +2209,12 @@ function AssetDetail({
           <Newspaper size={16} />
           Notícias
         </button>
+        {position.quantity > 0 && (
+          <button className="button outline" onClick={onSell}>
+            <ArrowUpRight size={16} />
+            Registrar venda
+          </button>
+        )}
         <button className="button primary" onClick={onAdd}>
           <Plus size={16} />
           Registrar aporte

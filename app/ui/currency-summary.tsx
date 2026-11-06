@@ -1,13 +1,8 @@
 "use client";
 import { money } from "../lib/format";
-import {
-  Wallet,
-  Globe2,
-  Landmark,
-  ArrowUpRight,
-  Coins,
-  Info,
-} from "lucide-react";
+import { Wallet, Globe2, Landmark, Coins } from "lucide-react";
+import { signedMoney, tone } from "../lib/format";
+import { realizedResults } from "../lib/trade-history";
 import { totals, type Portfolio, type Market } from "../lib/model";
 export function CurrencySummary({
   portfolio,
@@ -30,7 +25,9 @@ export function CurrencySummary({
   const br = t.brazilStocks,
     etfs = t.brazilEtfs,
     us = t.international,
-    btc = t.rows.find((a) => a.ticker === "BTC")!;
+    btc = t.rows.find((a) => a.ticker === "BTC")!,
+    realized = realizedResults(portfolio),
+    sold = realized.BRL.count + realized.USD.count;
   return (
     <>
       <div className="stats-grid currency-stats">
@@ -159,6 +156,38 @@ export function CurrencySummary({
                   + {fmt(t.incomes.USD, "USD")} <span>· moedas separadas</span>
                 </div>
               </section>
+              {sold > 0 && (
+                <section className="panel supplemental-income">
+                  <div className="stat-label">
+                    Resultado realizado <Coins size={16} />
+                  </div>
+                  <div
+                    className={
+                      "stat-value " + (hidden ? "" : tone(realized.BRL.result))
+                    }
+                  >
+                    {hidden ? "••••••" : signedMoney(realized.BRL.result)}
+                  </div>
+                  <div className="stat-foot income-us">
+                    {hidden
+                      ? "••••••"
+                      : signedMoney(realized.USD.result, "USD")}{" "}
+                    <span>
+                      · {sold} {sold === 1 ? "venda" : "vendas"} · fora do
+                      rendimento em carteira
+                    </span>
+                  </div>
+                  {realized.pending.length > 0 && (
+                    <div className="stat-foot">
+                      {hidden
+                        ? "Há vendas sem câmbio para calcular."
+                        : "Sem câmbio para calcular: " +
+                          realized.pending.join(", ") +
+                          "."}
+                    </div>
+                  )}
+                </section>
+              )}
               {btc.quantity > 0 && (
                 <section className="panel supplemental-holding">
                   <div>
