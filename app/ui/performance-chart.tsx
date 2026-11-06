@@ -700,8 +700,8 @@ export function PerformanceChart({
               Todos começam em 0% na mesma data. S&P 500 e Bitcoin incluem a
               variação histórica do dólar frente ao real. Ibovespa é um índice
               de retorno total; S&P 500 (^GSPC) é de preços, sem reinvestimento
-              de dividendos. O CDI só aparece onde existe cobertura das taxas
-              diárias publicadas.
+              de dividendos. O CDI usa as taxas diárias já publicadas pelo Banco
+              Central, que divulga a taxa do dia depois do fechamento.
             </p>
             {mode === "recorded" && (
               <p>

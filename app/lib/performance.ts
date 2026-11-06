@@ -275,13 +275,13 @@ export function recordedChart(
         .filter((k) => first.benchmarks[k] && p.benchmarks[k])
         .map((k) => [k, pct(p.benchmarks[k]!, first.benchmarks[k]!)]),
     ),
-    ...(rates.length &&
-    start >= rates[0].date &&
-    brDate(new Date(p.time)) <= rates.at(-1)!.date
+    ...(rates.length && start >= rates[0].date
       ? { cdi: (cdiFactor(rates, start, brDate(new Date(p.time))) - 1) * 100 }
       : {}),
   }));
 }
+// A taxa de D remunera de D até o próximo dia útil: início inclusive e fim exclusive.
+// Assim a taxa do dia, publicada só depois, não falta para acumular até hoje.
 export function cdiFactor(
   rates: CdiRate[],
   start: string,
@@ -289,7 +289,7 @@ export function cdiFactor(
   ratePercent = 100,
 ) {
   return rates
-    .filter((r) => r.date > start && r.date <= end)
+    .filter((r) => r.date >= start && r.date < end)
     .reduce((f, r) => f * (1 + ((r.rate / 100) * ratePercent) / 100), 1);
 }
 export type Simulation = {
