@@ -383,8 +383,8 @@ Executada ao fim desta etapa, na ordem pedida.
 | Verificação | Resultado |
 |---|---|
 | `npx tsc --noEmit` | Passa |
-| `npm run lint` | 32 erros e 6 avisos, contra 33 e 17 antes. Nenhum nos arquivos novos |
-| `npm test` | 15 de 15 arquivos, incluindo as 21 verificações de divergência |
+| `npm run lint` | 36 erros e 9 avisos. Antes da revisão eram 33 e 17; 4 erros vieram do painel de avaliação da versão 16. Nenhum nos arquivos novos da importação |
+| `npm test` | 19 de 19 arquivos, incluindo as 21 verificações de divergência e os testes da versão 16 |
 | `npm run test:api` | 2 de 2, em banco temporário. O banco local não mudou, conferido por soma de verificação |
 | `npm run build` | Passa |
 | Instalação do zero em cópia limpa do commit (`npm ci`, build e testes) | Passa |
@@ -449,7 +449,24 @@ Credenciais ficam só em variáveis de ambiente do servidor: `.dev.vars` local, 
 
 ## 14. Roteiro de publicação
 
-Nada foi publicado. Este checkout não tem remote nem comando de publicação: os commits "Update Site source" de `main` vêm do fluxo do Sites. A branch está à frente de `main`, que pode avançar direto, sem conflito.
+Este checkout não tem remote nem comando de publicação. A publicação usa as ferramentas nativas do Sites, que só existem nas sessões do Codex e do ChatGPT, e parte do repositório de origem do próprio Sites.
+
+### Integração com a versão 16
+
+A base desta revisão estava atrás do que está no ar: a versão 16 do Sites já tinha avaliação de ações, seletor de tema, Klabin Units fora do acompanhamento e colunas de quantidade e saldo. Publicar sem integrar apagaria tudo isso. A branch `integracao-versao-16` junta os dois lados, com a versão 16 como pai do merge.
+
+**Regra usada:** os recursos da versão 16 ficam, e os cálculos revisados e aprovados continuam valendo onde os dois lados mexeram no mesmo ponto.
+
+| Ponto | Decisão |
+|---|---|
+| Tema | Fica o seletor da versão 16, que respeita o sistema até você escolher. As cores são as da revisão, com contraste medido |
+| Validação de cotação | Fica a da versão 16, mais rigorosa: recusa preço inválido e moeda trocada |
+| Ativo legado | Registros preservados e fora das contas. Só os legados ficam fora: ativos cadastrados continuam acompanhados, e o relatório da B3 importa o histórico deles sem pedir cadastro |
+| Tabela da Visão geral | Fica a da versão 16: todos os ativos em carteira, com quantidade e saldo |
+| Histórico parcial | Segue a regra da revisão: a posição inicial vale na data de referência, o que veio antes já está nela e o que vem depois soma. Três cenários dos testes da versão 16 foram reescritos para essa regra |
+| Taxa em reais sem câmbio de compra | Segue a revisão: usa o câmbio atual e marca como estimativa, sem apagar o custo em dólar. A versão 16 deixava o preço médio em branco. O teste foi ajustado |
+
+`tests/integracao-versao-16.mjs` cobre a carteira salva na versão 16: pesos e teses sobrevivem à migração. As 7 páginas foram medidas no build de produção, em desktop e celular, nos dois temas: nenhuma falha de contraste, nenhuma rolagem horizontal e nenhum erro de página.
 
 ### O que a publicação muda
 
@@ -458,13 +475,13 @@ Nada foi publicado. Este checkout não tem remote nem comando de publicação: o
 | Hospedagem e autenticação | `.openai/hosting.json`, `app/chatgpt-auth.ts` e `worker/` não mudaram |
 | Banco | Nenhuma migração nova em `drizzle/` |
 | Variáveis de ambiente | Nenhuma nova. O teste do Meu Pluggy não deixou código |
-| Dependências novas | `fflate` e `unpdf`, com versão fixa |
+| Dependências novas | `fflate` e `unpdf`, com versão fixa. `unpdf` fica fora do pacote do servidor |
 | Carteira salva | Abrir o site não grava nada. A migração roda na leitura e só fica salva quando você salvar algo. Se alguma quantidade mudar, um aviso lista cada ativo |
 
 ### Passos
 
 1. **Exportar o backup no site atual, antes de publicar.** Guarde o arquivo fora da pasta do projeto: ele contém seus dados reais.
-2. **Avançar `main` até esta branch e publicar pelo fluxo do Sites.**
+2. **Publicar pelo fluxo do Sites**, a partir da integração.
 3. **Abrir o site sem importar nada.** Conferir se há aviso de migração e se as quantidades continuam iguais.
 4. **Importar os extratos da Nomad.** Conferir a prévia e confirmar. As quantidades não devem mudar.
 5. **Importar a Negociação da B3.** Conferir "Como as posições vão mudar", decidir os ativos fora da lista e confirmar. Aqui as quantidades podem mudar, porque o relatório traz operações que a carteira ainda não tem.
