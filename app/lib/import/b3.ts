@@ -113,6 +113,7 @@ export function normalizeInstitution(raw: Cell) {
   const plain = normalize(text);
   if (/\bnu\b|nubank|nu invest|easynvest/.test(plain)) return "Nu Invest";
   if (/\bbtg\b/.test(plain)) return "BTG";
+  if (/\bxp\b/.test(plain)) return "XP";
   return text.slice(0, 100);
 }
 
@@ -244,7 +245,13 @@ function parseNegotiation(
       );
       continue;
     }
-    if (market && !/vista|fracion/.test(market)) {
+    // ETF de renda fixa, como AUPO11, vem no mercado "Renda Fixa" com código de bolsa.
+    const listed = /^[A-Z]{4}\d{1,2}$/.test(ticker);
+    if (
+      market &&
+      !/vista|fracion/.test(market) &&
+      !(market.includes("renda fixa") && listed)
+    ) {
       file.decisions.push(
         note(`Mercado ainda não suportado: ${row[c.market]}.`),
       );

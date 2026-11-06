@@ -5,6 +5,7 @@ import { money, num } from "../lib/format";
 import { parseB3Table, type ParsedFile } from "../lib/import/b3";
 import {
   applyPreview,
+  archivedAsset,
   buildPreview,
   type ImportPreview,
 } from "../lib/import/preview";
@@ -237,6 +238,9 @@ export function ImportPanel({
       add: [...preview.trades, ...preview.incomes, ...preview.actions].map(
         (row) => lineOf(row as ImportPreview["duplicates"][number]),
       ),
+      matched: preview.matched.map((row) =>
+        lineOf(row as ImportPreview["duplicates"][number]),
+      ),
       duplicates: preview.duplicates.map(lineOf),
       probable: preview.probable.map((row) =>
         lineOf(row as ImportPreview["duplicates"][number]),
@@ -255,7 +259,16 @@ export function ImportPanel({
     };
   }, [preview]);
 
-  const total = groups ? groups.add.length + chosen.size : 0;
+  const total = groups ? groups.add.length + chosen.size : 0,
+    updates = groups ? groups.matched.length : 0;
+  const keepAsHistory = (tickers: string[]) =>
+    save({
+      ...portfolio,
+      customAssets: [
+        ...(portfolio.customAssets ?? []),
+        ...tickers.map(archivedAsset),
+      ],
+    });
 
   async function confirm() {
     if (!preview) return;
@@ -273,7 +286,7 @@ export function ImportPanel({
       return;
     }
     if (await save(parsed.data as Portfolio)) {
-      setUndo({ before: portfolio, count: total });
+      setUndo({ before: portfolio, count: total + updates });
       setFiles([]);
       setChosen(new Set());
     }
@@ -349,8 +362,8 @@ export function ImportPanel({
           <Check size={17} />
           <span>
             {undo.count}{" "}
-            {undo.count === 1 ? "registro adicionado" : "registros adicionados"}{" "}
-            à carteira.
+            {undo.count === 1 ? "registro salvo" : "registros salvos"} na
+            carteira.
           </span>
           <button
             disabled={busy}
@@ -386,6 +399,10 @@ export function ImportPanel({
               <dd>{groups.add.length}</dd>
             </div>
             <div>
+              <dt>Já na carteira</dt>
+              <dd>{groups.matched.length}</dd>
+            </div>
+            <div>
               <dt>Duplicados</dt>
               <dd>{groups.duplicates.length}</dd>
             </div>
@@ -412,17 +429,43 @@ export function ImportPanel({
             <div className="import-unknown">
               <h3>Ativos fora da sua lista</h3>
               <p>
-                Cadastre para incluir as linhas. Sem cadastro, elas ficam de
-                fora e o resto segue normalmente.
+                Cadastre o que você ainda tem. O que já vendeu pode ficar só no
+                histórico, sem cotação e fora do patrimônio. Sem nenhuma das
+                duas, as linhas ficam de fora e o resto segue normalmente.
               </p>
+              {preview.unknown.filter((a) => a.closed).length > 1 && (
+                <button
+                  className="button outline"
+                  disabled={busy}
+                  onClick={() =>
+                    keepAsHistory(
+                      preview.unknown
+                        .filter((a) => a.closed)
+                        .map((a) => a.ticker),
+                    )
+                  }
+                >
+                  Guardar os {preview.unknown.filter((a) => a.closed).length}{" "}
+                  encerrados só no histórico
+                </button>
+              )}
               <ul>
                 {preview.unknown.map((asset) => (
                   <li key={asset.ticker}>
                     <b>{asset.ticker}</b>
                     <span>
                       {asset.rows} {asset.rows === 1 ? "linha" : "linhas"}
-                      {asset.closed ? " · posição já encerrada" : ""}
+                      {asset.closed
+                        ? " · sem saldo no arquivo"
+                        : ` · saldo de ${num(asset.net, 8)} no arquivo. Confira se houve evento societário.`}
                     </span>
+                    <button
+                      className="button outline"
+                      disabled={busy}
+                      onClick={() => keepAsHistory([asset.ticker])}
+                    >
+                      Só histórico
+                    </button>
                     <button
                       className="button outline"
                       onClick={() => onAddAsset(asset.ticker)}
@@ -475,6 +518,11 @@ export function ImportPanel({
           )}
           <Lines title="A adicionar" lines={groups.add} open />
           <Lines
+            title="Já estão na carteira"
+            lines={groups.matched}
+            hint="As mesmas operações, registradas antes com a data de liquidação. Elas recebem a data do negócio e a corretora, sem mudar quantidades."
+          />
+          <Lines
             title="Precisam de você"
             lines={groups.decisions}
             hint="Estas linhas não serão aplicadas. Registre à mão o que for necessário."
@@ -504,14 +552,16 @@ export function ImportPanel({
             <span className="muted">Nada foi salvo até agora.</span>
             <button
               className="button primary"
-              disabled={busy || total === 0}
+              disabled={busy || total + updates === 0}
               onClick={confirm}
             >
               {busy
                 ? "Salvando…"
-                : total === 0
+                : total + updates === 0
                   ? "Nada a adicionar"
-                  : `Adicionar ${total} ${total === 1 ? "registro" : "registros"}`}
+                  : total === 0
+                    ? `Atualizar ${updates} ${updates === 1 ? "registro" : "registros"}`
+                    : `Adicionar ${total} ${total === 1 ? "registro" : "registros"}`}
               <Check size={15} />
             </button>
           </div>

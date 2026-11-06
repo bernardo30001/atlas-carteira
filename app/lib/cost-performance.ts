@@ -98,7 +98,9 @@ export function costPerformance(
 ): CostPerformance {
   const p = performancePortfolio(portfolio, scope),
     currency: Currency = scope === "us" ? "USD" : "BRL";
-  const rows = positions(p, market).filter((r) => r.quantity > 0),
+  const rows = positions(p, market).filter(
+      (r) => r.quantity > 0 && !r.archived,
+    ),
     excluded: string[] = [],
     warnings: string[] = [];
   const ledgers = new Map(rows.map((r) => [r.ticker, ledgerFor(p, r.ticker)])),

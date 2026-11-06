@@ -1,6 +1,7 @@
 // Monta a prévia da importação e aplica só o que você confirmar. Nada aqui grava.
 import {
   allAssets,
+  type Asset,
   type CorporateAction,
   type Income,
   type Portfolio,
@@ -36,12 +37,14 @@ export type ImportPreview = {
   actions: Row<ParsedAction>[];
   /** Já importados antes, pela mesma chave. Nunca entram de novo. */
   duplicates: Row<ParsedTrade | ParsedIncome | ParsedAction>[];
+  /** A mesma operação já na carteira, sem chave. Recebe a data do negócio e a corretora. */
+  matched: (Row<ParsedTrade> & { legacyId: string })[];
   /** Parecidos com registros antigos, sem chave. Você decide; por padrão ficam fora. */
   probable: Row<ParsedTrade | ParsedIncome>[];
   /** Pagamentos já contidos em um provento "Acumulado anterior". */
   included: Row<ParsedIncome>[];
   /** Ativos fora da lista, com o que está aguardando o cadastro. */
-  unknown: { ticker: string; rows: number; closed: boolean }[];
+  unknown: { ticker: string; rows: number; closed: boolean; net: number }[];
   ignored: (ParsedNote & { file: string })[];
   decisions: (ParsedNote & { file: string })[];
   /** Posições iniciais que o histórico completo agora explica. */
@@ -110,8 +113,86 @@ function uniqueByKey<T>(rows: Row<T>[]) {
   return [...new Map(rows.map((row) => [row.key, row])).values()];
 }
 
-/** Registros antigos não têm chave. Compara por dia, ticker e tipo, em grupo: a B3 lista
- * execuções e um registro antigo pode somar várias, com o preço médio do dia. */
+const dayNumber = (date: string) => Date.parse(date + "T00:00:00Z") / 86400000;
+/** Registros vindos da Movimentação têm a data de liquidação, dias depois do negócio. */
+const MAX_SETTLEMENT_DAYS = 7;
+
+/** Casa cada linha nova com um registro antigo sem chave: mesmo ativo, tipo e quantidade,
+ * na data do negócio ou até a liquidação. Cada registro antigo serve a uma linha só. */
+function matchLegacyLines(p: Portfolio, rows: Row<ParsedTrade>[]) {
+  const free = new Set((p.tradeHistory ?? []).filter((e) => !e.importKey));
+  const exact = new Map<string, TradeEvent>(),
+    priceDiffers = new Set<string>();
+  const ordered = [...rows].sort((a, b) =>
+    a.item.date.localeCompare(b.item.date),
+  );
+  const pick = (row: Row<ParsedTrade>, samePrice: boolean) =>
+    [...free]
+      .filter((e) => {
+        const gap = dayNumber(e.date) - dayNumber(row.item.date);
+        return (
+          e.ticker === row.item.ticker &&
+          e.kind === row.item.kind &&
+          close(e.quantity, row.item.quantity, 1e-8) &&
+          gap >= 0 &&
+          gap <= MAX_SETTLEMENT_DAYS &&
+          (!samePrice || close(e.price, row.item.price, 0.011))
+        );
+      })
+      .sort((x, y) => dayNumber(x.date) - dayNumber(y.date))[0];
+  for (const row of ordered) {
+    const event = pick(row, true);
+    if (event) {
+      exact.set(row.id, event);
+      free.delete(event);
+    }
+  }
+  for (const row of ordered) {
+    if (exact.has(row.id)) continue;
+    const event = pick(row, false);
+    if (event) {
+      priceDiffers.add(row.id);
+      free.delete(event);
+    }
+  }
+  // Um registro antigo pode somar as execuções de um dia, com o preço médio.
+  const lots = new Set(p.transactions.map((t) => t.id));
+  const summed = new Map<string, TradeEvent>();
+  for (const event of [...free]) {
+    if (lots.has(event.id)) continue;
+    const days = new Map<string, Row<ParsedTrade>[]>();
+    for (const row of ordered) {
+      const gap = dayNumber(event.date) - dayNumber(row.item.date);
+      if (
+        exact.has(row.id) ||
+        summed.has(row.id) ||
+        priceDiffers.has(row.id) ||
+        row.item.ticker !== event.ticker ||
+        row.item.kind !== event.kind ||
+        gap < 0 ||
+        gap > MAX_SETTLEMENT_DAYS
+      )
+        continue;
+      days.set(row.item.date, [...(days.get(row.item.date) ?? []), row]);
+    }
+    for (const rows of days.values()) {
+      const quantity = rows.reduce((s, r) => s + r.item.quantity, 0),
+        total = rows.reduce((s, r) => s + r.item.total, 0);
+      if (
+        rows.length > 1 &&
+        close(quantity, event.quantity, 1e-8) &&
+        close(total, event.total, Math.max(0.05, total * 0.001))
+      ) {
+        for (const row of rows) summed.set(row.id, event);
+        free.delete(event);
+        break;
+      }
+    }
+  }
+  return { exact, summed, priceDiffers, free };
+}
+
+/** Registro antigo que pode somar várias execuções do dia, com o preço médio. */
 function matchLegacyTrades(p: Portfolio, rows: Row<ParsedTrade>[]) {
   const history = p.tradeHistory ?? [],
     ids = new Set(history.map((e) => e.id));
@@ -215,6 +296,7 @@ export async function buildPreview(
     incomes: [],
     actions: [],
     duplicates: [],
+    matched: [],
     probable: [],
     included: [],
     unknown: [],
@@ -256,7 +338,36 @@ export async function buildPreview(
       `${repeated} ${repeated === 1 ? "linha repetida" : "linhas repetidas"} entre os arquivos ${repeated === 1 ? "foi considerada" : "foram consideradas"} uma vez só.`,
     );
 
-  // Registros antigos, sem chave.
+  // Registros antigos, sem chave: primeiro linha a linha, depois somando o dia.
+  const lines = matchLegacyLines(portfolio, newTrades);
+  newTrades = newTrades.filter((row) => {
+    const event = lines.exact.get(row.id);
+    if (event) {
+      preview.matched.push({
+        ...row,
+        legacyId: event.id,
+        reason: "Já na carteira, com a data de liquidação.",
+      });
+      return false;
+    }
+    const sum = lines.summed.get(row.id);
+    if (sum) {
+      preview.matched.push({
+        ...row,
+        legacyId: sum.id,
+        reason: "Já na carteira, somada com outras execuções do dia.",
+      });
+      return false;
+    }
+    if (lines.priceDiffers.has(row.id)) {
+      preview.probable.push({
+        ...row,
+        reason: "Parece já estar no histórico, com outro preço.",
+      });
+      return false;
+    }
+    return true;
+  });
   const isLegacyTrade = matchLegacyTrades(portfolio, newTrades);
   newTrades = newTrades.filter((row) => {
     if (!isLegacyTrade(row)) return true;
@@ -266,6 +377,25 @@ export async function buildPreview(
     });
     return false;
   });
+  if (trades.length && lines.free.size) {
+    const first = allTrades.unique.reduce(
+        (d, r) => (r.item.date < d ? r.item.date : d),
+        "9999-12-31",
+      ),
+      last = allTrades.unique.reduce(
+        (d, r) => (r.item.date > d ? r.item.date : d),
+        "",
+      );
+    const missing = [...lines.free].filter(
+      (e) =>
+        e.date >= first &&
+        dayNumber(e.date) <= dayNumber(last) + MAX_SETTLEMENT_DAYS,
+    ).length;
+    if (missing)
+      preview.warnings.push(
+        `${missing} ${missing === 1 ? "movimentação da carteira não aparece" : "movimentações da carteira não aparecem"} no arquivo, embora ${missing === 1 ? "esteja" : "estejam"} no período dele. ${missing === 1 ? "Ela continua valendo" : "Elas continuam valendo"}: confira antes de confirmar.`,
+      );
+  }
   const legacyIncomes = (portfolio.incomes ?? []).filter((i) => !i.importKey);
   newIncomes = newIncomes.filter((row) => {
     const { item } = row;
@@ -317,16 +447,24 @@ export async function buildPreview(
     .map(([ticker, c]) => ({
       ticker,
       rows: c.rows,
-      closed: Math.abs(c.net) < 1e-8,
+      // Saldo zero ou negativo: vendido, às vezes comprado antes do período do arquivo.
+      closed: c.net < 1e-8,
+      net: c.net,
     }))
     .sort((a, b) => a.ticker.localeCompare(b.ticker));
 
   // Cada ativo precisa fechar: uma venda não pode superar o saldo daquela data.
   const blocked = new Set<string>();
+  const historical = new Set(
+    allAssets(portfolio)
+      .filter((a) => a.archived)
+      .map((a) => a.ticker),
+  );
+  const refreshed = withMatched(portfolio, preview.matched);
   const candidate = (rows: Row<ParsedTrade>[]): Portfolio => ({
-    ...portfolio,
+    ...refreshed,
     tradeHistory: [
-      ...(portfolio.tradeHistory ?? []),
+      ...(refreshed.tradeHistory ?? []),
       ...rows.map((row) => eventFrom(row, "BRL")),
     ],
     corporateActions: [
@@ -335,6 +473,8 @@ export async function buildPreview(
     ],
   });
   for (const ticker of new Set(newTrades.map((r) => r.item.ticker))) {
+    // Encerrado fica só no histórico: uma venda sem compra no arquivo não afeta nada.
+    if (historical.has(ticker)) continue;
     for (let guard = 0; guard < 500; guard++) {
       const ledger = ledgerFor(candidate(newTrades), ticker);
       let quantity = ledger.baseline.reduce((s, l) => s + l.quantity, 0),
@@ -437,6 +577,55 @@ export async function buildPreview(
   return preview;
 }
 
+/** Atualiza os registros antigos com a data do negócio, a corretora e a origem. Um
+ * registro que somava execuções vira uma linha por execução, com as taxas rateadas. */
+function withMatched(
+  p: Portfolio,
+  matched: ImportPreview["matched"],
+): Portfolio {
+  if (!matched.length) return p;
+  const byLegacy = new Map<string, ImportPreview["matched"]>();
+  for (const row of matched)
+    byLegacy.set(row.legacyId, [...(byLegacy.get(row.legacyId) ?? []), row]);
+  return {
+    ...p,
+    tradeHistory: (p.tradeHistory ?? []).flatMap((e) => {
+      const rows = byLegacy.get(e.id);
+      if (!rows) return [e];
+      const marks = (row: ImportPreview["matched"][number]) => ({
+        date: row.item.date,
+        institution: row.item.institution,
+        source: row.source,
+        importKey: row.key,
+      });
+      if (rows.length === 1) return [{ ...e, ...marks(rows[0]) }];
+      const total = rows.reduce((s, r) => s + r.item.total, 0);
+      return rows.map((row) => ({
+        ...e,
+        ...marks(row),
+        id: row.id,
+        quantity: row.item.quantity,
+        price: row.item.price,
+        total: row.item.total,
+        fees: total ? (e.fees * row.item.total) / total : 0,
+      }));
+    }),
+  };
+}
+
+/** Ativo guardado só para o histórico: sem cotação, fora do patrimônio e dos aportes. */
+export const archivedAsset = (ticker: string): Asset => ({
+  ticker,
+  symbol: `${ticker}.SA`,
+  name: ticker,
+  group: "br",
+  currency: "BRL",
+  sector: "Encerrado",
+  color: "#626b99",
+  query: ticker,
+  archived: true,
+});
+
 function eventFrom(row: Row<ParsedTrade>, currency: "BRL" | "USD"): TradeEvent {
   const t = row.item;
   return {
@@ -492,7 +681,13 @@ function impactOf(before: Portfolio, after: Portfolio) {
       (r) => r.ticker,
     ),
   );
+  const historical = new Set(
+    allAssets(after)
+      .filter((a) => a.archived)
+      .map((a) => a.ticker),
+  );
   return [...tickers].flatMap((ticker) => {
+    if (historical.has(ticker)) return [];
     const old = replayLedger(ledgerFor(before, ticker)).quantity,
       next = replayLedger(ledgerFor(after, ticker)).quantity;
     return Math.abs(old - next) > 1e-8
@@ -507,7 +702,7 @@ export function applyPreview(
   preview: ImportPreview,
   probableIds: ReadonlySet<string> = new Set(),
 ): Portfolio {
-  const portfolio = migratePortfolio(current);
+  const portfolio = withMatched(migratePortfolio(current), preview.matched);
   const currency = (ticker: string) =>
     allAssets(portfolio).find((a) => a.ticker === ticker)?.currency ?? "BRL";
   const extraTrades = preview.probable.filter(

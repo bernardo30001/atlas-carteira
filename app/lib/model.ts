@@ -373,7 +373,7 @@ export function positions(portfolio: Portfolio, market: Market) {
       q = market.quotes[a.ticker],
       quoteValid = !!q && !q.stale;
     const nativeValue =
-      quantity === 0 ? 0 : quoteValid ? quantity * q.price : null;
+      quantity === 0 || a.archived ? 0 : quoteValid ? quantity * q.price : null;
     const value =
       nativeValue === 0
         ? 0
@@ -505,6 +505,7 @@ export function totals(p: Portfolio, m: Market) {
     const owned = rows.filter(
       (r) =>
         r.ticker !== "BTC" &&
+        !r.archived &&
         r.currency === currency &&
         r.quantity > 0 &&
         (!segment ||
@@ -552,7 +553,7 @@ export function dayChange(p: Portfolio, m: Market) {
   let now = 0,
     before = 0;
   for (const r of positions(p, m)) {
-    if (r.quantity <= 0) continue;
+    if (r.quantity <= 0 || r.archived) continue;
     const q = r.quote;
     if (!q || q.stale || (r.currency === "USD" && !usd)) return null;
     now += r.quantity * q.price * (r.currency === "USD" ? usd!.price : 1);

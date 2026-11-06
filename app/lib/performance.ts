@@ -197,7 +197,7 @@ function captureSnapshot(
     value: t.value,
     totalFlow: (previous?.totalFlow ?? 0) + flow,
     holdings: t.rows
-      .filter((a) => a.quantity > 0)
+      .filter((a) => a.quantity > 0 && !a.archived)
       .map((a) => ({ ticker: a.ticker, quantity: a.quantity })),
     fixed: p.fixedIncome.map((r) => ({
       id: r.id,

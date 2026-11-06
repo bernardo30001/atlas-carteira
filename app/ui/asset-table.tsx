@@ -38,7 +38,7 @@ export function AssetTable({
   const hasFiis = t.rows.some((a) => a.segment === "fii" && !a.archived);
   const rows = t.rows.filter(
     (a) =>
-      (!a.archived || a.quantity > 0) &&
+      !a.archived &&
       (filter === "all" ||
         (filter === "brazil" && a.currency === "BRL") ||
         (filter === "fii" && a.segment === "fii") ||

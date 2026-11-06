@@ -368,7 +368,11 @@ export function purchasesForPoints<T extends { date: string }>(
   p: Portfolio,
   points: T[],
 ): (T & { purchases: TradeEvent[] })[] {
-  const known = new Set(allAssets(p).map((a) => a.ticker));
+  const known = new Set(
+    allAssets(p)
+      .filter((a) => !a.archived)
+      .map((a) => a.ticker),
+  );
   const trades = datedTrades(p).filter(
     (e) => e.kind === "buy" && known.has(e.ticker),
   );
@@ -568,8 +572,10 @@ export function realizedResults(p: Portfolio) {
         rate,
       );
       if (complete && saleFee !== null) {
-        target.sales += event.total;
-        target.fees += saleFee;
+        // Sem a compra no arquivo, só conta a parte da venda que tem custo conhecido.
+        const covered = Math.min(event.quantity, quantity) / event.quantity;
+        target.sales += event.total * covered;
+        target.fees += saleFee * covered;
         target.cost += cost;
         target.count++;
       } else pending.add(ticker);
@@ -629,8 +635,15 @@ export function migrationChanges(before: Portfolio) {
 
 /** Tickers cujo histórico não fecha nem com o saldo inicial nem sozinho. */
 export function ledgerIssues(p: Portfolio): string[] {
+  // Ativo guardado só no histórico pode ter vendas de compras anteriores ao arquivo.
+  const historical = new Set(
+    allAssets(p)
+      .filter((a) => a.archived)
+      .map((a) => a.ticker),
+  );
   return [...new Set((p.tradeHistory ?? []).map((e) => e.ticker))].filter(
     (ticker) => {
+      if (historical.has(ticker)) return false;
       if (!replayLedger(ledgerFor(p, ticker)).oversold) return false;
       try {
         replayTrades((p.tradeHistory ?? []).filter((e) => e.ticker === ticker));
