@@ -45,6 +45,16 @@ export type ImportPreview = {
   probable: Row<ParsedTrade | ParsedIncome>[];
   /** Pagamentos já contidos em um provento "Acumulado anterior". */
   included: Row<ParsedIncome>[];
+  /** Proventos acumulados que os pagamentos do arquivo explicam e substituem. */
+  replaced: {
+    id: string;
+    ticker: string;
+    currency: Currency;
+    amount: number;
+    payments: number;
+    net: number;
+    withheld: number;
+  }[];
   /** Ativos fora da lista, com o que está aguardando o cadastro. */
   unknown: {
     ticker: string;
@@ -125,6 +135,8 @@ function uniqueByKey<T>(rows: Row<T>[]) {
 const dayNumber = (date: string) => Date.parse(date + "T00:00:00Z") / 86400000;
 /** Registros vindos da Movimentação têm a data de liquidação, dias depois do negócio. */
 const MAX_SETTLEMENT_DAYS = 7;
+/** Diferença de arredondamento aceita entre um acumulado e os pagamentos que o explicam. */
+const CENT_TOLERANCE = 0.011;
 
 /** Casa cada linha nova com um registro antigo sem chave: mesmo ativo, tipo e quantidade,
  * na data do negócio ou até a liquidação. Cada registro antigo serve a uma linha só. */
@@ -308,6 +320,7 @@ export async function buildPreview(
     matched: [],
     probable: [],
     included: [],
+    replaced: [],
     unknown: [],
     ignored: files.flatMap((f) =>
       f.ignored.map((n) => ({
@@ -414,19 +427,57 @@ export async function buildPreview(
       );
   }
   const legacyIncomes = (portfolio.incomes ?? []).filter((i) => !i.importKey);
+  const openings = legacyIncomes.filter((i) => i.kind === "opening");
+  // Pagamentos com bruto e imposto conhecidos substituem o acumulado, se fecharem com ele.
+  for (const opening of openings) {
+    const rows = newIncomes.filter(
+      ({ item, currency }) =>
+        item.ticker === opening.ticker &&
+        item.date <= opening.date &&
+        currency === opening.currency,
+    );
+    if (
+      !rows.length ||
+      rows.some(({ item }) => item.gross === undefined) ||
+      openings.filter((i) => i.ticker === opening.ticker).length > 1
+    )
+      continue;
+    const gross = rows.reduce((s, r) => s + (r.item.gross ?? 0), 0),
+      net = rows.reduce((s, r) => s + r.item.amount, 0);
+    // O acumulado pode ter sido informado pelo bruto ou pelo líquido.
+    if (
+      close(gross, opening.amount, CENT_TOLERANCE) ||
+      close(net, opening.amount, CENT_TOLERANCE)
+    )
+      preview.replaced.push({
+        id: opening.id,
+        ticker: opening.ticker,
+        currency: opening.currency,
+        amount: opening.amount,
+        payments: rows.length,
+        net,
+        withheld: rows.reduce((s, r) => s + (r.item.withheldTax ?? 0), 0),
+      });
+    else
+      preview.warnings.push(
+        `${opening.ticker}: os pagamentos dos arquivos somam ${gross.toFixed(2)} brutos, e o acumulado informado é de ${opening.amount.toFixed(2)}. O acumulado continua valendo até os valores fecharem.`,
+      );
+  }
+  const replacedIds = new Set(preview.replaced.map((r) => r.id));
   newIncomes = newIncomes.filter((row) => {
     const { item } = row;
     const accumulated = legacyIncomes.find(
       (i) =>
         i.kind === "opening" && i.ticker === item.ticker && item.date <= i.date,
     );
-    if (accumulated) {
+    if (accumulated && !replacedIds.has(accumulated.id)) {
       preview.included.push({
         ...row,
         reason: "Já contido no provento acumulado informado antes.",
       });
       return false;
     }
+    if (accumulated) return true;
     const same = legacyIncomes.some(
       (i) =>
         i.kind === "payment" &&
@@ -740,7 +791,8 @@ export function applyPreview(
     extraIncomes = preview.probable.filter(
       (row) => probableIds.has(row.id) && "type" in row.item,
     ) as Row<ParsedIncome>[];
-  const reconcile = new Set(preview.reconcile);
+  const reconcile = new Set(preview.reconcile),
+    replaced = new Set(preview.replaced.map((r) => r.id));
   return {
     ...portfolio,
     transactions: portfolio.transactions.map((t) =>
@@ -753,7 +805,7 @@ export function applyPreview(
       ),
     ],
     incomes: [
-      ...(portfolio.incomes ?? []),
+      ...(portfolio.incomes ?? []).filter((i) => !replaced.has(i.id)),
       ...[...preview.incomes, ...extraIncomes].map((row) =>
         incomeFrom(row, currency(row)),
       ),

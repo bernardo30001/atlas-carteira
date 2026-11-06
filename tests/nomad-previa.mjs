@@ -1,6 +1,7 @@
 // Extratos da Nomad na prévia e na carteira. Só dados fictícios.
 import test from "node:test";
 import assert from "node:assert/strict";
+import { positions } from "../app/lib/model.ts";
 import {
   ledgerFor,
   PORTFOLIO_SCHEMA,
@@ -24,8 +25,10 @@ import {
 import {
   income,
   lot,
+  market,
   near,
   portfolio,
+  quote,
   trade,
 } from "./fixtures/auditoria.mjs";
 
@@ -213,5 +216,113 @@ test("extrato em dólar não acusa movimentações da B3", async () => {
   const warning = preview.warnings.find((w) => /não aparece/.test(w));
   assert.ok(warning, "a movimentação em dólar continua sendo avisada");
   assert.match(warning, /^1 movimentação/);
+});
+
+test("pagamentos que fecham com o acumulado bruto o substituem pelo líquido", async () => {
+  const p = v4({
+    transactions: [usdLot(FUNDO, 5, 56), usdLot(OUTRO, 1, 30)],
+    incomes: [openingIncome(FUNDO, 2.5), openingIncome(OUTRO, 1)],
+  });
+  const preview = await buildPreview(p, history(), DAY);
+  assert.equal(preview.incomes.length, 2);
+  assert.equal(preview.included.length, 0);
+  assert.equal(preview.replaced.length, 2);
+  assert.deepEqual(
+    preview.replaced.map((r) => [r.ticker, r.amount, r.payments]),
+    [
+      [FUNDO, 2.5, 1],
+      [OUTRO, 1, 1],
+    ],
+  );
+  near(preview.replaced[0].net, 1.75, "líquido");
+  near(preview.replaced[0].withheld, 0.75, "retido");
+
+  const next = applyPreview(p, preview);
+  assert.ok(portfolioSchema.safeParse(next).success, "carteira válida");
+  assert.equal(
+    next.incomes.filter((i) => i.kind === "opening").length,
+    0,
+    "o acumulado sai",
+  );
+  const paid = next.incomes.find((i) => i.ticker === FUNDO);
+  assert.equal(paid.kind, "payment");
+  assert.equal(paid.amount, 1.75);
+  assert.equal(paid.withheldTax, 0.75);
+  assert.equal(paid.currency, "USD");
+  assert.equal(paid.fx, null);
+  assert.equal(paid.date, "2026-06-20");
+  assert.equal(paid.source, `nomad-extrato|Nomad|${DAY}`);
+
+  // Na posição, o provento passa a ser o que chegou de fato.
+  const row = positions(
+    next,
+    market(
+      quote(FUNDO, 60, { currency: "USD" }),
+      quote(OUTRO, 30, { currency: "USD" }),
+    ),
+  ).find((r) => r.ticker === FUNDO);
+  near(row.nativeIncome, 1.75, "provento líquido na posição");
+});
+
+test("acumulado informado pelo líquido também é substituído", async () => {
+  const p = v4({
+    transactions: [usdLot(FUNDO, 5, 56)],
+    incomes: [openingIncome(FUNDO, 1.75)],
+  });
+  const preview = await buildPreview(p, history(), DAY);
+  assert.equal(preview.replaced.length, 1);
+  assert.equal(preview.replaced[0].ticker, FUNDO);
+});
+
+test("pagamentos que não fecham: o acumulado continua e a prévia avisa", async () => {
+  const p = v4({
+    transactions: [usdLot(FUNDO, 5, 56)],
+    incomes: [openingIncome(FUNDO, 9)],
+  });
+  const preview = await buildPreview(p, history(), DAY);
+  assert.equal(preview.replaced.length, 0);
+  assert.deepEqual(
+    preview.included.map((r) => r.item.ticker).filter((t) => t === FUNDO),
+    [FUNDO],
+  );
+  assert.ok(
+    preview.warnings.some((w) => w.includes("2.50") && w.includes("9.00")),
+  );
+  const next = applyPreview(p, preview);
+  assert.equal(next.incomes.find((i) => i.ticker === FUNDO).amount, 9);
+  assert.equal(next.incomes.find((i) => i.ticker === FUNDO).kind, "opening");
+});
+
+test("dividendo depois do acumulado entra normalmente, sem mexer nele", async () => {
+  const p = v4({
+    transactions: [usdLot(FUNDO, 5, 56)],
+    incomes: [openingIncome(FUNDO, 2.5)],
+  });
+  const file = parse(
+    statementEn({
+      start: "2026-11-01",
+      end: "2026-11-30",
+      activity: dividendEn("2026-11-20", FUNDO, "0.5", "5", "2.50"),
+    }),
+  );
+  const preview = await buildPreview(p, [file], DAY);
+  assert.equal(preview.replaced.length, 0);
+  assert.equal(preview.incomes.length, 1);
+  const next = applyPreview(p, preview);
+  assert.equal(next.incomes.length, 2);
+});
+
+test("importar de novo não duplica nem desfaz nada", async () => {
+  const p = v4({
+    transactions: [usdLot(FUNDO, 5, 56), usdLot(OUTRO, 1, 30)],
+    incomes: [openingIncome(FUNDO, 2.5), openingIncome(OUTRO, 1)],
+  });
+  const first = applyPreview(p, await buildPreview(p, history(), DAY));
+  const again = await buildPreview(first, history(), "2026-12-01");
+  assert.equal(again.trades.length, 0);
+  assert.equal(again.incomes.length, 0);
+  assert.equal(again.replaced.length, 0);
+  assert.equal(again.duplicates.length, 5);
+  assert.deepEqual(applyPreview(first, again).incomes, first.incomes);
 });
 
