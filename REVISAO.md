@@ -356,7 +356,7 @@ Pontos que os extratos reais revelaram:
 
 Testada em `tests/pdf.mjs`, `tests/nomad.mjs` e `tests/nomad-previa.mjs`, com fixtures fictícias, incluindo um PDF gerado no teste. No navegador, com PDFs fictícios e gravação interceptada, em desktop e celular: nenhuma gravação antes de confirmar, um PDF de outro tipo recusado com mensagem clara, e reimportar deu 0 a adicionar. Capturas em `outputs/revisao/nomad`, que o Git ignora.
 
-Validada com os extratos reais, só em memória: todos reconhecidos, sem decisão pendente nem aviso; as operações batem com um segundo leitor, escrito à parte; o caixa do período fecha até o centavo; nenhum ativo muda de quantidade ou custo; reimportar não adiciona nada. **A carteira não foi alterada:** a importação real depende da sua confirmação na tela.
+Validada com os extratos reais, em memória e no navegador, com o build de produção, sem capturas e com a gravação interceptada: todos reconhecidos, sem decisão pendente nem aviso; as operações batem com um segundo leitor, escrito à parte; o caixa do período fecha até o centavo; nenhum ativo muda de quantidade ou custo; reimportar não adiciona nada. **A carteira não foi alterada:** a importação real depende da sua confirmação na tela.
 
 ## 11. O que ficou pendente
 
@@ -387,6 +387,9 @@ Executada ao fim desta etapa, na ordem pedida.
 | `npm test` | 15 de 15 arquivos, incluindo as 21 verificações de divergência |
 | `npm run test:api` | 2 de 2, em banco temporário. O banco local não mudou, conferido por soma de verificação |
 | `npm run build` | Passa |
+| Instalação do zero em cópia limpa do commit (`npm ci`, build e testes) | Passa |
+| Build de produção no navegador, em desktop e celular | Passa, sem erro de página. A biblioteca de PDF só carrega depois de escolher um PDF e fica fora do pacote do servidor |
+| Auditoria de dados reais e segredos no código, no histórico da branch e no build | Nenhuma ocorrência. O detector foi conferido com valores plantados |
 
 ## 13. Camada 2: sincronização automática
 
@@ -443,3 +446,40 @@ Credenciais ficam só em variáveis de ambiente do servidor: `.dev.vars` local, 
 - [Renda variável na especificação do Open Finance](https://openfinancebrasil.atlassian.net/wiki/spaces/OF/pages/144900298/Informa+es+Gerais+-+Renda+Vari+vel+-+v1.0.0-rc3.0) e [participantes](https://openfinancebrasil.org.br/quem-participa/)
 - [Parceiros da Nomad](https://benomad.zendesk.com/hc/en-us/articles/360060051573-Which-institutions-are-Nomad-s-partners) e [extratos na Nomad](https://benomad.zendesk.com/hc/en-us/articles/360042473714-Where-can-I-see-my-monthly-statements-for-my-Account)
 - [Sites na documentação da OpenAI](https://learn.chatgpt.com/docs/sites) e [segredos, em blog de terceiros](https://oran.chat/blog/codex-sites-environment-variables)
+
+## 14. Roteiro de publicação
+
+Nada foi publicado. Este checkout não tem remote nem comando de publicação: os commits "Update Site source" de `main` vêm do fluxo do Sites. A branch está à frente de `main`, que pode avançar direto, sem conflito.
+
+### O que a publicação muda
+
+| Tema | Situação |
+|---|---|
+| Hospedagem e autenticação | `.openai/hosting.json`, `app/chatgpt-auth.ts` e `worker/` não mudaram |
+| Banco | Nenhuma migração nova em `drizzle/` |
+| Variáveis de ambiente | Nenhuma nova. O teste do Meu Pluggy não deixou código |
+| Dependências novas | `fflate` e `unpdf`, com versão fixa |
+| Carteira salva | Abrir o site não grava nada. A migração roda na leitura e só fica salva quando você salvar algo. Se alguma quantidade mudar, um aviso lista cada ativo |
+
+### Passos
+
+1. **Exportar o backup no site atual, antes de publicar.** Guarde o arquivo fora da pasta do projeto: ele contém seus dados reais.
+2. **Avançar `main` até esta branch e publicar pelo fluxo do Sites.**
+3. **Abrir o site sem importar nada.** Conferir se há aviso de migração e se as quantidades continuam iguais.
+4. **Importar os extratos da Nomad.** Conferir a prévia e confirmar. As quantidades não devem mudar.
+5. **Importar a Negociação da B3.** Conferir "Como as posições vão mudar", decidir os ativos fora da lista e confirmar. Aqui as quantidades podem mudar, porque o relatório traz operações que a carteira ainda não tem.
+6. **Conferir a Visão geral e exportar um novo backup.**
+
+A ordem entre os passos 4 e 5 não altera o resultado: simulei Nomad e B3 em qualquer ordem, e juntas, com as mesmas quantidades e proventos.
+
+### Como voltar atrás
+
+| Momento | O que fazer |
+|---|---|
+| Logo depois de confirmar uma importação | O botão Desfazer, enquanto a tela estiver aberta |
+| Depois de publicar, antes de importar | Publicar a versão anterior. Ela aceita a carteira migrada, sem nada a restaurar |
+| Depois de importar | **Primeiro restaurar o backup do passo 1**, depois publicar a versão anterior. Ela não entende uma carteira já importada: recusa salvar e mostra quantidades erradas |
+
+### O que só dá para conferir depois de publicar
+
+A carteira publicada pode ser diferente da cópia local usada nas simulações. As contagens da prévia podem variar se você alterou algo no site depois dessa cópia. A publicação em si, o site no ar e a importação sobre a carteira publicada não foram testados.
