@@ -1,7 +1,7 @@
 import {ASSETS} from './model.ts';
 import {parseFundamentals,parseScreening,peerReference,freshFundamentals} from './fundamentals.ts';
 import type {Fundamentals,FundamentalData} from './evaluation-config.ts';
-let memory:FundamentalData|undefined,pending:Promise<FundamentalData>|undefined;
+let memory:FundamentalData|undefined;
 async function html(path:string,deadline:number){
  const available=deadline-Date.now();if(available<=0)throw Error('Tempo de consulta esgotado');
  const r=await fetch('https://www.fundamentus.com.br/'+path,{headers:{'User-Agent':'Mozilla/5.0','Accept':'text/html'},signal:AbortSignal.timeout(Math.min(6000,available))});
@@ -25,6 +25,6 @@ async function refresh():Promise<FundamentalData>{
 }
 export async function loadFundamentals(){
  if(memory&&Date.now()-Date.parse(memory.fetchedAt)<(memory.errors.length?60000:3600000))return memory;
- if(!pending)pending=refresh().then(data=>{if(Object.keys(data.items).length)memory=data;return data;}).finally(()=>{pending=undefined});
- return pending;
+ // Sem promessa compartilhada: na Cloudflare, ela morre junto com a requisição que a criou.
+ const data=await refresh();if(Object.keys(data.items).length)memory=data;return data;
 }

@@ -7,8 +7,8 @@ export type CdiResponse = {
   error?: string;
 };
 let cached: CdiResponse | undefined,
-  checked = 0,
-  pending: Promise<CdiResponse> | undefined;
+  checked = 0;
+// Sem promessa compartilhada: na Cloudflare, ela morre junto com a requisição que a criou.
 export async function loadCdi(force = false): Promise<CdiResponse> {
   if (
     !force &&
@@ -16,9 +16,8 @@ export async function loadCdi(force = false): Promise<CdiResponse> {
     Date.now() - checked < (cached.error ? 60000 : 3600000)
   )
     return cached;
-  if (pending) return pending;
-  pending = (async () => {
-    try {
+  try {
+    {
       const end = new Date(),
         start = new Date(end.getTime() - 1100 * 86400000),
         format = (d: Date) =>
@@ -52,64 +51,54 @@ export async function loadCdi(force = false): Promise<CdiResponse> {
       };
       checked = Date.now();
       return cached;
-    } catch {
-      checked = Date.now();
-      cached = cached
-        ? { ...cached, stale: true, error: "Não foi possível atualizar o CDI." }
-        : {
-            points: [],
-            source: "Banco Central · SGS 12",
-            updatedAt: new Date().toISOString(),
-            error:
-              "CDI indisponível. A renda fixa sem histórico não será presumida.",
-          };
-      return cached;
     }
-  })().finally(() => {
-    pending = undefined;
-  });
-  return pending;
+  } catch {
+    checked = Date.now();
+    cached = cached
+      ? { ...cached, stale: true, error: "Não foi possível atualizar o CDI." }
+      : {
+          points: [],
+          source: "Banco Central · SGS 12",
+          updatedAt: new Date().toISOString(),
+          error:
+            "CDI indisponível. A renda fixa sem histórico não será presumida.",
+        };
+    return cached;
+  }
 }
 
 export type PtaxResponse = { points: { date: string; close: number }[] };
 let ptaxCache: PtaxResponse | undefined,
-  ptaxChecked = 0,
-  ptaxPending: Promise<PtaxResponse> | undefined;
+  ptaxChecked = 0;
 /** Dólar oficial do Banco Central, no boletim de fechamento de cada dia útil. O histórico
  * do Yahoo para BRL=X chega um dia atrasado em relação à B3. */
-export function loadPtax(): Promise<PtaxResponse> {
-  if (ptaxCache && Date.now() - ptaxChecked < 3600000)
-    return Promise.resolve(ptaxCache);
-  ptaxPending ??= (async () => {
-    try {
-      const end = new Date(),
-        start = new Date(end.getTime() - 1100 * 86400000),
-        format = (d: Date) =>
-          `${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}-${d.getUTCFullYear()}`;
-      const r = await fetch(
-        `https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/odata/CotacaoDolarPeriodo(dataInicial=@dataInicial,dataFinalCotacao=@dataFinalCotacao)?@dataInicial='${format(start)}'&@dataFinalCotacao='${format(end)}'&$format=json&$select=cotacaoVenda,dataHoraCotacao&$top=2000`,
-        { signal: AbortSignal.timeout(12000) },
-      );
-      if (!r.ok) throw new Error("Fonte indisponível");
-      const { value: rows } = (await r.json()) as {
-        value: { cotacaoVenda: number; dataHoraCotacao: string }[];
-      };
-      const points = rows
-        .map((row) => ({
-          date: row.dataHoraCotacao.slice(0, 10),
-          close: row.cotacaoVenda,
-        }))
-        .filter((p) => Number.isFinite(p.close) && p.close > 0)
-        .sort((a, b) => a.date.localeCompare(b.date));
-      if (!points.length) throw new Error("Sem dados");
-      ptaxCache = { points };
-    } catch {
-      ptaxCache ??= { points: [] };
-    }
-    ptaxChecked = Date.now();
-    return ptaxCache;
-  })().finally(() => {
-    ptaxPending = undefined;
-  });
-  return ptaxPending;
+export async function loadPtax(): Promise<PtaxResponse> {
+  if (ptaxCache && Date.now() - ptaxChecked < 3600000) return ptaxCache;
+  try {
+    const end = new Date(),
+      start = new Date(end.getTime() - 1100 * 86400000),
+      format = (d: Date) =>
+        `${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}-${d.getUTCFullYear()}`;
+    const r = await fetch(
+      `https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/odata/CotacaoDolarPeriodo(dataInicial=@dataInicial,dataFinalCotacao=@dataFinalCotacao)?@dataInicial='${format(start)}'&@dataFinalCotacao='${format(end)}'&$format=json&$select=cotacaoVenda,dataHoraCotacao&$top=2000`,
+      { signal: AbortSignal.timeout(12000) },
+    );
+    if (!r.ok) throw new Error("Fonte indisponível");
+    const { value: rows } = (await r.json()) as {
+      value: { cotacaoVenda: number; dataHoraCotacao: string }[];
+    };
+    const points = rows
+      .map((row) => ({
+        date: row.dataHoraCotacao.slice(0, 10),
+        close: row.cotacaoVenda,
+      }))
+      .filter((p) => Number.isFinite(p.close) && p.close > 0)
+      .sort((a, b) => a.date.localeCompare(b.date));
+    if (!points.length) throw new Error("Sem dados");
+    ptaxCache = { points };
+  } catch {
+    ptaxCache ??= { points: [] };
+  }
+  ptaxChecked = Date.now();
+  return ptaxCache;
 }

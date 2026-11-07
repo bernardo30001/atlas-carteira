@@ -18,7 +18,6 @@ function barDay(seconds: number, zone: string) {
 const DAY = 86400;
 export type ExtraAsset = { ticker: string; symbol: string };
 let memory: Market | undefined;
-let pending: Promise<Market> | undefined;
 export const SYMBOLS = [
   ...ASSETS.map((a) => ({ ticker: a.ticker, symbol: a.symbol })),
   { ticker: "USD", symbol: "BRL=X" },
@@ -180,14 +179,12 @@ async function refresh(): Promise<Market> {
   memory = { quotes, errors, fetchedAt: new Date().toISOString() };
   return memory;
 }
+// Cada requisição faz a própria consulta. Na Cloudflare, uma consulta pertence à requisição
+// que a criou: se ela for cancelada, quem esperasse pela mesma promessa ficaria preso.
 async function loadBase() {
   if (memory && Date.now() - Date.parse(memory.fetchedAt) < 55000)
     return memory;
-  if (!pending)
-    pending = refresh().finally(() => {
-      pending = undefined;
-    });
-  return await pending;
+  return refresh();
 }
 
 const extras = new Map<string, { quote: Quote; at: number }>();
