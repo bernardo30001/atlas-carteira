@@ -378,14 +378,14 @@ Validada com os extratos reais, em memória e no navegador, com o build de produ
 
 ## 12. Verificação final
 
-Executada de novo ao fim da migração para a Cloudflare, na ordem pedida. As duas últimas linhas da tabela são da etapa anterior.
+Executada de novo ao fim da revisão da seção 16, na ordem pedida. As três últimas linhas da tabela são de etapas anteriores.
 
 | Verificação | Resultado |
 |---|---|
 | `npx tsc --noEmit` | Passa |
-| `npm run lint` | 36 erros e 9 avisos. Antes da revisão eram 33 e 17; 4 erros vieram do painel de avaliação da versão 16. Nenhum nos arquivos novos da importação |
-| `npm test` | 20 de 20 arquivos, incluindo as 21 verificações de divergência, os testes da versão 16 e os 15 casos do token do Access |
-| `npm run test:api` | 2 de 2, em banco temporário. A carteira de produção continuou na mesma revisão |
+| `npm run lint` | 30 erros e 9 avisos, todos anteriores a estas mudanças. Antes da revisão eram 33 e 17 |
+| `npm test` | 22 de 22 arquivos, incluindo a curva refeita, o planejador e a consulta cancelada |
+| `npm run test:api` | Passa, em banco temporário. A carteira de produção continuou na mesma revisão |
 | `npm run build` | Passa |
 | Instalação do zero em cópia limpa do commit (`npm ci`, build e testes) | Passa |
 | Build de produção no navegador, em desktop e celular | Passa, sem erro de página. A biblioteca de PDF só carrega depois de escolher um PDF e fica fora do pacote do servidor |
@@ -562,7 +562,7 @@ Oito das 30 passaram dos 10 ms do plano grátis, e a rota de cotações chegou a
 ### O que falta
 
 1. **Botão Sair da conta.** Não testei, porque encerraria a sua sessão. O botão aponta para `/cdn-cgi/access/logout`.
-2. **Observar o plano grátis.** Se aparecer o erro 1102 ou as cotações falharem com frequência, o plano pago custa US$ 5 por mês.
+2. **Observar o plano grátis.** A medida mais recente está na seção 16. Se aparecer o erro 1102 ou as cotações falharem com frequência, o plano pago custa US$ 5 por mês.
 3. **Período com os dois sites.** Registrar tudo só no site novo, para os dois não ficarem diferentes.
 4. **Desativar o site na OpenAI**, quando estiver satisfeito. Depois disso, a curva observada antiga deixa de estar disponível.
 5. **GitHub.** A branch não foi enviada. O repositório público segue sem a migração até você pedir.
@@ -621,10 +621,30 @@ A identidade verde foi mantida.
 - **Tabelas:** linhas mais baixas, números alinhados à direita e minigráfico de 3 meses. No celular, cada ativo cabe em duas linhas.
 - **Aportes:** quem recebe vem primeiro, o restante fica recolhido e o histórico mostra 12 registros, com botão para os demais.
 
+### Publicação
+
+Publicada em 07/11/2026 na conta Cloudflare, a partir da branch `repaginada-e-curva`. Nenhuma migração de banco foi necessária, e a carteira não mudou: mesma revisão e mesmo hash antes e depois.
+
+**Erro encontrado ao publicar:** ao recarregar a página durante uma consulta, as cotações travavam até o Worker reiniciar. O servidor reaproveitava uma consulta em andamento entre requisições, mas na Cloudflare ela morre com a requisição que a criou. O erro já existia antes desta versão. Agora cada requisição faz a própria consulta, o navegador desiste depois de 30 segundos e tenta de novo, e a curva não aparece só com os títulos manuais quando faltam cotações. `tests/consulta-cancelada.mjs` falha sem a correção e passa com ela. Repeti o cenário no site publicado, recarregando no meio das consultas, e as cotações voltaram normalmente.
+
+**CPU real em produção**, em 48 requisições de uma sessão. Nenhuma foi interrompida pelo limite.
+
+| Rota | Requisições | CPU mínimo | CPU mediano | CPU máximo |
+|---|---|---|---|---|
+| `GET /` | 7 | 10 ms | 11 ms | 38 ms |
+| `GET /api/market` | 10 | 0 ms | 2 ms | 11 ms |
+| `GET /api/history` | 7 | 3 ms | 8 ms | 9 ms |
+| `GET /api/portfolio` | 8 | 2 ms | 4 ms | 9 ms |
+| `GET /api/cdi` | 7 | 1 ms | 2 ms | 5 ms |
+| `GET /api/news` | 8 | 0 ms | 2 ms | 6 ms |
+| `GET /api/fundamentals` | 1 | 37 ms | 37 ms | 37 ms |
+
+As linhas de `/api/market`, `/api/news` e `/api/portfolio` incluem chamadas canceladas pelo teste de recarregar. A página inicial e a primeira consulta de fundamentos, que depois fica guardada por até uma hora, ainda podem passar dos 10 ms do plano grátis. A primeira leitura de notícias continua levando cerca de 10 segundos, à espera das fontes externas.
+
 ### O que falta
 
-1. **Publicar.** Nada desta seção está no site ainda.
-2. **Medir o CPU real** depois de publicar.
-3. **Datas de compra do Bitcoin.** Um lote segue sem datas e entra na curva na data de referência. Com o histórico de compras, a curva inclui o período anterior.
-4. **Câmbio das remessas.** Com ele, o custo em reais deixa de ser estimativa.
-5. **Pesos dentro de cada classe.** Decisão sua em Estratégia e metas. Sem eles, a compra mantém a proporção atual.
+1. **Datas de compra do Bitcoin.** Um lote segue sem datas e entra na curva na data de referência. Com o histórico de compras, a curva inclui o período anterior.
+2. **Câmbio das remessas.** Com ele, o custo em reais deixa de ser estimativa.
+3. **Pesos dentro de cada classe.** Decisão sua em Estratégia e metas. Sem eles, a compra mantém a proporção atual.
+4. **Botão Sair da conta.** Continua sem teste, porque encerraria a sua sessão.
+5. **GitHub.** A branch não foi enviada. O repositório público segue sem a migração e sem esta revisão até você pedir.
