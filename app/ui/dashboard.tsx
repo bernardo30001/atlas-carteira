@@ -1738,19 +1738,11 @@ export default function Dashboard() {
                 </button>
               )}
               {account !== "ready" ? (
-                <a
-                  className="button primary"
-                  href={SIGN_IN_URL}
-                  target="_top"
-                >
+                <a className="button primary" href={SIGN_IN_URL} target="_top">
                   Entrar
                 </a>
               ) : (
-                <a
-                  className="button outline"
-                  href={SIGN_OUT_URL}
-                  target="_top"
-                >
+                <a className="button outline" href={SIGN_OUT_URL} target="_top">
                   Sair da conta
                 </a>
               )}
