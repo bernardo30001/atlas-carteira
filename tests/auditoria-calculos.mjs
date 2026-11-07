@@ -5,6 +5,7 @@ import assert from "node:assert/strict";
 import {
   allocationPlan,
   assetPlan,
+  contributionPlan,
   metrics,
   positions,
   today,
@@ -18,6 +19,7 @@ import {
 import { costPerformance } from "../app/lib/cost-performance.ts";
 import { datedCost, replayTrades } from "../app/lib/trade-history.ts";
 import { portfolioSchema } from "../app/lib/validation.ts";
+import { DEFAULT_EVALUATION } from "../app/lib/evaluation-config.ts";
 import {
   income,
   lot,
@@ -306,14 +308,17 @@ test("planejador: a sobra das cotas inteiras vai para quem aceita frações", ()
     transactions: [lot("BTC", 0.87, 20), lot("ABTC11", 0.13, 20)],
   });
   const m = market(quote("BTC", 20), quote("ABTC11", 100), quote("USD", 5));
-  const plan = assetPlan(p, m, 100);
-  const of = (t) => plan.find((x) => x.ticker === t);
-  assert.equal(of("ABTC11").quantity, 0, "não compra uma cota");
-  near(
-    plan.reduce((s, x) => s + x.executable, 0),
-    100,
-    "nada fica sem destino",
+  const plan = contributionPlan(p, m, 100, "all");
+  assert.equal(
+    plan.items.find((x) => x.ticker === "ABTC11"),
+    undefined,
+    "não compra uma cota",
   );
+  assert.equal(
+    plan.waiting.find((x) => x.ticker === "ABTC11").reason,
+    "Valor menor que uma cota",
+  );
+  near(plan.spent, 100, "nada fica sem destino");
 });
 
 test("planejador: renda fixa pode ir para o ETF cotado da classe", () => {
@@ -326,6 +331,146 @@ test("planejador: renda fixa pode ir para o ETF cotado da classe", () => {
   assert.equal(plan[0].ticker, "AUPO11");
   assert.equal(plan[0].quantity, 4, "cotas inteiras");
   near(plan[0].executable, 400, "o resto fica no título que você escolher");
+});
+
+test("aporte: carteira inteira sempre mostra para onde vai cada real", () => {
+  // Tudo em ações: o aporte vai para as outras classes, e a tela precisa dizer quais.
+  const p = portfolio({ transactions: [lot("WEGE3", 100, 10)] });
+  const m = market(
+    quote("WEGE3", 10),
+    quote("AUPO11", 100),
+    quote("VOO", 20),
+    quote("BTC", 100),
+    quote("ABTC11", 100),
+    quote("USD", 5),
+  );
+  const plan = contributionPlan(p, m, 1000, "all");
+  assert.equal(plan.ready, true);
+  near(
+    plan.classes.reduce((s, c) => s + c.amount, 0),
+    1000,
+    "soma das classes",
+  );
+  assert.ok(
+    plan.items.some((x) => x.group === "rf"),
+    "renda fixa aparece entre as compras",
+  );
+  near(plan.spent + plan.leftover, 1000, "compras + sobra = aporte");
+  const brasil = plan.classes.find((c) => c.group === "br");
+  near(brasil.amount, 0, "classe acima da meta");
+  near(brasil.current, 100, "peso atual");
+  near(brasil.after, 50, "peso depois do aporte");
+});
+
+test("aporte: só bolsa BR segue os pesos salvos nas ações", () => {
+  // Sem nada em carteira, R$ 998 seguem a regra base (soma 99,8): ALUP11 10,4 → R$ 104.
+  const m = market(
+    ...[
+      "ALUP11",
+      "WEGE3",
+      "ITUB4",
+      "KLBN4",
+      "EGIE3",
+      "BPAC11",
+      "BBSE3",
+      "PSSA3",
+      "TUPY3",
+      "LEVE3",
+      "FESA4",
+      "VALE3",
+      "PRIO3",
+    ].map((t) => quote(t, 1)),
+    quote("USD", 5),
+  );
+  const plan = contributionPlan(portfolio(), m, 998, "br");
+  const of = (t) => plan.items.find((x) => x.ticker === t);
+  near(of("ALUP11").amount, 104, "10,4 de 99,8");
+  near(of("PRIO3").amount, 45, "4,5 de 99,8");
+  near(of("ALUP11").targetShare, (10.4 / 99.8) * 100, "peso recomendado");
+  assert.ok(
+    plan.items.every((x) => x.group === "br"),
+    "só ações",
+  );
+  near(plan.classes.find((c) => c.group === "br").amount, 998, "todo o valor");
+  near(
+    plan.classes.find((c) => c.group === "rf").amount,
+    0,
+    "nada em renda fixa",
+  );
+  // Pesos editados valem mais que a regra inicial.
+  const edited = contributionPlan(
+    portfolio({
+      evaluation: { ...DEFAULT_EVALUATION, baseWeights: { WEGE3: 1 } },
+    }),
+    m,
+    100,
+    "br",
+  );
+  assert.deepEqual(
+    edited.items.map((x) => x.ticker),
+    ["WEGE3"],
+  );
+  // Tese marcada para revisão não recebe aporte e diz o motivo.
+  const paused = contributionPlan(
+    portfolio({
+      evaluation: {
+        ...DEFAULT_EVALUATION,
+        overrides: {
+          ALUP11: {
+            referencePrice: null,
+            thesis: "review",
+            note: "",
+            updatedAt: "2026-11-06",
+          },
+        },
+      },
+    }),
+    m,
+    998,
+    "br",
+  );
+  assert.equal(
+    paused.items.find((x) => x.ticker === "ALUP11"),
+    undefined,
+  );
+  assert.equal(
+    paused.waiting.find((x) => x.ticker === "ALUP11").reason,
+    "Tese marcada para revisão",
+  );
+});
+
+test("aporte: só ETFs usa os pesos escolhidos e mostra quem fica de fora", () => {
+  const p = portfolio({
+    weights: { SPHQ: 40, VEA: 30, VNQ: 15, VWO: 10, IAU: 5, VOO: 0 },
+    transactions: [lot("WEGE3", 100, 10), lot("VOO", 1, 20)],
+  });
+  const m = market(
+    quote("WEGE3", 10),
+    quote("VOO", 20),
+    quote("SPHQ", 20),
+    quote("VEA", 20),
+    quote("VNQ", 20),
+    quote("VWO", 20),
+    quote("IAU", 20),
+    quote("USD", 5),
+  );
+  // VOO tem peso 0: o saldo dele não conta, e R$ 1000 seguem 40/30/15/10/5.
+  const plan = contributionPlan(p, m, 1000, "etf");
+  const of = (t) => plan.items.find((x) => x.ticker === t);
+  near(of("SPHQ").amount, 400, "SPHQ");
+  near(of("IAU").amount, 50, "IAU");
+  assert.equal(of("VOO"), undefined, "peso 0 não recebe");
+  assert.equal(
+    plan.waiting.find((x) => x.ticker === "VOO").reason,
+    "Sem peso definido",
+  );
+  assert.ok(plan.items.every((x) => x.group === "etf"));
+  near(plan.spent, 1000, "frações usam todo o valor");
+  // Sem cotação, não indica nada e avisa.
+  const pending = contributionPlan(p, market(quote("USD", 5)), 1000, "etf");
+  assert.equal(pending.ready, false);
+  assert.equal(pending.missing, true);
+  assert.deepEqual(pending.items, []);
 });
 
 test("planejador: cotas inteiras na B3 e frações no exterior e em BTC", () => {

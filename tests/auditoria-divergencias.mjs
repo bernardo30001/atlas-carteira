@@ -5,7 +5,12 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { registerHooks } from "node:module";
-import { assetPlan, positions, totals } from "../app/lib/model.ts";
+import {
+  assetPlan,
+  contributionPlan,
+  positions,
+  totals,
+} from "../app/lib/model.ts";
 import { percent, tone } from "../app/lib/format.ts";
 import { cdiFactor, simulateComposition } from "../app/lib/performance.ts";
 import { costPerformance } from "../app/lib/cost-performance.ts";
@@ -222,11 +227,14 @@ test("I9 sugestão não usa câmbio desatualizado", () => {
     weights: { SPHQ: 0, VEA: 0, VNQ: 0, IAU: 0, VWO: 0 },
   });
   const m = market(quote("VOO", 100), quote("USD", 5, { stale: true }));
-  const voo = assetPlan(p, m, 1000).find((x) => x.ticker === "VOO");
   assert.equal(
-    voo.quantity,
-    0,
-    `quantidade: exibido ${voo.quantity}, correto 0`,
+    assetPlan(p, m, 1000).find((x) => x.ticker === "VOO"),
+    undefined,
+    "sem câmbio válido, não indica compra",
+  );
+  assert.equal(
+    contributionPlan(p, m, 1000).waiting.find((x) => x.ticker === "VOO").reason,
+    "Cotação indisponível",
   );
 });
 

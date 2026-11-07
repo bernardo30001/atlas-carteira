@@ -1,3 +1,4 @@
+import { BASE_STOCK_WEIGHTS } from "./evaluation-config.ts";
 import {
   attributeIncomes,
   incomesFor,
@@ -654,81 +655,186 @@ export function allocationPlan(p: Portfolio, m: Market, budget: number) {
     amount: amounts.get(group) ?? 0,
   }));
 }
-export function assetPlan(p: Portfolio, m: Market, budget: number) {
+export type PlanDestination = "all" | "br" | "etf";
+export type PlanItem = {
+  ticker: string;
+  group: Group;
+  amount: number;
+  quantity: number;
+  executable: number;
+  gap: number;
+  quote: Quote | undefined;
+  /** Peso do ativo dentro da classe hoje e o recomendado, em %. */
+  currentShare: number;
+  targetShare: number;
+  /** Por que não recebe neste aporte. */
+  reason?: string;
+};
+const PAUSED_THESES = new Set(["review", "broken"]);
+/** Pesos dentro da classe. Ações seguem a sua regra base; nas demais, sem pesos escolhidos,
+ * mantém a proporção atual, sem presumir divisão. Tese em revisão não recebe aporte. */
+function classWeights(
+  p: Portfolio,
+  group: Group,
+  assets: { ticker: string; value: number | null }[],
+) {
+  const held = (a: { value: number | null }) => a.value ?? 0,
+    chosen = assets.some((a) => p.weights[a.ticker] !== undefined),
+    anyHeld = assets.some((a) => held(a) > 0);
+  return (a: { ticker: string; value: number | null }) => {
+    if (group === "br")
+      return PAUSED_THESES.has(
+        p.evaluation?.overrides?.[a.ticker]?.thesis ?? "",
+      )
+        ? 0
+        : (p.evaluation?.baseWeights?.[a.ticker] ??
+            p.weights[a.ticker] ??
+            // Critérios salvos são a lista completa: o que não está neles não tem peso.
+            (p.evaluation ? 0 : BASE_STOCK_WEIGHTS[a.ticker]) ??
+            0);
+    return chosen ? (p.weights[a.ticker] ?? 1) : anyHeld ? held(a) : 1;
+  };
+}
+/** Plano completo do aporte: quanto vai para cada classe e o que comprar em cada uma.
+ * Em "só bolsa BR" ou "só ETFs", todo o valor fica na classe e segue os pesos dela. */
+export function contributionPlan(
+  p: Portfolio,
+  m: Market,
+  budget: number,
+  destination: PlanDestination = "all",
+) {
   const t = totals(p, m),
-    groups = allocationPlan(p, m, budget),
-    fx = m.quotes.USD && !m.quotes.USD.stale ? m.quotes.USD.price : undefined;
-  return groups
-    .flatMap((g) => {
-      if (g.amount < 0.01) return [];
-      const assets = t.rows.filter((a) => a.group === g.group && !a.archived),
-        held = (a: (typeof assets)[number]) => a.value ?? 0,
-        // Sem pesos escolhidos, mantém a proporção atual: nenhuma divisão é presumida.
-        chosen = assets.some((a) => p.weights[a.ticker] !== undefined),
-        anyHeld = assets.some((a) => held(a) > 0),
-        weightOf = (a: (typeof assets)[number]) =>
-          chosen ? (p.weights[a.ticker] ?? 1) : anyHeld ? held(a) : 1;
-      const amounts = fillToTargets(
+    keys = Object.keys(GROUPS) as Group[],
+    fx = m.quotes.USD && !m.quotes.USD.stale ? m.quotes.USD.price : undefined,
+    ready = !t.missing.length && Number.isFinite(budget) && budget > 0;
+  const empty = {
+    ready,
+    missing: t.missing.length > 0,
+    classes: [] as {
+      group: Group;
+      amount: number;
+      current: number;
+      after: number;
+      target: number;
+    }[],
+    items: [] as PlanItem[],
+    waiting: [] as PlanItem[],
+    spent: 0,
+    leftover: 0,
+  };
+  if (!ready) return empty;
+  const amounts =
+      destination === "all"
+        ? new Map(allocationPlan(p, m, budget).map((g) => [g.group, g.amount]))
+        : new Map(keys.map((g) => [g, g === destination ? budget : 0])),
+    total = t.value + budget,
+    items: PlanItem[] = [],
+    waiting: PlanItem[] = [];
+  for (const group of keys) {
+    const classAmount = amounts.get(group) ?? 0;
+    if (classAmount < 0.01) continue;
+    const assets = t.rows.filter((a) => a.group === group && !a.archived),
+      held = (a: (typeof assets)[number]) => a.value ?? 0,
+      weightOf = classWeights(p, group, assets),
+      weightSum = assets.reduce((s, a) => s + weightOf(a), 0),
+      heldSum = assets.reduce((s, a) => s + held(a), 0),
+      planned = fillToTargets(
         assets.map((a) => ({
           key: a.ticker,
           target: weightOf(a),
           held: held(a),
         })),
-        g.amount,
+        classAmount,
       );
-      const planned = assets
-        .filter((a) => (amounts.get(a.ticker) ?? 0) > 0)
-        .map((a) => {
-          const q = a.quote,
-            amount = amounts.get(a.ticker) ?? 0,
-            unit =
-              q && !q.stale
-                ? q.price * (a.currency === "USD" ? (fx ?? 0) : 1)
-                : 0,
-            precision = wholeUnits(a) ? 1 : a.ticker === "BTC" ? 1e8 : 1e6,
-            quantity =
-              unit > 0
-                ? Math.floor((amount / unit) * precision) / precision
-                : 0;
-          return {
-            ticker: a.ticker,
-            group: g.group,
-            amount,
-            quantity,
-            executable: quantity * unit,
-            gap: amount,
-            quote: q,
-            unit,
-            precision,
-          };
+    const rows = assets.map((a) => {
+      const q = a.quote,
+        amount = planned.get(a.ticker) ?? 0,
+        unit =
+          q && !q.stale ? q.price * (a.currency === "USD" ? (fx ?? 0) : 1) : 0,
+        precision = wholeUnits(a) ? 1 : a.ticker === "BTC" ? 1e8 : 1e6,
+        quantity =
+          unit > 0 ? Math.floor((amount / unit) * precision) / precision : 0;
+      return {
+        ticker: a.ticker,
+        group,
+        amount,
+        quantity,
+        executable: quantity * unit,
+        gap: amount,
+        quote: q,
+        currentShare: heldSum ? (held(a) / heldSum) * 100 : 0,
+        targetShare: weightSum ? (weightOf(a) / weightSum) * 100 : 0,
+        unit,
+        precision,
+      };
+    });
+    // O que o arredondamento em cotas inteiras deixou vai para quem aceita frações,
+    // ou para mais uma cota de quem couber, em vez de ficar sem destino.
+    const funded = rows.filter((x) => x.amount > 0);
+    let left = classAmount - funded.reduce((s, x) => s + x.executable, 0);
+    for (const item of [...funded].sort((a, b) =>
+      a.precision === b.precision
+        ? b.amount - a.amount
+        : b.precision - a.precision,
+    )) {
+      if (left <= 0 || item.unit <= 0) continue;
+      const extra =
+        Math.floor((left / item.unit) * item.precision) / item.precision;
+      item.quantity =
+        Math.round((item.quantity + extra) * item.precision) / item.precision;
+      item.executable = item.quantity * item.unit;
+      left -= extra * item.unit;
+    }
+    for (const row of rows) {
+      const item: PlanItem = {
+        ticker: row.ticker,
+        group: row.group,
+        amount: row.amount,
+        quantity: row.quantity,
+        executable: row.executable,
+        gap: row.gap,
+        quote: row.quote,
+        currentShare: row.currentShare,
+        targetShare: row.targetShare,
+      };
+      if (item.quantity > 0) items.push(item);
+      else
+        waiting.push({
+          ...item,
+          reason:
+            group === "br" &&
+            PAUSED_THESES.has(
+              p.evaluation?.overrides?.[item.ticker]?.thesis ?? "",
+            )
+              ? "Tese marcada para revisão"
+              : item.targetShare === 0
+                ? "Sem peso definido"
+                : row.unit <= 0
+                  ? "Cotação indisponível"
+                  : item.amount > 0
+                    ? "Valor menor que uma cota"
+                    : "Já está no peso ou acima",
         });
-      // O que o arredondamento em cotas inteiras deixou vai para quem aceita frações,
-      // ou para mais uma cota de quem couber, em vez de ficar sem destino.
-      let left = g.amount - planned.reduce((s, x) => s + x.executable, 0);
-      for (const item of [...planned].sort((a, b) =>
-        a.precision === b.precision
-          ? b.amount - a.amount
-          : b.precision - a.precision,
-      )) {
-        if (left <= 0 || item.unit <= 0) continue;
-        const extra =
-          Math.floor((left / item.unit) * item.precision) / item.precision;
-        item.quantity =
-          Math.round((item.quantity + extra) * item.precision) / item.precision;
-        item.executable = item.quantity * item.unit;
-        left -= extra * item.unit;
-      }
-      return planned
-        .map((item) => ({
-          ticker: item.ticker,
-          group: item.group,
-          amount: item.amount,
-          quantity: item.quantity,
-          executable: item.executable,
-          gap: item.gap,
-          quote: item.quote,
-        }))
-        .sort((a, b) => b.amount - a.amount);
-    })
-    .sort((a, b) => b.amount - a.amount);
+    }
+  }
+  items.sort((a, b) => b.executable - a.executable);
+  waiting.sort((a, b) => b.targetShare - a.targetShare);
+  const spent = items.reduce((s, x) => s + x.executable, 0);
+  return {
+    ...empty,
+    classes: keys.map((group) => ({
+      group,
+      amount: amounts.get(group) ?? 0,
+      current: t.value ? (t.byGroup[group] / t.value) * 100 : 0,
+      after: ((t.byGroup[group] + (amounts.get(group) ?? 0)) / total) * 100,
+      target: p.targets[group],
+    })),
+    items,
+    waiting,
+    spent,
+    leftover: Math.max(0, budget - spent),
+  };
+}
+export function assetPlan(p: Portfolio, m: Market, budget: number) {
+  return contributionPlan(p, m, budget).items;
 }
