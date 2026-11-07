@@ -91,10 +91,9 @@ export function loadPtax(): Promise<PtaxResponse> {
         { signal: AbortSignal.timeout(12000) },
       );
       if (!r.ok) throw new Error("Fonte indisponível");
-      const rows = ((await r.json()) as any).value as {
-        cotacaoVenda: number;
-        dataHoraCotacao: string;
-      }[];
+      const { value: rows } = (await r.json()) as {
+        value: { cotacaoVenda: number; dataHoraCotacao: string }[];
+      };
       const points = rows
         .map((row) => ({
           date: row.dataHoraCotacao.slice(0, 10),

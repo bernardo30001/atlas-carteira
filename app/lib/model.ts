@@ -719,7 +719,15 @@ export function assetPlan(p: Portfolio, m: Market, budget: number) {
         left -= extra * item.unit;
       }
       return planned
-        .map(({ unit: _unit, precision: _precision, ...item }) => item)
+        .map((item) => ({
+          ticker: item.ticker,
+          group: item.group,
+          amount: item.amount,
+          quantity: item.quantity,
+          executable: item.executable,
+          gap: item.gap,
+          quote: item.quote,
+        }))
         .sort((a, b) => b.amount - a.amount);
     })
     .sort((a, b) => b.amount - a.amount);

@@ -25,7 +25,28 @@ export const SYMBOLS = [
   { ticker: "SP500", symbol: "^GSPC" },
   { ticker: "IBOV", symbol: "^BVSP" },
 ];
-type Bars = { closes: Point[]; raw: Point[]; meta: any; zone: string };
+type YahooMeta = {
+  regularMarketPrice: number;
+  regularMarketTime: number;
+  regularMarketChangePercent?: number;
+  previousClose?: number;
+  currency: string;
+  exchangeDataDelayedBy?: number;
+  exchangeTimezoneName?: string;
+};
+type YahooChart = {
+  chart?: {
+    result?: {
+      meta?: YahooMeta;
+      timestamp?: number[];
+      indicators?: {
+        quote?: { close?: number[] }[];
+        adjclose?: { adjclose?: number[] }[];
+      };
+    }[];
+  };
+};
+type Bars = { closes: Point[]; raw: Point[]; meta: YahooMeta; zone: string };
 async function bars(symbol: string, query: string): Promise<Bars> {
   let last: unknown;
   for (const host of ["query1", "query2"]) {
@@ -38,13 +59,10 @@ async function bars(symbol: string, query: string): Promise<Bars> {
         },
       );
       if (!r.ok) throw new Error(`Fonte: ${r.status}`);
-      const data = (await r.json()) as any,
+      const data = (await r.json()) as YahooChart,
         result = data.chart?.result?.[0],
         meta = result?.meta;
-      if (
-        !Number.isFinite(meta?.regularMarketPrice) ||
-        !(meta.regularMarketPrice > 0)
-      )
+      if (!result || !meta || !(meta.regularMarketPrice > 0))
         throw new Error("Sem cotação");
       const zone: string = meta.exchangeTimezoneName ?? "UTC",
         stamps: number[] = result.timestamp ?? [],
