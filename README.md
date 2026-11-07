@@ -6,7 +6,7 @@ Painel privado de investimentos em português, com posições e estratégia vinc
 
 - 14 ações BR: ALUP11, WEGE3, ITUB4, KLBN4, KLBN11, EGIE3, BPAC11, BBSE3, PSSA3, TUPY3, LEVE3, FESA4, VALE3, PRIO3.
 - ETFs internacionais VOO, SPHQ, VEA, VNQ, IAU e VWO; ABTC11 e AUPO11 na B3; Bitcoin direto.
-- AUPO11 classificado em renda fixa e ABTC11 em exposição cripto para as metas.
+- Cada ETF conta na classe a que dá exposição: AUPO11 em renda fixa e ABTC11 em Bitcoin, nas metas, nos resumos e nos filtros.
 - Custos, saldos, proventos e resultados por moeda de origem; conversão do saldo em USD para BRL exibida à parte.
 - Proventos acumulados ou novos pagamentos por ativo, sem duplicar o patrimônio.
 - Extratos de referência preservados com os valores recebidos e observações de reconciliação.
@@ -16,13 +16,13 @@ Painel privado de investimentos em português, com posições e estratégia vinc
 - Dividendos da Nomad ficam pelo valor líquido, com o imposto retido à parte. Os extratos não trazem o câmbio das remessas, que nunca é presumido.
 - Ativos fora da lista padrão, como FIIs, são cadastrados pela interface. FIIs entram na meta Brasil, com cartão próprio.
 - Desdobramentos, grupamentos, bonificações e trocas de ticker ajustam quantidade e preço médio.
-- Filtro de rendimento: tudo agregado, ações/ETFs americanos, ações na B3 e Bitcoin direto. O modo padrão Desde o preço médio inclui o resultado acumulado anterior ao cadastro: (saldo − custo + proventos) / custo, ponderado pelo capital investido. Custos exatos do extrato e taxas são preservados.
+- Filtro por classe: tudo, Brasil, renda fixa, exterior e Bitcoin. O resultado sobre o investido inclui o resultado acumulado anterior ao cadastro: (saldo − custo + proventos) / custo, ponderado pelo capital investido. Custos exatos do extrato e taxas são preservados.
 - O histórico de compras e vendas é a fonte da quantidade e do custo. Posição inicial vale como posição na data de referência; o que veio antes dela já está incluído. Vendas parciais reduzem o custo e os proventos pelo preço médio; posições e ciclos encerrados ficam fora do rendimento em carteira e aparecem em Resultado realizado. Backups antigos são migrados ao carregar, com aviso se alguma quantidade mudar.
 - O preço médio inclui as taxas, como o valor investido exibido ao lado.
 - Pontos de compra com botão liga/desliga, agrupados por data, detalhes de quantidade/preço/total e tabela acessível. Usa a data do extrato, sem inferir horário de execução.
-- Curva retroativa pelo preço médio com cotações históricas sem ajuste por dividendos, quando disponíveis. Posições iniciais são reconstruídas pelas quantidades cadastradas; compras com datas conhecidas entram na data informada. Proventos acumulados entram na data de referência. A janela do gráfico não zera o acumulado. A curva é uma estimativa, separada das observações reais.
-- No modo pelo preço médio, o grupo americano usa USD, B3 e Bitcoin usam BRL. O consolidado preserva o câmbio registrado; conversões sem câmbio de compra/recebimento usam o dólar da data avaliada e aparecem como estimativa, sem ganho cambial histórico. Renda fixa sem capital inicial fica fora do percentual, com cobertura indicada; saldos manuais conhecidos entram apenas no acumulado, sem curva diária inventada.
-- Acompanhamento real e simulação permanecem disponíveis em BRL, com aportes e proventos isolados por grupo. O histórico real anterior ao registro por grupo continua no consolidado.
+- Curva de rentabilidade refeita dia a dia com as compras, vendas, proventos e os preços de cada dia, sem depender de abrir o site. Aportes não contam como ganho, como na cota de um fundo, e a comparação com Ibovespa, S&P 500, CDI e Bitcoin parte da mesma data. Posição sem datas de compra entra na data de referência, pelo valor de mercado. Títulos manuais entram na data do saldo e depois seguem o índice contratado, como estimativa.
+- Exterior em dólares; Brasil, renda fixa, Bitcoin e consolidado em reais. Sem o câmbio da remessa, o custo em reais usa o dólar oficial (PTAX) do dia da compra e aparece como estimativa. Renda fixa sem capital inicial fica fora do resultado sobre o investido, com cobertura indicada.
+- Gráficos de rentabilidade, patrimônio contra dinheiro aportado, resultado sobre o investido e simulação da composição atual.
 - Notícias por mercado (incluindo Bolsa brasileira) e por ativo, com buscas alternativas pelo nome ou ticker. Filtro Bolsa brasileira também na tabela de ativos, incluindo ações e ETFs negociados na B3.
 - Metas iniciais: Brasil 35%, renda fixa 35%, exterior 22%, Bitcoin 8%.
 - Registro de posição inicial e compra com quantidade, preço, câmbio e taxas.
@@ -34,7 +34,7 @@ Painel privado de investimentos em português, com posições e estratégia vinc
 
 ## Atualização e limites
 
-A interface consulta o Yahoo Finance a cada 60 segundos enquanto a aba está visível. A fonte pode fornecer dados atrasados, ser bloqueada ou ficar indisponível; não há garantia de tempo real de bolsa. A interface usada não é uma API pública documentada do Yahoo. Para uma operação com garantias e disponibilidade contratual, substitua por um provedor licenciado. Nunca configure chaves no navegador.
+A interface consulta o Yahoo Finance a cada 60 segundos enquanto a aba está visível, só para o preço atual. O histórico diário vem à parte, em lotes pequenos, e o histórico do dólar vem da PTAX do Banco Central. A fonte pode fornecer dados atrasados, ser bloqueada ou ficar indisponível; não há garantia de tempo real de bolsa. A interface usada não é uma API pública documentada do Yahoo. Para uma operação com garantias e disponibilidade contratual, substitua por um provedor licenciado. Nunca configure chaves no navegador.
 
 Notícias via Google Notícias RSS, com Bing Notícias e Yahoo Finance como alternativas, com cache de 5 minutos e links para a publicação. Renda fixa exige atualização manual pelo extrato. O resultado por ativo inclui os proventos registrados, que não são somados novamente ao saldo em custódia. Vendas ficam à parte, em Resultado realizado. Impostos não são calculados. O gráfico de referências não representa a rentabilidade da carteira.
 

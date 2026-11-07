@@ -534,7 +534,7 @@ O site saiu do Sites da OpenAI para uma conta Cloudflare própria, com a sua apr
 - **Origem:** o último backup, fora do repositório. Antes de usar, conferi que a carteira do site antigo tinha a mesma revisão e o mesmo hash SHA-256.
 - **Gravação:** direta no D1, por um arquivo temporário apagado logo depois. A validação da rota de importação não rodou nesse caminho, mas a carteira veio do site antigo, onde já tinha sido validada.
 - **Conferência:** o conteúdo lido de volta do banco tem o mesmo hash do backup.
-- **Curva observada:** recomeça do zero. A API antiga não expõe o estado que a curva precisa para continuar, e a tela parte da linha de base mais recente, então copiar só os pontos não adiantaria. Os 14 pontos antigos ficam no site antigo até você desativá-lo. A curva retroativa, pelo preço médio, não depende disso e se recalcula sozinha.
+- **Curva observada:** não foi copiada, porque a API antiga não expõe o estado que ela precisa para continuar. Deixou de ser necessária: a seção 16 refaz a curva a partir das operações.
 
 ### O que foi conferido no site publicado
 
@@ -567,3 +567,64 @@ Oito das 30 passaram dos 10 ms do plano grátis, e a rota de cotações chegou a
 4. **Desativar o site na OpenAI**, quando estiver satisfeito. Depois disso, a curva observada antiga deixa de estar disponível.
 5. **GitHub.** A branch não foi enviada. O repositório público segue sem a migração até você pedir.
 6. **Cobrança.** O Zero Trust Free exigiu forma de pagamento e autoriza cobrar uso acima dos limites grátis. A página não detalha que uso seria esse. Vale conferir **Billing** no painel depois de alguns dias.
+
+## 16. Curva, aportes, classificação e design
+
+Revisão pedida em 07/11/2026, na branch `repaginada-e-curva`. Os números reais foram conferidos fora do repositório.
+
+### Classificação
+
+As metas já contavam ABTC11 em Bitcoin e AUPO11 em renda fixa, mas o filtro da curva e os resumos tratavam os dois como "ETFs na B3". Agora cada ETF conta na classe a que dá exposição em todo o site. O filtro Bitcoin junta BTC e ABTC11, e há um filtro novo de renda fixa. O ABTC11 segue a estratégia do próprio fundo, então sua variação pode diferir da do BTC.
+
+### Curva
+
+| O que estava errado | Efeito | Correção |
+|---|---|---|
+| Posição sem datas de compra valia desde o início do gráfico | Retorno inventado antes de a posição existir, que depois parecia uma queda | Entra na data de referência, pelo valor de mercado |
+| Histórico do dólar do Yahoo (`BRL=X`) chega um dia atrasado em relação à B3 | Saltos falsos nas posições em dólar nos dias de câmbio agitado | Histórico pela PTAX do Banco Central. A cotação do minuto continua no Yahoo |
+| Custo em reais sem câmbio de remessa usava o dólar de hoje | O resultado em reais ignorava a variação do dólar desde a compra | Usa a PTAX do dia da compra, marcada como estimativa. O campo `fx` continua vazio: nada é presumido nos dados |
+| Acompanhamento dependia de abrir o site e recomeçava ao migrar | Curva curta, sem o passado | Curva refeita pelas operações. A rota de observações saiu e as tabelas ficam no banco, sem uso |
+| Histórico limitado a um ano | Compras mais antigas ficavam de fora | Baixa desde a posição aberta mais antiga |
+
+Retorno diário = (saldo final + vendas + proventos) ÷ (saldo anterior + compras) − 1, com os dias encadeados, como na cota de um fundo. `tests/history-performance.mjs` confere cada caso com valores calculados à mão: aporte neutro, taxas, proventos, posição sem datas, câmbio, carteira zerada, janela, CDB pelo CDI e filtros.
+
+### Aportes
+
+A conta das classes estava correta, e com uma classe bem abaixo da meta todo o aporte vai para ela, como esperado. Não avaliei se as metas ou os ativos são adequados para você: isso exige um profissional habilitado. Avaliei se a conta leva às metas que você definiu.
+
+| Ponto | Antes | Agora |
+|---|---|---|
+| Classe acima da meta | Divisão proporcional aos déficits | As classes que recebem terminam igualmente perto da meta |
+| Sem pesos dentro da classe | Divisão igual entre os ativos, incluindo os que você não tem | Mantém a proporção atual, sem presumir divisão |
+| Volatilidade e tendência | Mudavam levemente os valores | Só informação |
+| Sobra das cotas inteiras | Ficava sem destino | Vai para quem aceita frações ou para mais uma cota |
+| Renda fixa | Sem quantidade | Mostra a quantidade do ETF da classe, além da opção de um título |
+
+O simulador das ações brasileiras não mudou: ele já distribuía por preço, fundamentos e limites.
+
+### Otimização
+
+Medido no build de produção local, onde `/api/market` tinha ficado em 14 ms de CPU antes da mudança.
+
+| Item | Resultado |
+|---|---|
+| `/api/market` | 2 ms de CPU e 6,5 KB por consulta, só com o preço atual |
+| Histórico | Até 6,7 ms de CPU por lote de 4 ativos, com cache de 30 minutos |
+| Pacote da tela inicial | De 653 KB para 486 KB: Avaliação e Importar carregam quando abertas |
+
+### Design
+
+A identidade verde foi mantida.
+
+- **Resumo:** patrimônio em destaque e quatro cartões por classe, cada um com o percentual atual e a marca da meta.
+- **Gráfico:** controles em menos linhas, índices ao lado do resultado e novo gráfico de patrimônio contra dinheiro aportado.
+- **Tabelas:** linhas mais baixas, números alinhados à direita e minigráfico de 3 meses. No celular, cada ativo cabe em duas linhas.
+- **Aportes:** quem recebe vem primeiro, o restante fica recolhido e o histórico mostra 12 registros, com botão para os demais.
+
+### O que falta
+
+1. **Publicar.** Nada desta seção está no site ainda.
+2. **Medir o CPU real** depois de publicar.
+3. **Datas de compra do Bitcoin.** Um lote segue sem datas e entra na curva na data de referência. Com o histórico de compras, a curva inclui o período anterior.
+4. **Câmbio das remessas.** Com ele, o custo em reais deixa de ser estimativa.
+5. **Pesos dentro de cada classe.** Decisão sua em Estratégia e metas. Sem eles, a compra mantém a proporção atual.
