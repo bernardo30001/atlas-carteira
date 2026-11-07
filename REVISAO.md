@@ -364,7 +364,7 @@ Validada com os extratos reais, em memória e no navegador, com o build de produ
 2. **Relatório de Posição da B3 (seção 3.5).** É a conferência definitiva de quantidades.
 3. **Migração sobre a carteira publicada.** Simulada na cópia local, sem nenhuma quantidade alterada e com a validação aprovada. A carteira publicada só pode ser conferida depois de publicar. Se alguma quantidade mudar, um aviso lista cada ativo com o valor antes e depois.
 4. **Nota de corretagem (etapa 5).** Não iniciada. Preciso de notas reais para conhecer o formato.
-   - **Importação real da Nomad.** O leitor está pronto e validado em memória. Falta você importar os extratos na tela e confirmar a prévia.
+   - **Ativos fora da lista na B3.** As linhas deles não foram importadas: decidir entre cadastrar e guardar só no histórico. Dois têm saldo no relatório e dependem da Movimentação.
    - **Câmbio das remessas da Nomad.** Nem os extratos nem os prints trazem a cotação ou o valor em reais. O custo em reais desses ativos segue como estimativa.
    - **Compras do mês corrente na Nomad.** O extrato só sai no mês seguinte. Até lá, uma compra recente precisa ser registrada à mão, ou espera o extrato.
    - **PDF protegido por senha.** A mensagem existe, mas não foi testada com um arquivo assim.
@@ -470,7 +470,13 @@ A base desta revisão estava atrás do que está no ar: a versão 16 do Sites j�
 
 ### Publicação
 
-Publicada em 06/11/2026 como **versão 17** do Sites, com o público privado preservado. O código publicado é o desta integração, conferido por comparação de árvore, e a origem estava na versão 16. Uma entrada `node_modules` rastreada por engano no repositório do Sites, um atalho para uma pasta local, deixou de existir. **A carteira não foi alterada:** a importação continua dependendo da sua confirmação na tela.
+Publicada em 06/11/2026 como **versão 17** do Sites, com o público privado preservado. O código publicado é o desta integração, conferido por comparação de árvore, e a origem estava na versão 16. Uma entrada `node_modules` rastreada por engano no repositório do Sites, um atalho para uma pasta local, deixou de existir. 
+
+### Importação real
+
+Feita em 06/11/2026 sobre a carteira publicada, com a sua autorização: extratos da Nomad e Negociação da B3. O navegador integrado não permite escolher arquivos nem grava downloads, então o resultado foi calculado com o mesmo código da tela (`buildPreview` e `applyPreview`) sobre um backup da carteira publicada e gravado pela mesma rota do botão Adicionar, só depois de conferir revisão e soma de verificação. A validação do servidor foi aplicada normalmente. O botão Desfazer não existe nesse caminho: a volta é pelo backup, guardado fora do repositório.
+
+A carteira publicada era mais nova que a cópia local usada nas simulações anteriores, por isso as contas finais foram refeitas sobre ela. Ficam de fora os ativos fora da lista, à espera da sua decisão.
 
 ### O que a publicação muda
 
