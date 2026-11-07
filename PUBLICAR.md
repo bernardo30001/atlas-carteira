@@ -17,11 +17,11 @@ O site roda em uma conta Cloudflare própria: Workers, banco D1 e login pelo Clo
    - Em **Integrations > Identity providers**, adicione **One-time PIN** para entrar com código por e-mail. Sem isso, a tela só oferece a conta Cloudflare.
 10. **Configurar as variáveis** como segredos, uma por comando, com `npx wrangler secret put NOME`:
 
-    | Nome | Valor |
-    |---|---|
-    | `CF_ACCESS_TEAM_DOMAIN` | Nome do time, como `minha-equipe` |
-    | `CF_ACCESS_AUD` | **AUD tag**, na aba **Access** do Worker |
-    | `ATLAS_ALLOWED_EMAILS` | Os e-mails autorizados, separados por vírgula |
+    | Nome                    | Valor                                         |
+    | ----------------------- | --------------------------------------------- |
+    | `CF_ACCESS_TEAM_DOMAIN` | Nome do time, como `minha-equipe`             |
+    | `CF_ACCESS_AUD`         | **AUD tag**, na aba **Access** do Worker      |
+    | `ATLAS_ALLOWED_EMAILS`  | Os e-mails autorizados, separados por vírgula |
 
 11. **Conferir:** abra o site em uma janela anônima. Ele deve pedir o login antes de mostrar qualquer coisa.
 12. **Levar a carteira:** faça login e use **Estratégia e metas > Importar backup**.

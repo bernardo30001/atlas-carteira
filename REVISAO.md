@@ -372,20 +372,20 @@ Validada com os extratos reais, em memória e no navegador, com o build de produ
 6. **Eventos que dependem de você na prévia.** Atualização, incorporação, subscrição e leilão de fração são mostrados, mas não aplicados. Falta interface para registrar troca de ticker à mão e para excluir evento societário importado depois de sair da tela. Vou definir isso com o arquivo real.
 7. **Altura no celular.** O conteúdo principal subiu, mas a página total não encurtou: visão geral de 6035 para 6189 px e carteira de 6853 para 7553 px, porque os cartões mostram mais dados à vista. Sugiro recolher os detalhes de cada cartão.
 8. **Notícias.** Ativos cadastrados ainda não aparecem nos filtros de notícias.
-9. **Não testado:** site publicado, aparelho físico, VoiceOver e zoom de 200%.
+9. **Não testado:** aparelho físico, VoiceOver e zoom de 200%.
 10. **Lint.** Restam erros anteriores a esta revisão, fora do escopo. Os números finais estão na seção 12.
-11. **Publicação.** Nada foi publicado. O checkout não tem remote, e `.openai/hosting.json` e `app/chatgpt-auth.ts` não foram alterados.
+11. **Migração para a Cloudflare.** O que falta está na seção 15.
 
 ## 12. Verificação final
 
-Executada ao fim desta etapa, na ordem pedida.
+Executada de novo ao fim da migração para a Cloudflare, na ordem pedida. As duas últimas linhas da tabela são da etapa anterior.
 
 | Verificação | Resultado |
 |---|---|
 | `npx tsc --noEmit` | Passa |
 | `npm run lint` | 36 erros e 9 avisos. Antes da revisão eram 33 e 17; 4 erros vieram do painel de avaliação da versão 16. Nenhum nos arquivos novos da importação |
-| `npm test` | 19 de 19 arquivos, incluindo as 21 verificações de divergência e os testes da versão 16 |
-| `npm run test:api` | 2 de 2, em banco temporário. O banco local não mudou, conferido por soma de verificação |
+| `npm test` | 20 de 20 arquivos, incluindo as 21 verificações de divergência, os testes da versão 16 e os 15 casos do token do Access |
+| `npm run test:api` | 2 de 2, em banco temporário. A carteira de produção continuou na mesma revisão |
 | `npm run build` | Passa |
 | Instalação do zero em cópia limpa do commit (`npm ci`, build e testes) | Passa |
 | Build de produção no navegador, em desktop e celular | Passa, sem erro de página. A biblioteca de PDF só carrega depois de escolher um PDF e fica fora do pacote do servidor |
@@ -449,7 +449,9 @@ Credenciais ficam só em variáveis de ambiente do servidor: `.dev.vars` local, 
 
 ## 14. Roteiro de publicação
 
-Este checkout não tem remote nem comando de publicação. A publicação usa as ferramentas nativas do Sites, que só existem nas sessões do Codex e do ChatGPT, e parte do repositório de origem do próprio Sites.
+Esta seção registra a publicação no Sites da OpenAI. A publicação atual está na seção 15 e em `PUBLICAR.md`.
+
+Este checkout não tem remote. A publicação no Sites usava as ferramentas nativas dele, que só existem nas sessões do Codex e do ChatGPT, e partia do repositório de origem do próprio Sites.
 
 ### Integração com a versão 16
 
@@ -510,3 +512,39 @@ A ordem entre os passos 4 e 5 não altera o resultado: simulei Nomad e B3 em qua
 ### O que só dá para conferir depois de publicar
 
 A carteira publicada pode ser diferente da cópia local usada nas simulações. As contagens da prévia podem variar se você alterou algo no site depois dessa cópia. A publicação em si, o site no ar e a importação sobre a carteira publicada não foram testados.
+
+## 15. Migração para a Cloudflare
+
+O site saiu do Sites da OpenAI para uma conta Cloudflare própria, com a sua aprovação. A branch é `migracao-cloudflare`, e o passo a passo está em `PUBLICAR.md`. O site antigo continua no ar até você desativá-lo.
+
+### O que mudou
+
+| Tema | Antes | Agora |
+|---|---|---|
+| Hospedagem | Sites da OpenAI | Worker na sua conta, em um endereço `workers.dev` |
+| Banco | D1 gerenciado pelo Sites | D1 na sua conta |
+| Login | Conta do ChatGPT, pelo cabeçalho da plataforma | Cloudflare Access, com código por e-mail ou conta Cloudflare, e uma política que permite um único e-mail |
+| Conferência da identidade | `app/chatgpt-auth.ts` | `app/auth.ts` e `app/lib/access-token.ts`: assinatura, time, aplicação, validade e lista de e-mails. Sem configuração completa, ninguém entra |
+| Identificador do usuário no banco | Identificador da OpenAI | E-mail em minúsculas |
+| Segredos | Nenhum | Três, só no Worker: time, AUD e e-mails. Nenhum no repositório |
+| Endereços de prévia | Não se aplica | Desligados em `wrangler.jsonc` |
+
+### Carteira
+
+- **Origem:** o último backup, fora do repositório. Antes de usar, conferi que a carteira do site antigo tinha a mesma revisão e o mesmo hash SHA-256.
+- **Gravação:** direta no D1, por um arquivo temporário apagado logo depois. A validação da rota de importação não rodou nesse caminho, mas a carteira veio do site antigo, onde já tinha sido validada.
+- **Conferência:** o conteúdo lido de volta do banco tem o mesmo hash do backup.
+- **Curva observada:** recomeça do zero. A API antiga não expõe o estado que a curva precisa para continuar, e a tela parte da linha de base mais recente, então copiar só os pontos não adiantaria. Os 14 pontos antigos ficam no site antigo até você desativá-lo. A curva retroativa, pelo preço médio, não depende disso e se recalcula sozinha.
+
+### O que foi conferido no site publicado
+
+Sem login, a página, a leitura e a gravação da carteira e o histórico redirecionam para a tela de login. O mesmo vale para token forjado no cabeçalho e no cookie, cookie de desenvolvimento e cabeçalhos antigos do ChatGPT. O subdomínio criado automaticamente pela Cloudflare deixou de existir depois da troca.
+
+### O que falta
+
+1. **Entrar pela primeira vez.** Conferir o token real, a carteira pela API e o botão de sair (`/cdn-cgi/access/logout`).
+2. **Medir o CPU real.** O limite grátis é de 10 ms por requisição. Localmente, a rota de cotações ficou em 14 ms, e as de notícias e fundamentos só foram medidas com cache. Se houver erro 1102 ou falha frequente, o plano pago custa US$ 5 por mês.
+3. **Período com os dois sites.** Registrar tudo só no site novo, para os dois não ficarem diferentes.
+4. **Desativar o site na OpenAI**, quando estiver satisfeito. Depois disso, a curva observada antiga deixa de estar disponível.
+5. **GitHub.** A branch não foi enviada. O repositório público segue sem a migração até você pedir.
+6. **Cobrança.** O Zero Trust Free exigiu forma de pagamento e autoriza cobrar uso acima dos limites grátis. A página não detalha que uso seria esse. Vale conferir **Billing** no painel depois de alguns dias.
