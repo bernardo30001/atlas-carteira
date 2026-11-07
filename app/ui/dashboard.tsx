@@ -173,6 +173,10 @@ function demoPortfolio(): Portfolio {
     ],
   };
 }
+/** O Access pede o login ao recarregar a página: precisa ser um link comum. */
+const SIGN_IN_URL = "/";
+const SIGN_OUT_URL = "/cdn-cgi/access/logout";
+
 export default function Dashboard() {
   const [page, setPage] = useState("overview"),
     [portfolio, setPortfolio] = useState<Portfolio>(EMPTY),
@@ -898,7 +902,7 @@ export default function Dashboard() {
                 Entre para salvar sua carteira na nuvem e acessar em outros
                 dispositivos.
               </span>
-              <a href="/" target="_top">
+              <a href={SIGN_IN_URL} target="_top">
                 Entrar <ArrowRight size={15} />
               </a>
             </div>
@@ -1736,7 +1740,7 @@ export default function Dashboard() {
               {account !== "ready" ? (
                 <a
                   className="button primary"
-                  href="/"
+                  href={SIGN_IN_URL}
                   target="_top"
                 >
                   Entrar
@@ -1744,7 +1748,7 @@ export default function Dashboard() {
               ) : (
                 <a
                   className="button outline"
-                  href="/cdn-cgi/access/logout"
+                  href={SIGN_OUT_URL}
                   target="_top"
                 >
                   Sair da conta
