@@ -34,7 +34,8 @@ export function useMarketHistory(portfolio: Portfolio) {
       .then((r) => r.json() as Promise<{ points?: Point[] }>)
       .then((j) => setPtax(j.points ?? []))
       .catch(() => {});
-    const queue = historyBatches(symbols.split(","));
+    const queue = historyBatches(symbols.split(",")),
+      collected: Record<string, AssetHistory> = {};
     const worker = async () => {
       for (let batch = queue.shift(); batch; batch = queue.shift()) {
         try {
@@ -44,14 +45,17 @@ export function useMarketHistory(portfolio: Portfolio) {
           );
           if (!r.ok) continue;
           const j: { items: Record<string, AssetHistory> } = await r.json();
-          setHistories((old) => ({ ...old, ...j.items }));
+          Object.assign(collected, j.items);
         } catch {
           if (signal.aborted) return;
         }
       }
     };
     Promise.all(Array.from({ length: CONCURRENT }, worker)).finally(() => {
-      if (!signal.aborted) setLoadedKey(key);
+      // De uma vez: com parte do histórico, a curva sairia errada por alguns instantes.
+      if (signal.aborted) return;
+      setHistories((old) => ({ ...old, ...collected }));
+      setLoadedKey(key);
     });
     return () => controller.abort();
   }, [from, symbols, key]);

@@ -1,17 +1,62 @@
 "use client";
 import { money } from "../lib/format";
-import { Wallet, Globe2, Landmark, Coins } from "lucide-react";
+import { Wallet, Globe2, Coins } from "lucide-react";
 import { useMemo } from "react";
-import { percent, signedMoney, tone } from "../lib/format";
+import { percent, plainPercent, signedMoney, tone } from "../lib/format";
 import { costPerformance } from "../lib/cost-performance";
 import { realizedResults } from "../lib/trade-history";
 import {
+  GROUPS,
   dayChange,
   totals,
   usableQuote,
+  type Group,
   type Portfolio,
   type Market,
 } from "../lib/model";
+function ClassCard({
+  group,
+  label,
+  value,
+  foot,
+  share,
+  target,
+  hidden,
+}: {
+  group: Group;
+  label: string;
+  value: React.ReactNode;
+  foot: string;
+  share: number | null;
+  target: number;
+  hidden: boolean;
+}) {
+  return (
+    <section className="class-card">
+      <div className="class-card-head">
+        <span>
+          <i style={{ background: GROUPS[group].color }} />
+          {label}
+        </span>
+        <b>{hidden || share === null ? "—" : plainPercent(share, 1)}</b>
+      </div>
+      <div className="class-card-value">{value}</div>
+      <div className="class-meter" aria-hidden="true">
+        <i
+          style={{
+            width: hidden || share === null ? 0 : `${Math.min(100, share)}%`,
+            background: GROUPS[group].color,
+          }}
+        />
+        <em style={{ left: `${target}%` }} />
+      </div>
+      <div className="class-card-foot">
+        <span>{foot}</span>
+        <span>Meta {target}%</span>
+      </div>
+    </section>
+  );
+}
 export function CurrencySummary({
   portfolio,
   market,
@@ -44,6 +89,8 @@ export function CurrencySummary({
       [portfolio, market],
     ),
     today = useMemo(() => dayChange(portfolio, market), [portfolio, market]);
+  const share = (group: Group) =>
+    t.missing.length || !t.value ? null : (t.byGroup[group] / t.value) * 100;
   const figure = (amount: number | undefined, change: number | undefined) =>
     hidden ? (
       "••••••"
@@ -56,11 +103,7 @@ export function CurrencySummary({
     );
   return (
     <>
-      <div
-        className={
-          "stats-grid currency-stats" + (fiis.count ? " with-fiis" : "")
-        }
-      >
+      <div className="summary-grid">
         <section className="stat-card wealth">
           <div className="stat-label">
             Patrimônio consolidado em reais <Wallet size={16} />
@@ -92,88 +135,88 @@ export function CurrencySummary({
           </div>
           <div className="wealth-decoration" />
         </section>
-        <section className="stat-card">
-          <div className="stat-label">
-            Ações na B3 <Landmark size={16} />
-          </div>
-          <div className="stat-value">
-            {br.missing ? "Cotação pendente" : fmt(br.value)}
-          </div>
-          <div className="stat-foot">{br.count} ações · valores em reais</div>
-        </section>
-        {fiis.count > 0 && (
-          <section className="stat-card">
-            <div className="stat-label">
-              FIIs na B3 <Landmark size={16} />
-            </div>
-            <div className="stat-value">
-              {fiis.missing ? "Cotação pendente" : fmt(fiis.value)}
-            </div>
-            <div className="stat-foot">
-              {fiis.count} fundos · valores em reais
-            </div>
-          </section>
-        )}
-        <section className="stat-card">
-          <div className="stat-label">
-            Exterior · patrimônio em dólar <Globe2 size={16} />
-          </div>
-          <div className="stat-value">
-            {us.missing ? "Cotação pendente" : fmt(us.value, "USD")}
-          </div>
-          <div className="stat-foot">
-            {us.missing ? (
-              "Saldo parcial · cotação pendente"
-            ) : fx ? (
-              <>≈ {fmt(us.value * fx.price)} ao câmbio atual</>
-            ) : (
-              "Conversão indisponível · saldo em US$ preservado"
-            )}
-          </div>
-        </section>
-        <section className="stat-card">
-          <div className="stat-label">
-            Renda fixa <Landmark size={16} />
-          </div>
-          <div className="stat-value">
-            {t.fixedQuoted.missing ? "Cotação pendente" : fmt(t.byGroup.rf)}
-          </div>
-          <div className="stat-foot">
-            {[
-              ...fixedEtfs.map((a) => a.ticker),
-              ...(portfolio.fixedIncome.length
-                ? [
-                    `${portfolio.fixedIncome.length} ${portfolio.fixedIncome.length === 1 ? "título manual" : "títulos manuais"}, saldo de ${new Date(manualDate + "T12:00:00Z").toLocaleDateString("pt-BR")}`,
+        <div className="class-cards">
+          <ClassCard
+            hidden={hidden}
+            group="br"
+            label="Brasil"
+            share={share("br")}
+            target={portfolio.targets.br}
+            value={
+              br.missing || fiis.missing
+                ? "Cotação pendente"
+                : fmt(t.byGroup.br)
+            }
+            foot={
+              `${br.count} ${br.count === 1 ? "ação" : "ações"}` +
+              (fiis.count
+                ? ` · ${fiis.count} ${fiis.count === 1 ? "FII" : "FIIs"}`
+                : "")
+            }
+          />
+          <ClassCard
+            hidden={hidden}
+            group="rf"
+            label="Renda fixa"
+            share={share("rf")}
+            target={portfolio.targets.rf}
+            value={
+              t.fixedQuoted.missing ? "Cotação pendente" : fmt(t.byGroup.rf)
+            }
+            foot={
+              [
+                ...fixedEtfs.map((a) => a.ticker),
+                ...(portfolio.fixedIncome.length
+                  ? [
+                      `${portfolio.fixedIncome.length} ${portfolio.fixedIncome.length === 1 ? "título" : "títulos"} em ${new Date(manualDate + "T12:00:00Z").toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}`,
+                    ]
+                  : []),
+              ].join(" · ") || "Nenhum título"
+            }
+          />
+          <ClassCard
+            hidden={hidden}
+            group="etf"
+            label="Exterior"
+            share={share("etf")}
+            target={portfolio.targets.etf}
+            value={us.missing ? "Cotação pendente" : fmt(us.value, "USD")}
+            foot={
+              us.missing
+                ? "Saldo parcial"
+                : fx
+                  ? `≈ ${fmt(us.value * fx.price)} hoje`
+                  : "Conversão indisponível"
+            }
+          />
+          <ClassCard
+            hidden={hidden}
+            group="crypto"
+            label="Bitcoin"
+            share={share("crypto")}
+            target={portfolio.targets.crypto}
+            value={
+              t.bitcoin.missing ? "Cotação pendente" : fmt(t.byGroup.crypto)
+            }
+            foot={
+              hidden
+                ? "Quantidade oculta"
+                : [
+                    btc.quantity > 0
+                      ? btc.quantity.toLocaleString("pt-BR", {
+                          maximumFractionDigits: 4,
+                        }) + " BTC"
+                      : "",
+                    ...btcEtfs.map(
+                      (a) =>
+                        `${a.quantity.toLocaleString("pt-BR")} ${a.ticker}`,
+                    ),
                   ]
-                : []),
-            ].join(" · ") || "Nenhum título cadastrado"}
-          </div>
-        </section>
-        <section className="stat-card">
-          <div className="stat-label">
-            Bitcoin <Coins size={16} />
-          </div>
-          <div className="stat-value">
-            {t.bitcoin.missing ? "Cotação pendente" : fmt(t.byGroup.crypto)}
-          </div>
-          <div className="stat-foot">
-            {hidden
-              ? "Quantidade oculta"
-              : [
-                  btc.quantity > 0
-                    ? btc.quantity.toLocaleString("pt-BR", {
-                        maximumFractionDigits: 8,
-                      }) + " BTC"
-                    : "",
-                  ...btcEtfs.map(
-                    (a) =>
-                      `${a.quantity.toLocaleString("pt-BR")} ${a.quantity === 1 ? "cota" : "cotas"} ${a.ticker}`,
-                  ),
-                ]
-                  .filter(Boolean)
-                  .join(" · ") || "Nenhuma posição"}
-          </div>
-        </section>
+                    .filter(Boolean)
+                    .join(" · ") || "Nenhuma posição"
+            }
+          />
+        </div>
       </div>
       {!compact && (
         <div className="fx-ribbon">

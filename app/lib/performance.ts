@@ -9,17 +9,17 @@ import {
 export const PERFORMANCE_SCOPES = [
   {
     key: "all",
-    name: "Tudo agregado",
+    name: "Tudo",
     description: "Toda a carteira, incluindo renda fixa e Bitcoin.",
   },
   {
     key: "us",
-    name: "Ações/ETFs americanos",
+    name: "Exterior",
     description: "ETFs negociados em dólar, com retorno em dólares.",
   },
   {
     key: "br",
-    name: "Ações na B3",
+    name: "Brasil",
     description: "Somente ações brasileiras.",
   },
   {

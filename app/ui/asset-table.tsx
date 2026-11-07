@@ -2,13 +2,8 @@
 import { Search, Plus, ArrowRight, Coins } from "lucide-react";
 import { money, num, plainPercent, signedMoney, tone } from "../lib/format";
 import { Change } from "./change";
-import {
-  GROUPS,
-  totals,
-  usableQuote,
-  type Portfolio,
-  type Market,
-} from "../lib/model";
+import { Sparkline } from "./sparkline";
+import { totals, usableQuote, type Portfolio, type Market } from "../lib/model";
 export function AssetTable({
   portfolio,
   market,
@@ -98,8 +93,8 @@ export function AssetTable({
           </h2>
           <p>
             {full
-              ? "Custos, proventos e resultados preservados na moeda de cada posição."
-              : "Todos os ativos em carteira, com suas quantidades e saldos."}
+              ? "Custos, proventos e resultados na moeda de cada posição."
+              : "Posições em carteira. Volatilidade e tendência ficam no detalhe de cada ativo."}
           </p>
         </div>
         {full ? (
@@ -175,7 +170,7 @@ export function AssetTable({
                 <thead role="rowgroup">
                   <tr role="row">
                     <th role="columnheader" scope="col">
-                      Ativo / Classe
+                      Ativo
                     </th>
                     <th role="columnheader" scope="col">
                       Cotação
@@ -201,19 +196,19 @@ export function AssetTable({
                     ) : (
                       <>
                         <th role="columnheader" scope="col">
+                          3 meses
+                        </th>
+                        <th role="columnheader" scope="col">
+                          Hoje
+                        </th>
+                        <th role="columnheader" scope="col">
                           Quantidade
                         </th>
                         <th role="columnheader" scope="col">
                           Saldo atual
                         </th>
                         <th role="columnheader" scope="col">
-                          Variação do dia
-                        </th>
-                        <th role="columnheader" scope="col">
-                          Volatilidade anual
-                        </th>
-                        <th role="columnheader" scope="col">
-                          Tendência 6 meses
+                          Na carteira
                         </th>
                       </>
                     )}
@@ -242,8 +237,8 @@ export function AssetTable({
                               style={{
                                 background: a.color + "16",
                                 color: a.color,
-                                width: 36,
-                                height: 36,
+                                width: 32,
+                                height: 32,
                               }}
                             >
                               {a.ticker === "BTC" ? "₿" : a.ticker.slice(0, 2)}
@@ -251,17 +246,27 @@ export function AssetTable({
                             <span>
                               <b>{a.ticker}</b>
                               <small>{a.name}</small>
-                              <small>
-                                {GROUPS[a.group].short} ·{" "}
-                                {a.currency === "USD" && a.ticker !== "BTC"
-                                  ? "US$"
-                                  : "R$"}
-                              </small>
                             </span>
                           </button>
                         </td>
                         <td role="cell" data-label="Cotação">
-                          <b>
+                          <b
+                            title={
+                              a.quote
+                                ? "Cotação de " +
+                                  new Date(a.quote.time * 1000).toLocaleString(
+                                    "pt-BR",
+                                    {
+                                      timeZone: "America/Sao_Paulo",
+                                      day: "2-digit",
+                                      month: "2-digit",
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                    },
+                                  )
+                                : undefined
+                            }
+                          >
                             {quotePrimary === null
                               ? "Cotação pendente"
                               : money(quotePrimary, a.primaryCurrency)}
@@ -277,25 +282,15 @@ export function AssetTable({
                                   : "Conversão pendente"}
                             </small>
                           )}
-                          <small>
-                            {a.quote
-                              ? new Date(a.quote.time * 1000).toLocaleString(
-                                  "pt-BR",
-                                  {
-                                    timeZone: "America/Sao_Paulo",
-                                    day: "2-digit",
-                                    month: "2-digit",
-                                    hour: "2-digit",
-                                    minute: "2-digit",
-                                  },
-                                )
-                              : "Aguardando a fonte"}
-                            {a.quote?.stale
-                              ? " · sem atualização"
-                              : a.quote?.outdated
-                                ? " · cotação antiga"
-                                : ""}
-                          </small>
+                          {(!a.quote || a.quote.stale || a.quote.outdated) && (
+                            <small>
+                              {!a.quote
+                                ? "Aguardando a fonte"
+                                : a.quote.stale
+                                  ? "Sem atualização"
+                                  : "Cotação antiga"}
+                            </small>
+                          )}
                         </td>
                         {full ? (
                           <>
@@ -366,6 +361,14 @@ export function AssetTable({
                           </>
                         ) : (
                           <>
+                            <td role="cell" data-label="3 meses">
+                              <Sparkline points={a.quote?.priceHistory} />
+                            </td>
+                            <td role="cell" data-label="Hoje">
+                              <Change
+                                value={validQuote ? a.quote?.change : undefined}
+                              />
+                            </td>
                             <td role="cell" data-label="Quantidade">
                               {hidden ? "•••" : num(a.quantity, 8)}
                             </td>
@@ -383,18 +386,14 @@ export function AssetTable({
                                 </small>
                               )}
                             </td>
-                            <td role="cell" data-label="Variação do dia">
-                              <Change
-                                value={validQuote ? a.quote?.change : undefined}
-                              />
-                            </td>
-                            <td role="cell" data-label="Volatilidade anual">
-                              {a.quote?.volatility != null
-                                ? plainPercent(a.quote.volatility)
-                                : "—"}
-                            </td>
-                            <td role="cell" data-label="Tendência 6 meses">
-                              <Change value={a.quote?.momentum} />
+                            <td role="cell" data-label="Na carteira">
+                              {hidden
+                                ? "•••"
+                                : !t.missing.length && t.value
+                                  ? plainPercent(
+                                      ((a.value ?? 0) / t.value) * 100,
+                                    )
+                                  : "—"}
                             </td>
                           </>
                         )}

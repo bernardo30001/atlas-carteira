@@ -207,16 +207,16 @@ export function historyPerformance(
     }
     return quantity;
   };
+  // Antes do primeiro preço conhecido, o ativo fica parado no primeiro preço, para não
+  // bloquear a curva dos demais. Costuma ser um ETF mais novo que a posição informada.
   const priceOn = (holding: Holding, date: string) =>
-    atDate(holding.series, date);
+    atDate(holding.series, date) ?? holding.series[0].close;
   /** Saldo de uma posição na moeda da curva, na data. */
   const holdingValue = (holding: Holding, date: string) => {
     const quantity = quantityOn(holding, date);
     if (quantity === 0) return 0;
-    const close = priceOn(holding, date);
-    if (close === null) return null;
     return toCurrency(
-      quantity * holding.adjust(date) * close,
+      quantity * holding.adjust(date) * priceOn(holding, date),
       holding.asset.currency,
       date,
     );
@@ -232,7 +232,7 @@ export function historyPerformance(
     let quantity = 0;
     if (baselineDate) {
       const opening = ledger.baseline.reduce((s, l) => s + l.quantity, 0),
-        close = priceOn(holding, baselineDate) ?? holding.series[0].close,
+        close = priceOn(holding, baselineDate),
         value = toCurrency(
           opening * holding.adjust(baselineDate) * close,
           asset.currency,
@@ -308,7 +308,7 @@ export function historyPerformance(
     for (const holding of holdings) {
       const v = holdingValue(holding, date);
       if (v === null) {
-        // Sem preço nem câmbio neste dia, por exemplo antes do início da série.
+        // Sem câmbio neste dia, por exemplo antes do início da série.
         complete = false;
         break;
       }

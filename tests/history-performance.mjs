@@ -458,3 +458,25 @@ test("S&P 500 em reais soma índice e câmbio; em dólar, só o índice", () => 
   );
   near(historyPerformance(p, m, [], "us", null, NOW).points.at(-1).sp500, 10);
 });
+
+test("ativo sem preço antigo não bloqueia a curva dos demais", () => {
+  // ETF2 só tem preço a partir do dia 4. A curva começa no dia 2 mesmo assim.
+  const r = historyPerformance(
+    portfolio({
+      tradeHistory: [
+        trade("WEGE3", "buy", "2026-03-02", 10, 10),
+        trade("ABTC11", "buy", "2026-03-02", 10, 10),
+      ],
+    }),
+    market(
+      WEGE({ "2026-03-02": 10, "2026-03-03": 11, "2026-03-06": 11 }),
+      quote("ABTC11", "BRL", { "2026-03-04": 10, "2026-03-06": 10 }),
+    ),
+    [],
+    "all",
+    null,
+    NOW,
+  );
+  assert.equal(r.startedAt, "2026-03-02");
+  near(byDate(r, "2026-03-03").portfolio, 5, "metade da carteira subiu 10%");
+});

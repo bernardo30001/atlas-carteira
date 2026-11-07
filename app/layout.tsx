@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "./design.css";
 import { THEME_BOOT_SCRIPT } from "./lib/theme";
 export const metadata: Metadata = {
   title: "Atlas · Sua carteira, por inteiro",

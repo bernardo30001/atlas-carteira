@@ -1,4 +1,5 @@
 "use client";
+import { useState } from "react";
 import {
   ArrowDownLeft,
   ArrowUpRight,
@@ -91,7 +92,8 @@ export function MovementHistory({
   onDelete: (id: string) => void;
   onExport: () => void;
 }) {
-  const rows = movementRows(portfolio);
+  const rows = movementRows(portfolio),
+    [limit, setLimit] = useState(12);
   return (
     <section className="panel history-panel">
       <div className="panel-title">
@@ -127,7 +129,7 @@ export function MovementHistory({
               </tr>
             </thead>
             <tbody>
-              {rows.map((row) => (
+              {rows.slice(0, limit).map((row) => (
                 <tr key={row.id}>
                   <td>
                     {new Date(row.date + "T12:00:00").toLocaleDateString(
@@ -167,6 +169,14 @@ export function MovementHistory({
               ))}
             </tbody>
           </table>
+          {rows.length > limit && (
+            <button
+              className="text-button history-more"
+              onClick={() => setLimit(rows.length)}
+            >
+              Ver todos os {rows.length} registros
+            </button>
+          )}
         </div>
       ) : (
         <div className="empty">

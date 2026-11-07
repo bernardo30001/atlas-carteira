@@ -13,7 +13,7 @@ import {
   Tooltip,
   ReferenceLine,
 } from "recharts";
-import { Activity, Info, TrendingUp, Check, RefreshCw } from "lucide-react";
+import { Activity, Info, Check, RefreshCw } from "lucide-react";
 import {
   PERFORMANCE_SCOPES,
   performancePortfolio,
@@ -162,7 +162,7 @@ export function PerformanceChart({
           ]),
       {
         key: "sp500",
-        name: curveCurrency === "USD" ? "S&P 500" : "S&P 500 em R$",
+        name: curveCurrency === "USD" ? "S&P 500" : "S&P 500 (R$)",
         color: "var(--chart-sp500)",
       },
       ...(curveCurrency === "USD"
@@ -170,7 +170,7 @@ export function PerformanceChart({
         : [{ key: "cdi" as const, name: "CDI", color: "var(--chart-cdi)" }]),
       {
         key: "bitcoin",
-        name: curveCurrency === "USD" ? "Bitcoin" : "Bitcoin em R$",
+        name: curveCurrency === "USD" ? "Bitcoin" : "Bitcoin (R$)",
         color: "var(--chart-bitcoin)",
       },
     ];
@@ -243,14 +243,11 @@ export function PerformanceChart({
       className="panel performance-panel"
       aria-label="Evolução e rentabilidade da carteira"
     >
-      <div className="panel-title">
+      <div className="performance-head">
         <div>
           <span className="eyebrow">SUA CARTEIRA EM PERSPECTIVA</span>
           <h2>{MODES.find((m) => m.key === mode)!.title}</h2>
         </div>
-        <TrendingUp size={21} />
-      </div>
-      <div className="performance-toolbar">
         <div
           className="performance-modes"
           role="group"
@@ -267,6 +264,25 @@ export function PerformanceChart({
             </button>
           ))}
         </div>
+      </div>
+      <div className="performance-toolbar">
+        <div className="performance-filters">
+          <span id="performance-filter-label" className="visually-hidden">
+            Filtrar por classe
+          </span>
+          <div role="group" aria-labelledby="performance-filter-label">
+            {PERFORMANCE_SCOPES.map((s) => (
+              <button
+                key={s.key}
+                aria-pressed={scope === s.key}
+                className={scope === s.key ? "chip active" : "chip"}
+                onClick={() => setScope(s.key)}
+              >
+                {s.name}
+              </button>
+            ))}
+          </div>
+        </div>
         <div
           className="period-tabs"
           role="group"
@@ -281,21 +297,6 @@ export function PerformanceChart({
               onClick={() => setDays(value)}
             >
               {label}
-            </button>
-          ))}
-        </div>
-      </div>
-      <div className="performance-filters">
-        <span id="performance-filter-label">Filtrar por classe</span>
-        <div role="group" aria-labelledby="performance-filter-label">
-          {PERFORMANCE_SCOPES.map((s) => (
-            <button
-              key={s.key}
-              aria-pressed={scope === s.key}
-              className={scope === s.key ? "chip active" : "chip"}
-              onClick={() => setScope(s.key)}
-            >
-              {s.name}
             </button>
           ))}
         </div>
@@ -369,55 +370,64 @@ export function PerformanceChart({
                     : "Aguardando histórico dos ativos"}
           </p>
         </div>
-        <span className="performance-base">
-          {mode === "cost" ? "Custo" : wealth ? currencyName : "Base 0%"}
-          <small>
-            {mode === "cost"
-              ? "base do resultado"
-              : wealth
-                ? "com aportes"
-                : "na mesma data inicial"}
-          </small>
-        </span>
-      </div>
-      <div
-        className="performance-legend"
-        role="group"
-        aria-label={
-          shownReferences.length ? "Índices para comparação" : "Séries"
-        }
-      >
-        <span>
-          <i style={{ background: "var(--chart-line)" }} />
-          {seriesName}
-        </span>
-        {wealth && (
-          <span>
-            <i style={{ background: "var(--chart-invested)" }} />
-            Dinheiro aportado
-          </span>
-        )}
-        {shownReferences.map((r) => (
-          <button
-            key={r.key}
-            aria-pressed={selected.includes(r.key)}
-            onClick={() => toggle(r.key)}
-            className={selected.includes(r.key) ? "selected" : ""}
-          >
-            <i
-              style={{
-                borderColor: r.color,
-                background: selected.includes(r.key) ? r.color : "transparent",
-              }}
-            >
-              {selected.includes(r.key) && <Check size={10} />}
-            </i>
-            {r.name}
-            {selected.includes(r.key) && unavailable.includes(r.key) && (
-              <small>sem dados</small>
-            )}
-          </button>
-        ))}
+        <div
+          className="performance-legend"
+          role="group"
+          aria-label={
+            shownReferences.length ? "Índices para comparação" : "Séries"
+          }
+        >
+          {wealth && (
+            <>
+              <span>
+                <i style={{ background: "var(--chart-line)" }} />
+                Patrimônio
+              </span>
+              <span>
+                <i style={{ background: "var(--chart-invested)" }} />
+                Dinheiro aportado
+              </span>
+            </>
+          )}
+          {shownReferences.map((r) => {
+            const on = selected.includes(r.key),
+              v = last?.[r.key],
+              difference =
+                v !== undefined && returnValue !== undefined
+                  ? returnValue - v
+                  : undefined;
+            return (
+              <button
+                key={r.key}
+                aria-pressed={on}
+                onClick={() => toggle(r.key)}
+                className={"benchmark-chip" + (on ? " selected" : "")}
+              >
+                <span>
+                  <i
+                    style={{
+                      borderColor: r.color,
+                      background: on ? r.color : "transparent",
+                    }}
+                  >
+                    {on && <Check size={9} />}
+                  </i>
+                  {r.name}
+                </span>
+                <b>{on ? pct(v) : "—"}</b>
+                <small>
+                  {!on
+                    ? "Oculto"
+                    : unavailable.includes(r.key) || difference === undefined
+                      ? "Sem dados"
+                      : hidden
+                        ? "Oculto"
+                        : `${percent(difference).replace("%", "")} p.p.`}
+                </small>
+              </button>
+            );
+          })}
+        </div>
       </div>
       {shownReferences.length > 0 && cdiError && (
         <div className="source-recovery" role="status">
@@ -661,33 +671,6 @@ export function PerformanceChart({
       {showPurchases && (
         <PurchaseTable purchases={visiblePurchases} hidden={hidden} />
       )}
-      <div className="performance-comparison">
-        {shownReferences
-          .filter((r) => selected.includes(r.key))
-          .map((r) => {
-            const v = last?.[r.key],
-              difference =
-                v !== undefined && returnValue !== undefined
-                  ? returnValue - v
-                  : undefined;
-            return (
-              <div key={r.key}>
-                <span>
-                  <i style={{ background: r.color }} />
-                  {r.name}
-                </span>
-                <b>{pct(v)}</b>
-                <small>
-                  {difference === undefined
-                    ? "Sem dado comum no período"
-                    : hidden
-                      ? "Comparação pessoal oculta"
-                      : `${scopeInfo.name}: ${percent(difference).replace("%", "")} p.p.`}
-                </small>
-              </div>
-            );
-          })}
-      </div>
       {mode === "cost" ? (
         <CostReturnMethod data={accumulated} hidden={hidden}>
           <p>
