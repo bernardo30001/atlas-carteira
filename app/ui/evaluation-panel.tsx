@@ -49,7 +49,6 @@ type Props = {
   setBudget: (value: number) => void;
   save: (p: Portfolio) => Promise<boolean>;
   busy: boolean;
-  initialTicker?: string;
   onRegister?: (ticker: string, quantity: number) => void;
 };
 export function EvaluationPanel({
@@ -60,21 +59,16 @@ export function EvaluationPanel({
   setBudget,
   save,
   busy,
-  initialTicker,
   onRegister,
 }: Props) {
   const [data, setData] = useState<FundamentalData>(),
     [loading, setLoading] = useState(true),
     [error, setError] = useState(""),
-    [selected, setSelected] = useState(
-      initialTicker && stocks.some((a) => a.ticker === initialTicker)
-        ? initialTicker
-        : "ALUP11",
-    ),
+    [selected, setSelected] = useState("ALUP11"),
     [filter, setFilter] = useState("all"),
     [query, setQuery] = useState(""),
     [budgetScope, setBudgetScope] = useState<EvaluationBudgetScope>("stocks"),
-    [view, setView] = useState(initialTicker ? "asset" : "allocation"),
+    [view, setView] = useState("allocation"),
     [message, setMessage] = useState("");
   async function load(signal?: AbortSignal) {
     setLoading(true);
