@@ -1,7 +1,7 @@
 // Roda os testes de API em um banco local temporário, nunca em .wrangler/state.
 import { spawn, spawnSync } from "node:child_process";
-import { mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { mkdirSync, rmSync } from "node:fs";
+import { resolve } from "node:path";
 
 const port = 5183;
 const base = `http://localhost:${port}`;
@@ -11,47 +11,24 @@ const wrangler = resolve("node_modules/wrangler/bin/wrangler.js");
 rmSync(state, { recursive: true, force: true });
 mkdirSync(state, { recursive: true });
 
-const config = join(state, "wrangler.json");
-writeFileSync(
-  config,
-  JSON.stringify({
-    name: "atlas-test",
-    compatibility_date: "2026-05-15",
-    d1_databases: [
-      {
-        binding: "DB",
-        database_name: "site-creator-d1",
-        database_id: "00000000-0000-4000-8000-000000000000",
-      },
-    ],
-  }),
+// Usa o wrangler.jsonc, como o servidor abaixo: os dois precisam ver o mesmo banco local.
+const applied = spawnSync(
+  process.execPath,
+  [
+    wrangler,
+    "d1",
+    "migrations",
+    "apply",
+    "atlas-carteira",
+    "--local",
+    "--persist-to",
+    state,
+  ],
+  { encoding: "utf8", input: "y\n" },
 );
-
-for (const file of readdirSync("drizzle")
-  .filter((name) => name.endsWith(".sql"))
-  .sort()) {
-  const applied = spawnSync(
-    process.execPath,
-    [
-      wrangler,
-      "d1",
-      "execute",
-      "site-creator-d1",
-      "--local",
-      "--persist-to",
-      state,
-      "--config",
-      config,
-      "--file",
-      join("drizzle", file),
-      "--yes",
-    ],
-    { encoding: "utf8" },
-  );
-  if (applied.status !== 0) {
-    console.error(applied.stdout, applied.stderr);
-    throw new Error(`Migração ${file} não aplicada ao banco de teste.`);
-  }
+if (applied.status !== 0) {
+  console.error(applied.stdout, applied.stderr);
+  throw new Error("Migrações não aplicadas ao banco de teste.");
 }
 
 const server = spawn(
