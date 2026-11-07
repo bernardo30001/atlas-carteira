@@ -56,7 +56,7 @@ for (const file of readdirSync("drizzle")
 
 const server = spawn(
   process.execPath,
-  ["scripts/run-framework.mjs", "dev", "--port", String(port), "--strictPort"],
+  ["node_modules/vinext/dist/cli.js", "dev", "--port", String(port), "--strictPort"],
   {
     env: { ...process.env, ATLAS_PERSIST_STATE: state },
     stdio: ["ignore", "pipe", "pipe"],
