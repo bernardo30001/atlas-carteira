@@ -1,6 +1,6 @@
 # Atlas · Minha carteira
 
-Painel privado de investimentos em português, com posições e estratégia vinculadas à conta ChatGPT e persistidas em Cloudflare D1.
+Painel privado de investimentos em português, com posições e estratégia vinculadas ao seu login e persistidas em Cloudflare D1.
 
 ## O que está pronto
 
@@ -50,4 +50,4 @@ As posições reais são registros privados no banco de dados e não são inclu�
 - `npm run test:api`: testes de API em um banco local temporário, apagado no fim. Eles não usam `.wrangler/state`.
 - `npm run lint` e `npm run build`
 
-As migrações em `drizzle/` são aplicadas pela publicação do Sites. A prévia local tem banco próprio. A pasta `dados-privados/` é ignorada pelo Git: arquivos reais ficam nela e nunca entram em código, testes ou commits. A configuração de publicação fica em `.openai/hosting.json`.
+Publicação: `npm run db:migrate` e `npm run deploy`, numa conta Cloudflare própria. O passo a passo está em `PUBLICAR.md`. A prévia local tem banco próprio. A pasta `dados-privados/` é ignorada pelo Git: arquivos reais ficam nela e nunca entram em código, testes ou commits.
