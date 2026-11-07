@@ -44,7 +44,7 @@ const CLASSES: {
   },
   {
     key: "crypto",
-    label: "Cripto",
+    label: "Bitcoin ou cripto",
     group: "crypto",
     sector: "Cripto",
     currency: "BRL",

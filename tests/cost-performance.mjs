@@ -125,12 +125,13 @@ const btc = {
     tx("ABTC11", 2, 10),
   ],
 };
+// O filtro Bitcoin junta BTC direto e o ETF de Bitcoin: custo 4000 + 20, saldo 7200 + 30.
 r = costPerformance(btc, m, "btc", 365, now);
-near(r.cost, 4000);
-near(r.value, 7200);
-near(r.returnPercent, 80);
-assert.equal(r.totalCount, 1);
-near(r.points.at(-1).portfolio, 80);
+near(r.cost, 4020);
+near(r.value, 7230);
+near(r.returnPercent, (3210 / 4020) * 100);
+assert.equal(r.totalCount, 2);
+near(r.points.at(-1).portfolio, (3210 / 4020) * 100);
 // Group returns use invested weights, not the mean of percentages or current values.
 const weighted = {
   ...EMPTY,

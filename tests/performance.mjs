@@ -308,8 +308,8 @@ const bm = {
 };
 const bt = totals(br, bm);
 close(bt.brazilStocks.value, 100);
-close(bt.brazilEtfs.value, 50);
-close(bt.brazil.value, 150);
+close(bt.bitcoin.value, 20);
+close(bt.fixedQuoted.value, 30);
 close(bt.byGroup.crypto, 20);
 close(bt.byGroup.rf, 30);
 console.log(
@@ -412,7 +412,7 @@ const base = capturePerformance(
 close(base.point.value, 1750);
 close(base.point.segments.br.value, 100);
 close(base.point.segments.us.value, 500);
-close(base.point.segments.btc.value, 100);
+close(base.point.segments.btc.value, 120);
 const movedMarket = {
   ...mixedMarket,
   quotes: {
@@ -456,7 +456,7 @@ const movement = capturePerformance(
 );
 close(movement.point.segments.br.index, 114);
 close(movement.point.segments.us.index, 146.4);
-close(movement.point.segments.btc.index, 108);
+close(movement.point.segments.btc.index, 115);
 close(movement.point.index, (2014 / 1750) * 100);
 const bought = {
   ...withPayments,
@@ -486,7 +486,7 @@ const mixedData = {
 for (const [scope, expected] of [
   ["br", 14],
   ["us", 46.4],
-  ["btc", 8],
+  ["btc", 15],
 ]) {
   const chart = recordedChart(
     mixedData,
@@ -534,7 +534,7 @@ assert.equal(delayed.point.segments.us.baseline, true);
 assert.equal(delayed.point.segments.br.baseline, false);
 assert.deepEqual(
   performancePortfolio(mixed, "btc").transactions.map((t) => t.ticker),
-  ["BTC"],
+  ["BTC", "ABTC11"],
 );
 assert.equal(performancePortfolio(mixed, "all"), mixed);
 const simBr = simulateComposition(

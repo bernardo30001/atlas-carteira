@@ -1807,14 +1807,15 @@ export default function Dashboard() {
                   Sem o câmbio de compra, o custo e o resultado históricos em
                   reais ficam pendentes. O resultado por ativo é saldo na moeda
                   de origem menos custo mais proventos registrados. Dividendos
-                  não são adicionados novamente ao patrimônio. Bitcoin direto
-                  pode ter custo informado em reais. Renda fixa usa o saldo
+                  não são adicionados novamente ao patrimônio. Bitcoin pode ter
+                  custo informado em reais. Renda fixa usa o saldo
                   manual do extrato; custo ausente permanece desconhecido. O
                   resultado das posições em carteira não inclui vendas, que
                   aparecem à parte em Resultado realizado. Impostos não são
-                  calculados. AUPO11 entra em renda fixa; ABTC11 entra em
-                  criptomoedas para as metas, sem presumir exposição 100% a BTC
-                  em seu fundo. Valores e rendimentos do extrato recebido ficam
+                  calculados. Cada ETF conta na classe a que dá exposição:
+                  AUPO11 em renda fixa e ABTC11 em Bitcoin, nas metas, nos
+                  resumos e nos filtros. O ABTC11 segue a estratégia do próprio
+                  fundo, então sua variação pode diferir da do BTC. Valores e rendimentos do extrato recebido ficam
                   preservados separadamente das cotações atuais.
                 </p>
                 <h3>Limites</h3>

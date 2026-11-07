@@ -29,16 +29,14 @@ export function CurrencySummary({
     hidden ? "••••••" : v === null ? "Não informado" : money(v, c);
   const br = t.brazilStocks,
     fiis = t.brazilFiis,
-    etfs = t.brazilEtfs,
-    etfNames = t.rows
-      .filter((a) => a.currency === "BRL" && a.group !== "br" && a.quantity > 0)
-      .map((a) => a.ticker)
-      .join(" e "),
     us = t.international,
     btc = t.rows.find((a) => a.ticker === "BTC")!,
+    btcEtfs = t.rows.filter(
+      (a) => a.group === "crypto" && a.ticker !== "BTC" && a.quantity > 0,
+    ),
+    fixedEtfs = t.rows.filter((a) => a.group === "rf" && a.quantity > 0),
     realized = realizedResults(portfolio),
     sold = realized.BRL.count + realized.USD.count,
-    manualBalance = portfolio.fixedIncome.reduce((sum, r) => sum + r.value, 0),
     manualDate = portfolio.fixedIncome.map((r) => r.updatedAt).sort()[0];
   // A janela de 1 dia dispensa reconstruir a curva: aqui só importa o acumulado.
   const accumulated = useMemo(
@@ -118,17 +116,6 @@ export function CurrencySummary({
         )}
         <section className="stat-card">
           <div className="stat-label">
-            ETFs na B3 <Landmark size={16} />
-          </div>
-          <div className="stat-value">
-            {etfs.missing ? "Cotação pendente" : fmt(etfs.value)}
-          </div>
-          <div className="stat-foot">
-            {etfs.count} ETFs{etfNames ? ` · ${etfNames}` : ""}
-          </div>
-        </section>
-        <section className="stat-card">
-          <div className="stat-label">
             Exterior · patrimônio em dólar <Globe2 size={16} />
           </div>
           <div className="stat-value">
@@ -146,33 +133,45 @@ export function CurrencySummary({
         </section>
         <section className="stat-card">
           <div className="stat-label">
-            CDB e títulos manuais <Landmark size={16} />
+            Renda fixa <Landmark size={16} />
           </div>
-          <div className="stat-value">{fmt(manualBalance)}</div>
+          <div className="stat-value">
+            {t.fixedQuoted.missing ? "Cotação pendente" : fmt(t.byGroup.rf)}
+          </div>
           <div className="stat-foot">
-            {manualDate
-              ? "Saldo de " +
-                new Date(manualDate + "T12:00:00Z").toLocaleDateString(
-                  "pt-BR",
-                ) +
-                " · incluído no total"
-              : "Nenhum título manual cadastrado"}
+            {[
+              ...fixedEtfs.map((a) => a.ticker),
+              ...(portfolio.fixedIncome.length
+                ? [
+                    `${portfolio.fixedIncome.length} ${portfolio.fixedIncome.length === 1 ? "título manual" : "títulos manuais"}, saldo de ${new Date(manualDate + "T12:00:00Z").toLocaleDateString("pt-BR")}`,
+                  ]
+                : []),
+            ].join(" · ") || "Nenhum título cadastrado"}
           </div>
         </section>
         <section className="stat-card">
           <div className="stat-label">
-            Bitcoin direto <Coins size={16} />
+            Bitcoin <Coins size={16} />
           </div>
           <div className="stat-value">
-            {btc.value === null ? "Cotação pendente" : fmt(btc.value)}
+            {t.bitcoin.missing ? "Cotação pendente" : fmt(t.byGroup.crypto)}
           </div>
           <div className="stat-foot">
             {hidden
               ? "Quantidade oculta"
-              : btc.quantity.toLocaleString("pt-BR", {
-                  maximumFractionDigits: 8,
-                }) + " BTC"}{" "}
-            · ABTC11 nos ETFs B3
+              : [
+                  btc.quantity > 0
+                    ? btc.quantity.toLocaleString("pt-BR", {
+                        maximumFractionDigits: 8,
+                      }) + " BTC"
+                    : "",
+                  ...btcEtfs.map(
+                    (a) =>
+                      `${a.quantity.toLocaleString("pt-BR")} ${a.quantity === 1 ? "cota" : "cotas"} ${a.ticker}`,
+                  ),
+                ]
+                  .filter(Boolean)
+                  .join(" · ") || "Nenhuma posição"}
           </div>
         </section>
       </div>
@@ -203,11 +202,20 @@ export function CurrencySummary({
               ...(fiis.count
                 ? [{ label: "FIIs na B3", currency: "BRL", data: fiis }]
                 : []),
-              { label: "ETFs na B3", currency: "BRL", data: etfs },
+              {
+                label: "Renda fixa · ETFs na B3",
+                currency: "BRL",
+                data: t.fixedQuoted,
+              },
               {
                 label: "Exterior · ETFs em dólares",
                 currency: "USD",
                 data: us,
+              },
+              {
+                label: "Bitcoin · BTC e ETFs",
+                currency: "BRL",
+                data: t.bitcoin,
               },
             ].map(({ label, currency, data }) => (
               <section className="panel regional-summary" key={label}>
@@ -238,11 +246,13 @@ export function CurrencySummary({
                 <p>
                   {currency === "USD"
                     ? "O câmbio de compra não foi presumido. O resultado acima é em dólares."
-                    : label === "ETFs na B3"
-                      ? "Separados das ações. As metas seguem a exposição de cada fundo."
-                      : label === "FIIs na B3"
-                        ? "Separados das ações, mas dentro da meta Brasil."
-                        : "Somente ações brasileiras. FIIs, ETFs, CDB e Bitcoin direto ficam separados."}
+                    : label.startsWith("Renda fixa")
+                      ? "Só os ETFs cotados. O CDB não tem custo informado e fica fora deste resultado."
+                      : label.startsWith("Bitcoin")
+                        ? "BTC direto e ETFs de Bitcoin na B3, juntos como na meta."
+                        : label === "FIIs na B3"
+                          ? "Separados das ações, mas dentro da meta Brasil."
+                          : "Somente ações brasileiras."}
                 </p>
               </section>
             ))}

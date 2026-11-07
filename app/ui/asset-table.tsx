@@ -47,7 +47,6 @@ export function AssetTable({
         (filter === "brazil" && a.currency === "BRL") ||
         (filter === "fii" && a.segment === "fii") ||
         (filter === "held" && a.quantity > 0) ||
-        (filter === "b3etf" && a.currency === "BRL" && a.group !== "br") ||
         filter === a.group) &&
       (!query ||
         `${a.ticker} ${a.name}`.toLowerCase().includes(query.toLowerCase())),
@@ -69,22 +68,22 @@ export function AssetTable({
       rows: shown.filter((a) => a.segment === "fii"),
     },
     {
-      id: "b3etfs",
-      title: "ETFs na B3",
-      text: "Fundos negociados em reais · valores em R$",
-      rows: shown.filter((a) => a.currency === "BRL" && a.group !== "br"),
+      id: "fixed",
+      title: "Renda fixa",
+      text: "ETFs de renda fixa na B3 · valores em R$",
+      rows: shown.filter((a) => a.group === "rf"),
     },
     {
       id: "abroad",
       title: "ETFs no exterior",
       text: "Valores em US$ · conversão atual em R$ separada",
-      rows: shown.filter((a) => a.currency === "USD" && a.ticker !== "BTC"),
+      rows: shown.filter((a) => a.group === "etf"),
     },
     {
       id: "btc",
-      title: "Bitcoin direto",
-      text: "Quantidade em BTC · saldo em reais",
-      rows: shown.filter((a) => a.ticker === "BTC"),
+      title: "Bitcoin",
+      text: "BTC direto e ETFs de Bitcoin na B3 · saldo em reais",
+      rows: shown.filter((a) => a.group === "crypto"),
     },
   ].filter((s) => s.rows.length);
   const fmt = (v: number | null, c = "BRL") =>
@@ -125,10 +124,9 @@ export function AssetTable({
             ["brazil", "Bolsa brasileira"],
             ["br", "Ações na B3"],
             ...(hasFiis ? [["fii", "FIIs na B3"]] : []),
-            ["b3etf", "ETFs na B3"],
-            ["etf", "Exterior"],
-            ["crypto", "Cripto"],
             ["rf", "Renda fixa"],
+            ["etf", "Exterior"],
+            ["crypto", "Bitcoin"],
             ...(full ? [["held", "Em carteira"]] : []),
           ].map(([v, l]) => (
             <button

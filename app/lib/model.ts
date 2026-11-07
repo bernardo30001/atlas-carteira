@@ -32,8 +32,8 @@ export const GROUPS: Record<
     color: "var(--group-etf)",
   },
   crypto: {
-    name: "Criptomoedas",
-    short: "Cripto",
+    name: "Bitcoin e cripto",
+    short: "Bitcoin",
     color: "var(--group-crypto)",
   },
 };
@@ -68,8 +68,8 @@ export const ASSETS: Asset[] = (
     {
       ticker: "ABTC11",
       symbol: "ABTC11.SA",
-      name: "BTG Teva Bitcoin Fear",
-      sector: "ETF BR · exposição cripto",
+      name: "BTG Teva AUVP Bitcoin Fear Arbitrage",
+      sector: "ETF de Bitcoin na B3",
       color: "#bb954e",
       query: "ABTC11 BTG Bitcoin Fear",
       group: "crypto",
@@ -78,8 +78,8 @@ export const ASSETS: Asset[] = (
     {
       ticker: "AUPO11",
       symbol: "AUPO11.SA",
-      name: "BTG Teva ITBR Liquidez",
-      sector: "ETF BR · renda fixa",
+      name: "BTG Teva AUVP ITBR Liquidez",
+      sector: "ETF de renda fixa na B3",
       color: "#749775",
       query: "AUPO11 BTG liquidez",
       group: "rf",
@@ -549,29 +549,18 @@ export function totals(p: Portfolio, m: Market) {
     cost !== null && income !== null && !missing.length
       ? value - cost + income
       : null;
-  const regional = (
-    currency: Currency,
-    segment?: "stocks" | "etfs" | "fiis",
-  ) => {
+  // Resumo por classe, na moeda principal de cada posição. Um ETF conta na classe a
+  // que dá exposição: ABTC11 é Bitcoin e AUPO11 é renda fixa, mesmo negociados na B3.
+  const summary = (matches: (r: (typeof rows)[number]) => boolean) => {
     const owned = rows.filter(
-      (r) =>
-        r.ticker !== "BTC" &&
-        !r.archived &&
-        r.currency === currency &&
-        r.quantity > 0 &&
-        (!segment ||
-          (segment === "fiis"
-            ? r.segment === "fii"
-            : segment === "stocks"
-              ? r.group === "br" && r.segment !== "fii"
-              : r.group !== "br")),
+      (r) => !r.archived && r.quantity > 0 && matches(r),
     );
     return {
-      value: owned.reduce((s, r) => s + (r.nativeValue ?? 0), 0),
+      value: owned.reduce((s, r) => s + (r.primaryValue ?? 0), 0),
       cost: sumNullable(owned.map((r) => r.primaryCost)),
       income: sumNullable(owned.map((r) => r.nativeIncome)),
       result: sumNullable(owned.map((r) => r.result)),
-      missing: owned.some((r) => r.nativeValue === null),
+      missing: owned.some((r) => r.primaryValue === null),
       count: owned.length,
     };
   };
@@ -582,11 +571,11 @@ export function totals(p: Portfolio, m: Market) {
     value,
     cost,
     result,
-    brazil: regional("BRL"),
-    brazilStocks: regional("BRL", "stocks"),
-    brazilEtfs: regional("BRL", "etfs"),
-    brazilFiis: regional("BRL", "fiis"),
-    international: regional("USD"),
+    brazilStocks: summary((r) => r.group === "br" && r.segment !== "fii"),
+    brazilFiis: summary((r) => r.segment === "fii"),
+    fixedQuoted: summary((r) => r.group === "rf"),
+    international: summary((r) => r.group === "etf"),
+    bitcoin: summary((r) => r.group === "crypto"),
     incomes: {
       BRL: (p.incomes ?? [])
         .filter((i) => i.currency === "BRL")

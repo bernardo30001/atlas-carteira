@@ -12,24 +12,27 @@ export const PERFORMANCE_SCOPES = [
   {
     key: "all",
     name: "Tudo agregado",
-    description: "Toda a carteira, incluindo renda fixa e ETFs na B3.",
+    description: "Toda a carteira, incluindo renda fixa e Bitcoin.",
   },
   {
     key: "us",
     name: "Ações/ETFs americanos",
-    description:
-      "Ativos negociados em dólar, convertidos para reais com o câmbio de cada observação.",
+    description: "ETFs negociados em dólar, com retorno em dólares.",
   },
   {
     key: "br",
     name: "Ações na B3",
-    description: "Somente ações brasileiras; ETFs na B3 ficam no consolidado.",
+    description: "Somente ações brasileiras.",
+  },
+  {
+    key: "rf",
+    name: "Renda fixa",
+    description: "ETFs de renda fixa na B3 e títulos manuais, como CDBs.",
   },
   {
     key: "btc",
     name: "Bitcoin",
-    description:
-      "Somente Bitcoin direto (BTC). ABTC11 permanece no consolidado.",
+    description: "Bitcoin direto (BTC) e ETFs de Bitcoin na B3, como ABTC11.",
   },
 ] as const;
 export type PerformanceScope = (typeof PERFORMANCE_SCOPES)[number]["key"];
@@ -44,16 +47,18 @@ export function performancePortfolio(
     const ticker = currentTicker(p, record.ticker, record.date),
       asset = assetOf(p, ticker);
     return scope === "btc"
-      ? ticker === "BTC"
-      : scope === "br"
-        ? asset?.group === "br" && asset.segment !== "fii"
-        : asset?.currency === "USD" && ticker !== "BTC";
+      ? asset?.group === "crypto"
+      : scope === "rf"
+        ? asset?.group === "rf"
+        : scope === "br"
+          ? asset?.group === "br" && asset.segment !== "fii"
+          : asset?.group === "etf";
   };
   return {
     ...p,
     transactions: p.transactions.filter(matches),
     incomes: (p.incomes ?? []).filter(matches),
-    fixedIncome: [],
+    fixedIncome: scope === "rf" ? p.fixedIncome : [],
     tradeHistory: p.tradeHistory?.filter(matches),
   };
 }
@@ -247,7 +252,7 @@ export function capturePerformance(
   const captured = captureSnapshot(p, m, previous, revision, at);
   captured.state.segments = {};
   captured.point.segments = {};
-  for (const scope of ["us", "br", "btc"] as const) {
+  for (const scope of ["us", "br", "rf", "btc"] as const) {
     const subset = performancePortfolio(p, scope),
       prior = previous?.segments?.[scope];
     if (!prior && !hasHolding(subset)) continue;
