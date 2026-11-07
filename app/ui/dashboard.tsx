@@ -68,6 +68,7 @@ const ImportPanel = lazy(() =>
 );
 import { Change } from "./change";
 import { ContributionPreview } from "./contribution-preview";
+import { ContributionPlan } from "./contribution-plan";
 import { ValidatedForm, FormInput } from "./validated-form";
 import { PerformanceChart } from "./performance-chart";
 import { useCdi } from "./use-cdi";
@@ -1302,24 +1303,18 @@ export default function Dashboard() {
             )}
             {portfolioReady && page === "contributions" && (
               <>
-                <EvaluationPanel
-                  plannerOnly
-                  defaultBudgetScope="portfolio"
+                <ContributionPlan
                   portfolio={p}
                   market={market}
                   hidden={hidden}
                   budget={budget}
                   setBudget={setBudget}
-                  save={save}
-                  busy={saveBusy}
-                  onInspect={(ticker) => {
-                    setEvaluationTicker(ticker);
-                    navigate("evaluation");
-                  }}
                   onRegister={(ticker, quantity) =>
                     setModal({ kind: "transaction", ticker, quantity })
                   }
                   onFixed={() => setModal({ kind: "fixed" })}
+                  onStrategy={() => navigate("strategy")}
+                  onEvaluation={() => navigate("evaluation")}
                 />
                 <MovementHistory
                   portfolio={trackedPortfolio(p)}

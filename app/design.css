@@ -505,6 +505,218 @@ body {
   }
 }
 
+/* Planejar aporte */
+.plan-panel {
+  padding: 1.15rem 1.35rem 1.25rem;
+}
+.plan-panel .panel-title {
+  padding: 0;
+  margin-bottom: 0.9rem;
+  border: 0;
+}
+.plan-inputs {
+  display: grid;
+  grid-template-columns: minmax(16rem, 1fr) minmax(0, 1.6fr);
+  gap: 1rem 1.5rem;
+  align-items: start;
+}
+.plan-inputs .quick-budgets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.5rem;
+}
+.plan-inputs .quick-budgets .chip {
+  min-height: 2rem;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.8125rem;
+}
+.plan-destinations {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+.plan-destinations label {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+.plan-destinations label:hover {
+  border-color: var(--line-strong);
+}
+.plan-destinations label.selected {
+  border-color: var(--accent);
+  background: var(--surface-2);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+.plan-destinations input {
+  flex: none;
+  min-height: 0;
+  margin-top: 0.2rem;
+  accent-color: var(--accent);
+}
+.plan-destinations b {
+  display: block;
+  font-size: 0.9375rem;
+}
+.plan-destinations small {
+  display: block;
+  line-height: 1.35;
+}
+.plan-classes {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin-top: 1.1rem;
+}
+.plan-classes > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  opacity: 0.72;
+}
+.plan-classes > div.receives {
+  border-color: var(--line-strong);
+  background: var(--surface-2);
+  opacity: 1;
+}
+.plan-class-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+.plan-class-name i {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+}
+.plan-classes strong {
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.plan-classes small {
+  font-size: 0.71875rem;
+}
+.plan-heading {
+  margin: 1.25rem 0 0.35rem;
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+table.plan-table {
+  width: 100%;
+}
+table.plan-table th,
+table.plan-table td {
+  padding: 0.5rem 0.6rem;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+  text-align: left;
+}
+table.plan-table tbody tr:last-child > * {
+  border-bottom: 0;
+}
+table.plan-table thead th {
+  font-size: 0.71875rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+table.plan-table tbody th small,
+table.plan-table td small {
+  display: block;
+  font-weight: 400;
+}
+.plan-status {
+  margin: 1.1rem 0 0;
+  padding: 0.75rem 0.9rem;
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+  font-size: 0.875rem;
+}
+.plan-leftover {
+  margin: 0.6rem 0 0;
+  font-size: 0.8125rem;
+}
+.plan-waiting {
+  margin-top: 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+}
+.plan-waiting > summary {
+  padding: 0.6rem 0.85rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.plan-waiting > .table-wrap {
+  border-top: 1px solid var(--line);
+}
+.plan-notes {
+  margin-top: 0.85rem;
+}
+.plan-notes p {
+  margin: 0.3rem 0 0;
+  font-size: 0.8125rem;
+}
+.plan-notes .text-button {
+  display: inline-flex;
+  min-height: 0;
+  padding: 0;
+}
+@media (max-width: 980px) {
+  .plan-inputs {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .plan-classes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 620px) {
+  .plan-destinations {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  table.plan-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  table.plan-table,
+  table.plan-table tbody {
+    display: block;
+  }
+  table.plan-table tr {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.35rem 0.75rem;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid var(--line);
+  }
+  table.plan-table th,
+  table.plan-table td {
+    display: block;
+    padding: 0;
+    border: 0;
+  }
+  table.plan-table td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 0.6875rem;
+    color: var(--muted);
+  }
+}
+
 /* Metas */
 .target-card > div {
   display: flex;
