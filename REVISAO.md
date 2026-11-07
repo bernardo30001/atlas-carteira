@@ -557,7 +557,7 @@ Amostra pequena, de 30 requisições em uma sessão, lida com `wrangler tail`. N
 | `GET /api/cdi` | 2 | 3 ms | 3 ms | 3 ms |
 | `GET /api/fundamentals` | 1 | 1 ms | 1 ms | 1 ms |
 
-Oito das 30 passaram dos 10 ms do plano grátis, e a de cotações passou cinco vezes. A Cloudflare não as interrompeu nesta sessão, mas isso não garante que nunca interromperá: o limite documentado continua sendo de 10 ms. A primeira leitura de notícias levou cerca de 10 segundos, quase todos à espera das fontes externas.
+Oito das 30 passaram dos 10 ms do plano grátis, e a rota de cotações chegou a 55 ms. A Cloudflare não as interrompeu nesta sessão, mas isso não garante que nunca interromperá: o limite documentado continua sendo de 10 ms. A primeira leitura de notícias levou cerca de 10 segundos, quase todos à espera das fontes externas.
 
 ### O que falta
 
