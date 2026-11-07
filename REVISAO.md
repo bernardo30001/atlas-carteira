@@ -384,7 +384,7 @@ Executada de novo ao fim da revisão da seção 16, na ordem pedida. As três ú
 |---|---|
 | `npx tsc --noEmit` | Passa |
 | `npm run lint` | 30 erros e 9 avisos, todos anteriores a estas mudanças. Antes da revisão eram 33 e 17 |
-| `npm test` | 22 de 22 arquivos, incluindo a curva refeita, o planejador e a consulta cancelada |
+| `npm test` | 22 de 22 arquivos, incluindo a curva refeita, os três destinos do aporte e a consulta cancelada |
 | `npm run test:api` | Passa, em banco temporário. A carteira de produção continuou na mesma revisão |
 | `npm run build` | Passa |
 | Instalação do zero em cópia limpa do commit (`npm ci`, build e testes) | Passa |
@@ -602,6 +602,18 @@ A conta das classes estava correta, e com uma classe bem abaixo da meta todo o a
 
 O simulador das ações brasileiras não mudou: ele já distribuía por preço, fundamentos e limites.
 
+### Tela de Aportes
+
+Em "Carteira inteira", o topo mostrava R$ 0 em ações e várias linhas de "não aportar", e o destino real ficava no fim da página. A tela agora mostra primeiro quanto vai para cada classe e o que comprar, com o peso de hoje e o recomendado.
+
+| Destino | O que faz |
+|---|---|
+| Carteira inteira | Divide entre as classes pelas metas e segue os pesos dentro de cada classe |
+| Só bolsa BR | Todo o valor nas ações, pela regra base da Avaliação |
+| Só ETFs americanos | Todo o valor nos ETFs, pelos pesos salvos na carteira |
+
+**Mudança de critério:** em Aportes valem só os seus percentuais. O filtro de preço e fundamentos, que antes podia deixar quase tudo em caixa, continua na aba Avaliação. Uma tese marcada para revisão segue sem receber aporte. Os percentuais dos ETFs ficam nos dados da carteira, fora do repositório.
+
 ### Otimização
 
 Medido no build de produção local, onde `/api/market` tinha ficado em 14 ms de CPU antes da mudança.
@@ -645,6 +657,6 @@ As linhas de `/api/market`, `/api/news` e `/api/portfolio` incluem chamadas canc
 
 1. **Datas de compra do Bitcoin.** Um lote segue sem datas e entra na curva na data de referência. Com o histórico de compras, a curva inclui o período anterior.
 2. **Câmbio das remessas.** Com ele, o custo em reais deixa de ser estimativa.
-3. **Pesos dentro de cada classe.** Decisão sua em Estratégia e metas. Sem eles, a compra mantém a proporção atual.
+3. **Pesos do Bitcoin.** Sem pesos, a compra entre BTC e ABTC11 mantém a proporção atual. Dá para definir em Estratégia e metas.
 4. **Botão Sair da conta.** Continua sem teste, porque encerraria a sua sessão.
 5. **GitHub.** A branch não foi enviada. O repositório público segue sem a migração e sem esta revisão até você pedir.
