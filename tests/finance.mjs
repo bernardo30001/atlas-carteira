@@ -31,7 +31,7 @@ near(
   10000,
 );
 assert.deepEqual(
-  plan.map((x) => x.amount),
+  plan.map((x) => Math.round(x.amount * 100) / 100),
   [3500, 3500, 2200, 800],
 );
 const tx = (ticker, quantity, price, fx, fees = 0) => ({
@@ -69,7 +69,14 @@ const stale = {
 };
 assert.equal(allocationPlan(p, stale, 1000).length, 0);
 const estimates = assetPlan(EMPTY, market, 10000);
-assert.ok(estimates.every((x) => x.executable <= x.amount + 1e-8));
+// A sobra pode passar de um ativo a outro, mas a classe nunca gasta mais que o seu valor.
+for (const group of new Set(estimates.map((x) => x.group))) {
+  const items = estimates.filter((x) => x.group === group);
+  assert.ok(
+    items.reduce((s, x) => s + x.executable, 0) <=
+      items.reduce((s, x) => s + x.amount, 0) + 1e-8,
+  );
+}
 assert.ok(
   estimates
     .filter((x) => x.group === "br")

@@ -237,6 +237,97 @@ test("planejador: déficits por classe e soma igual ao aporte", () => {
   );
 });
 
+test("planejador: as classes que recebem terminam igualmente perto da meta", () => {
+  // Brasil 1000 (acima da meta), RF 100, exterior 100, cripto 0. Metas 40/30/20/10.
+  // Níveis (posição ÷ meta): cripto 0, RF 333,3, exterior 500, Brasil 2500.
+  // R$ 100: cripto e RF sobem juntos até o nível 500, justo o do exterior.
+  const p = portfolio({
+    targets: { br: 40, rf: 30, etf: 20, crypto: 10 },
+    transactions: [
+      lot("WEGE3", 100, 10),
+      lot("AUPO11", 10, 10),
+      lot("VOO", 1, 20),
+    ],
+  });
+  const m = market(
+    quote("WEGE3", 10),
+    quote("AUPO11", 10),
+    quote("VOO", 20),
+    quote("USD", 5),
+  );
+  const amount = (b, group) =>
+    allocationPlan(p, m, b).find((g) => g.group === group).amount;
+  near(amount(100, "crypto"), 50, "cripto");
+  near(amount(100, "rf"), 50, "renda fixa");
+  near(amount(100, "etf"), 0, "exterior ainda não");
+  near(amount(100, "br"), 0, "acima da meta");
+  // Com pouco dinheiro, só o mais longe recebe.
+  near(amount(10, "crypto"), 10, "só o nível mais baixo");
+  // Com o suficiente para todos, cada classe chega exatamente à meta.
+  near(amount(1300, "br"), 0 + 0.4 * 2500 - 1000, "Brasil");
+  near(amount(1300, "rf"), 0.3 * 2500 - 100, "renda fixa na meta");
+  near(amount(1300, "etf"), 0.2 * 2500 - 100, "exterior na meta");
+  near(amount(1300, "crypto"), 0.1 * 2500, "cripto na meta");
+});
+
+test("planejador: sem pesos, a compra mantém a proporção atual da classe", () => {
+  const targets = { br: 0, rf: 0, etf: 100, crypto: 0 };
+  const p = portfolio({
+    targets,
+    transactions: [lot("VOO", 3, 20), lot("IAU", 1, 20)],
+  });
+  const m = market(
+    quote("VOO", 20),
+    quote("IAU", 20),
+    quote("SPHQ", 20),
+    quote("USD", 5),
+  );
+  // Saldos em reais: VOO 300, IAU 100, SPHQ 0. Sem pesos, nada vai para SPHQ.
+  const plan = assetPlan(p, m, 400);
+  const amount = (t) => plan.find((x) => x.ticker === t)?.amount ?? 0;
+  near(amount("VOO"), 300, "VOO");
+  near(amount("IAU"), 100, "IAU");
+  near(amount("SPHQ"), 0, "ativo sem posição e sem peso");
+  // Com pesos escolhidos, valem os pesos: VOO 1, IAU 3, demais 0.
+  const weighted = assetPlan(
+    { ...p, weights: { VOO: 1, IAU: 3, SPHQ: 0, VEA: 0, VNQ: 0, VWO: 0 } },
+    m,
+    400,
+  );
+  const chosen = (t) => weighted.find((x) => x.ticker === t)?.amount ?? 0;
+  near(chosen("VOO"), 0, "acima do peso");
+  near(chosen("IAU"), 400, "mais longe do peso");
+});
+
+test("planejador: a sobra das cotas inteiras vai para quem aceita frações", () => {
+  // Bitcoin: BTC 87 e ABTC11 13. R$ 100 dariam R$ 13 ao ABTC11, que custa R$ 120.
+  const p = portfolio({
+    targets: { br: 0, rf: 0, etf: 0, crypto: 100 },
+    transactions: [lot("BTC", 0.87, 20), lot("ABTC11", 0.13, 20)],
+  });
+  const m = market(quote("BTC", 20), quote("ABTC11", 100), quote("USD", 5));
+  const plan = assetPlan(p, m, 100);
+  const of = (t) => plan.find((x) => x.ticker === t);
+  assert.equal(of("ABTC11").quantity, 0, "não compra uma cota");
+  near(
+    plan.reduce((s, x) => s + x.executable, 0),
+    100,
+    "nada fica sem destino",
+  );
+});
+
+test("planejador: renda fixa pode ir para o ETF cotado da classe", () => {
+  const p = portfolio({
+    targets: { br: 0, rf: 100, etf: 0, crypto: 0 },
+    transactions: [lot("AUPO11", 10, 100)],
+  });
+  const plan = assetPlan(p, market(quote("AUPO11", 100)), 450);
+  assert.equal(plan.length, 1);
+  assert.equal(plan[0].ticker, "AUPO11");
+  assert.equal(plan[0].quantity, 4, "cotas inteiras");
+  near(plan[0].executable, 400, "o resto fica no título que você escolher");
+});
+
 test("planejador: cotas inteiras na B3 e frações no exterior e em BTC", () => {
   // Só Brasil: R$ 100 por WEGE3 a 33 = 3 cotas (99).
   const targets = { br: 100, rf: 0, etf: 0, crypto: 0 };

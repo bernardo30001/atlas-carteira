@@ -28,7 +28,7 @@ Painel privado de investimentos em português, com posições e estratégia vinc
 - Registro de posição inicial e compra com quantidade, preço, câmbio e taxas.
 - Cadastro e atualização manual de títulos de renda fixa.
 - Patrimônio consolidado em BRL; totais Brasil e exterior separados; custos em USD preservados mesmo sem câmbio de compra. Custo histórico em reais permanece pendente quando não informado.
-- Planejador de aportes por déficits de alocação, com ajuste moderado por volatilidade e tendência; pesos de ativos editáveis.
+- Planejador de aportes: o valor vai primeiro para a classe mais longe da meta, em proporção à própria meta, sem sugerir vendas. Pesos de ativos editáveis; sem pesos, a compra mantém a proporção atual da classe.
 - Notícias por ativo, backup JSON, restauração validada, modo demonstração sem gravação real.
 - Isolamento dos registros por identidade autenticada; revisão otimista para evitar sobreposição entre abas.
 

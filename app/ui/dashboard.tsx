@@ -1349,6 +1349,7 @@ export default function Dashboard() {
             <>
               <Strategy
                 portfolio={p}
+                market={market}
                 save={save}
                 busy={saveBusy}
                 onAddAsset={() => setModal({ kind: "asset-new" })}
@@ -1366,18 +1367,18 @@ export default function Dashboard() {
                     <span>01</span>
                     <h3>Reequilíbrio por aportes</h3>
                     <p>
-                      O orçamento considera o patrimônio após o aporte. As
-                      classes abaixo da meta dividem o valor proporcionalmente
-                      ao déficit, sem sugerir vendas.
+                      O aporte vai primeiro para a classe mais longe da meta, em
+                      proporção à própria meta. Ao alcançar a seguinte, as duas
+                      sobem juntas, sem sugerir vendas.
                     </p>
                   </div>
                   <div>
                     <span>02</span>
-                    <h3>Risco e tendência</h3>
+                    <h3>Dentro de cada classe</h3>
                     <p>
-                      O peso de cada ativo usa o déficit × (0,80 + 0,15 × 1/(1 +
-                      volatilidade/100) + 0,05 × tendência limitada entre −1 e
-                      1). A alocação guia a sugestão.
+                      Vale a mesma regra entre os ativos, com os pesos que você
+                      definiu. Sem pesos, a compra mantém a proporção atual da
+                      classe. Volatilidade e tendência são só informação.
                     </p>
                   </div>
                   <div>
@@ -1805,24 +1806,26 @@ export default function Dashboard() {
                 <p>
                   Brasil {p.targets.br}%, renda fixa {p.targets.rf}%, exterior{" "}
                   {p.targets.etf}% e Bitcoin {p.targets.crypto}%, conforme você
-                  definiu. Metas editáveis. Na ausência de pesos específicos, os
-                  ativos de uma classe têm pesos iguais.
+                  definiu. Metas editáveis. Sem pesos específicos, a compra
+                  mantém a proporção atual dos ativos da classe. Nenhuma divisão
+                  é presumida.
                 </p>
                 <h3>Como o valor é distribuído</h3>
                 <p>
-                  Déficit por classe = máximo entre zero e (patrimônio + aporte)
-                  × meta − posição atual. O orçamento é dividido
-                  proporcionalmente aos déficits. Nas ações brasileiras, preço,
-                  fundamentos e limites da Avaliação definem as compras. Nas
-                  outras classes, os pesos recebem ajuste moderado por risco e
-                  tendência.
+                  Cada classe tem um nível: posição atual ÷ meta. O aporte vai
+                  primeiro para o nível mais baixo e, ao alcançar o seguinte, as
+                  duas sobem juntas. Assim, as classes que recebem terminam
+                  igualmente perto da meta, e nenhuma venda é sugerida. Nas
+                  ações brasileiras, preço, fundamentos e limites da Avaliação
+                  definem as compras. Nas outras classes, a mesma regra vale
+                  entre os ativos.
                 </p>
                 <p>
-                  Fator = 0,80 + 0,15/(1 + volatilidade anual/100) + 0,05 ×
-                  limite(tendência 6m/100, −1, 1). Sem histórico suficiente, o
-                  componente ausente é neutro. Os percentuais de classes
-                  continuam preservados. Pode restar saldo após arredondar as
-                  quantidades.
+                  As quantidades respeitam as cotas inteiras da B3 e as frações
+                  do exterior e do Bitcoin. O que o arredondamento deixar vai
+                  para quem aceita frações ou para mais uma cota de quem couber.
+                  Volatilidade e tendência são exibidas como informação e não
+                  alteram os valores.
                 </p>
                 <h3>Métricas</h3>
                 <p>
@@ -1893,16 +1896,24 @@ export default function Dashboard() {
 }
 function Strategy({
   portfolio,
+  market,
   save,
   busy,
   onAddAsset,
 }: {
   portfolio: Portfolio;
+  market: Market;
   save: (p: Portfolio) => Promise<boolean>;
   busy: boolean;
   onAddAsset: () => void;
 }) {
   const assets = allAssets(portfolio).filter((a) => !a.archived);
+  const rows = useMemo(
+      () => totals(portfolio, market).rows,
+      [portfolio, market],
+    ),
+    heldOf = (ticker: string) =>
+      rows.find((r) => r.ticker === ticker)?.value ?? 0;
   const [targets, setTargets] = useState(portfolio.targets),
     [weights, setWeights] = useState({
       ...portfolio.weights,
@@ -2000,9 +2011,10 @@ function Strategy({
           <div>
             <h2>Pesos dentro de cada classe</h2>
             <p>
-              Peso 1 divide a meta igualmente. Peso 0 exclui dos novos aportes.
-              Renda fixa é planejada por classe, sem indicação automática de
-              título.
+              Sem pesos definidos, a compra mantém a proporção atual da classe.
+              Ao definir um peso, os demais ativos da classe valem 1. Peso 0
+              exclui dos novos aportes. Em renda fixa, a escolha do título é
+              sua.
             </p>
           </div>
           <button type="button" className="button outline" onClick={onAddAsset}>
@@ -2014,19 +2026,24 @@ function Strategy({
           {assets
             .filter((a) => a.group !== "rf")
             .map((a) => {
-              const total = assets
-                .filter((x) => x.group === a.group)
-                .reduce((s, x) => s + (weights[x.ticker] ?? 1), 0);
+              const peers = assets.filter((x) => x.group === a.group),
+                chosen = peers.some((x) => weights[x.ticker] !== undefined),
+                anyHeld = peers.some((x) => heldOf(x.ticker) > 0),
+                weightOf = (ticker: string) =>
+                  chosen
+                    ? (weights[ticker] ?? 1)
+                    : anyHeld
+                      ? heldOf(ticker)
+                      : 1,
+                total = peers.reduce((s, x) => s + weightOf(x.ticker), 0);
               return (
                 <label className="weight-item" key={a.ticker}>
                   <Mark ticker={a.ticker} size={30} />
                   <span>
                     <b>{a.ticker}</b>
                     <small>
-                      {total
-                        ? num(((weights[a.ticker] ?? 1) / total) * 100, 1)
-                        : 0}
-                      % da classe
+                      {total ? num((weightOf(a.ticker) / total) * 100, 1) : 0}%
+                      da classe{chosen ? "" : " hoje"}
                     </small>
                   </span>
                   <FormInput
@@ -2036,12 +2053,13 @@ function Strategy({
                     min="0"
                     max="100"
                     step="0.1"
-                    value={weights[a.ticker] ?? 1}
+                    placeholder={chosen ? "1" : "Atual"}
+                    value={weights[a.ticker] ?? ""}
                     onChange={(e) => {
-                      setWeights({
-                        ...weights,
-                        [a.ticker]: Number(e.target.value),
-                      });
+                      const next = { ...weights };
+                      if (e.target.value === "") delete next[a.ticker];
+                      else next[a.ticker] = Number(e.target.value);
+                      setWeights(next);
                       setDirty(true);
                     }}
                   />

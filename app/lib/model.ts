@@ -606,20 +606,52 @@ export function dayChange(p: Portfolio, m: Market) {
     ? { amount: now - before, percent: (now / before - 1) * 100 }
     : null;
 }
+/** Distribui o aporte para que os destinos terminem igualmente perto da meta: quem está
+ * mais longe, em proporção à própria meta, recebe primeiro, até alcançar o seguinte. Sem
+ * vender nada, é o que deixa menor a maior distância em relação às metas. */
+function fillToTargets(
+  items: { key: string; target: number; held: number }[],
+  budget: number,
+) {
+  const funded = items
+    .filter((item) => item.target > 0)
+    .sort((a, b) => a.held / a.target - b.held / b.target);
+  let held = 0,
+    target = 0,
+    level = 0;
+  for (const [index, item] of funded.entries()) {
+    held += item.held;
+    target += item.target;
+    level = (budget + held) / target;
+    const next = funded[index + 1];
+    if (!next || level <= next.held / next.target) break;
+  }
+  return new Map(
+    items.map((item) => [
+      item.key,
+      item.target > 0 ? Math.max(0, level * item.target - item.held) : 0,
+    ]),
+  );
+}
 export function allocationPlan(p: Portfolio, m: Market, budget: number) {
   const t = totals(p, m);
   if (t.missing.length || !Number.isFinite(budget) || !(budget > 0)) return [];
-  const gaps = (Object.keys(GROUPS) as Group[]).map((group) => ({
+  const keys = Object.keys(GROUPS) as Group[],
+    amounts = fillToTargets(
+      keys.map((group) => ({
+        key: group,
+        target: p.targets[group] / 100,
+        held: t.byGroup[group],
+      })),
+      budget,
+    );
+  return keys.map((group) => ({
     group,
     gap: Math.max(
       0,
       ((t.value + budget) * p.targets[group]) / 100 - t.byGroup[group],
     ),
-  }));
-  const gapSum = gaps.reduce((s, g) => s + g.gap, 0);
-  return gaps.map((g) => ({
-    ...g,
-    amount: gapSum ? (budget * g.gap) / gapSum : 0,
+    amount: amounts.get(group) ?? 0,
   }));
 }
 export function assetPlan(p: Portfolio, m: Market, budget: number) {
@@ -628,61 +660,66 @@ export function assetPlan(p: Portfolio, m: Market, budget: number) {
     fx = m.quotes.USD && !m.quotes.USD.stale ? m.quotes.USD.price : undefined;
   return groups
     .flatMap((g) => {
-      if (g.amount < 0.01 || g.group === "rf") return [];
-      const assets = t.rows.filter((a) => a.group === g.group && !a.archived);
-      const sum = assets.reduce((s, a) => s + (p.weights[a.ticker] ?? 1), 0);
-      // Sem histórico, o ativo recebe a qualidade média da classe: ajuste neutro.
-      const qualityOf = (volatility: number) => 1 / (1 + volatility / 100);
-      const known = assets.flatMap((a) =>
-        a.quote?.volatility != null ? [qualityOf(a.quote.volatility)] : [],
+      if (g.amount < 0.01) return [];
+      const assets = t.rows.filter((a) => a.group === g.group && !a.archived),
+        held = (a: (typeof assets)[number]) => a.value ?? 0,
+        // Sem pesos escolhidos, mantém a proporção atual: nenhuma divisão é presumida.
+        chosen = assets.some((a) => p.weights[a.ticker] !== undefined),
+        anyHeld = assets.some((a) => held(a) > 0),
+        weightOf = (a: (typeof assets)[number]) =>
+          chosen ? (p.weights[a.ticker] ?? 1) : anyHeld ? held(a) : 1;
+      const amounts = fillToTargets(
+        assets.map((a) => ({
+          key: a.ticker,
+          target: weightOf(a),
+          held: held(a),
+        })),
+        g.amount,
       );
-      const neutral = known.length
-        ? known.reduce((s, x) => s + x, 0) / known.length
-        : 0.5;
-      const scored = assets.map((a) => {
-        const target = sum ? (p.weights[a.ticker] ?? 1) / sum : 0;
-        const gap = Math.max(
-          0,
-          (t.byGroup[g.group] + g.amount) * target - (a.value ?? 0),
-        );
-        const q = a.quote;
-        const quality =
-          q?.volatility != null ? qualityOf(q.volatility) : neutral;
-        const momentum =
-          q?.momentum != null ? Math.max(-1, Math.min(1, q.momentum / 100)) : 0;
-        return {
-          a,
-          gap,
-          score: gap * (0.8 + 0.15 * quality + 0.05 * momentum),
-        };
-      });
-      const sumScore = scored.reduce((s, a) => s + a.score, 0);
-      return scored
-        .filter((x) => x.score > 0)
-        .map((x) => {
-          const q = x.a.quote,
+      const planned = assets
+        .filter((a) => (amounts.get(a.ticker) ?? 0) > 0)
+        .map((a) => {
+          const q = a.quote,
+            amount = amounts.get(a.ticker) ?? 0,
             unit =
               q && !q.stale
-                ? q.price * (x.a.currency === "USD" ? (fx ?? 0) : 1)
+                ? q.price * (a.currency === "USD" ? (fx ?? 0) : 1)
+                : 0,
+            precision = wholeUnits(a) ? 1 : a.ticker === "BTC" ? 1e8 : 1e6,
+            quantity =
+              unit > 0
+                ? Math.floor((amount / unit) * precision) / precision
                 : 0;
-          const amount = sumScore ? (g.amount * x.score) / sumScore : 0;
-          const precision = wholeUnits(x.a)
-            ? 1
-            : x.a.ticker === "BTC"
-              ? 1e8
-              : 1e6;
-          const quantity =
-            unit > 0 ? Math.floor((amount / unit) * precision) / precision : 0;
           return {
-            ticker: x.a.ticker,
+            ticker: a.ticker,
             group: g.group,
             amount,
             quantity,
             executable: quantity * unit,
-            gap: x.gap,
+            gap: amount,
             quote: q,
+            unit,
+            precision,
           };
-        })
+        });
+      // O que o arredondamento em cotas inteiras deixou vai para quem aceita frações,
+      // ou para mais uma cota de quem couber, em vez de ficar sem destino.
+      let left = g.amount - planned.reduce((s, x) => s + x.executable, 0);
+      for (const item of [...planned].sort((a, b) =>
+        a.precision === b.precision
+          ? b.amount - a.amount
+          : b.precision - a.precision,
+      )) {
+        if (left <= 0 || item.unit <= 0) continue;
+        const extra =
+          Math.floor((left / item.unit) * item.precision) / item.precision;
+        item.quantity =
+          Math.round((item.quantity + extra) * item.precision) / item.precision;
+        item.executable = item.quantity * item.unit;
+        left -= extra * item.unit;
+      }
+      return planned
+        .map(({ unit: _unit, precision: _precision, ...item }) => item)
         .sort((a, b) => b.amount - a.amount);
     })
     .sort((a, b) => b.amount - a.amount);
