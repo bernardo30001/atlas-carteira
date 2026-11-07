@@ -9,7 +9,7 @@
     {
       "binding": "DB",
       "database_name": "atlas-carteira",
-      "database_id": "00000000-0000-4000-8000-000000000000",
+      "database_id": "e0f757b7-0528-46ab-be49-5d2710ea7b5b",
       "migrations_dir": "drizzle"
     }
   ]
