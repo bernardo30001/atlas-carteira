@@ -898,8 +898,8 @@ export default function Dashboard() {
                 Entre para salvar sua carteira na nuvem e acessar em outros
                 dispositivos.
               </span>
-              <a href="/signin-with-chatgpt?return_to=/" target="_top">
-                Entrar com ChatGPT <ArrowRight size={15} />
+              <a href="/" target="_top">
+                Entrar <ArrowRight size={15} />
               </a>
             </div>
           )}
@@ -1712,7 +1712,7 @@ export default function Dashboard() {
               <h2 id="modal-title">Uma carteira só sua.</h2>
               <p>
                 Este site é privado. Registros são salvos na nuvem e vinculados
-                à sua conta ChatGPT.
+                à sua conta.
               </p>
               <div className="notice">
                 <ShieldCheck size={18} />
@@ -1736,15 +1736,15 @@ export default function Dashboard() {
               {account !== "ready" ? (
                 <a
                   className="button primary"
-                  href="/signin-with-chatgpt?return_to=/"
+                  href="/"
                   target="_top"
                 >
-                  Entrar com ChatGPT
+                  Entrar
                 </a>
               ) : (
                 <a
                   className="button outline"
-                  href="/signout-with-chatgpt?return_to=/"
+                  href="/cdn-cgi/access/logout"
                   target="_top"
                 >
                   Sair da conta

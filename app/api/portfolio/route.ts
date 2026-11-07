@@ -1,4 +1,4 @@
-import { getChatGPTUser } from "../../chatgpt-auth";
+import { getUser } from "../../auth";
 import { getDb } from "../../../db";
 import { portfolios } from "../../../db/schema";
 import { eq, and, sql } from "drizzle-orm";
@@ -8,7 +8,7 @@ import { requestSchema as schema } from "../../lib/validation";
 const respond = (data: unknown, status = 200) =>
   Response.json(data, { status, headers: { "Cache-Control": "no-store" } });
 export async function GET() {
-  const user = await getChatGPTUser();
+  const user = await getUser();
   if (!user)
     return respond(
       { error: "Entre com sua conta para carregar a carteira." },
@@ -38,7 +38,7 @@ export async function GET() {
   }
 }
 export async function PUT(request: Request) {
-  const user = await getChatGPTUser();
+  const user = await getUser();
   if (!user) return respond({ error: "Entre com sua conta para salvar." }, 401);
   if (
     request.headers.get("origin") &&

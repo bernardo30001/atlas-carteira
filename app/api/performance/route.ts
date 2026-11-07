@@ -1,5 +1,5 @@
 import { env } from "cloudflare:workers";
-import { getChatGPTUser } from "../../chatgpt-auth";
+import { getUser } from "../../auth";
 import { extraAssetsOf, loadMarket } from "../../lib/market-server";
 import {
   capturePerformance,
@@ -61,7 +61,7 @@ async function history(userId: string, warnings: string[] = []) {
   };
 }
 export async function GET() {
-  const user = await getChatGPTUser();
+  const user = await getUser();
   if (!user) return respond({ error: "Entre para acessar o histórico." }, 401);
   try {
     return respond(await history(user.userId));
@@ -70,7 +70,7 @@ export async function GET() {
   }
 }
 export async function POST(request: Request) {
-  const user = await getChatGPTUser();
+  const user = await getUser();
   if (!user)
     return respond({ error: "Entre para registrar o histórico." }, 401);
   if (

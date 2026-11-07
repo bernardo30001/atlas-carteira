@@ -9,11 +9,8 @@ assert.equal(
   (await fetch(base + "/api/performance", { method: "POST" })).status,
   401,
 );
-const signin = await fetch(base + "/signin-with-chatgpt?return_to=/", {
-    redirect: "manual",
-  }),
-  cookie = signin.headers.get("set-cookie")?.split(";")[0];
-assert.ok(cookie);
+// Só o servidor de desenvolvimento aceita este cookie. Em produção, vale o Access.
+const cookie = "atlas_dev_user=local@atlas.test";
 const headers = { Cookie: cookie, Origin: base };
 const empty = await (await fetch(base + "/api/portfolio", { headers })).json();
 const seeded = await fetch(base + "/api/portfolio", {

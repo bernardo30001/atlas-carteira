@@ -5,11 +5,8 @@ if (!base)
     "Rode com npm run test:api: este teste grava dados e não usa o banco local real.",
   );
 assert.equal((await fetch(base + "/api/portfolio")).status, 401);
-const sign = await fetch(base + "/signin-with-chatgpt?return_to=/", {
-    redirect: "manual",
-  }),
-  cookie = sign.headers.get("set-cookie")?.split(";")[0];
-assert.ok(cookie);
+// Só o servidor de desenvolvimento aceita este cookie. Em produção, vale o Access.
+const cookie = "atlas_dev_user=local@atlas.test";
 const headers = {
   Cookie: cookie,
   "Content-Type": "application/json",
