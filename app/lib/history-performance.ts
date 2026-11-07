@@ -194,7 +194,8 @@ export function historyPerformance(
     });
     if (ledger.baseline.length) undated.push(asset.ticker);
   }
-  if (!holdings.length && !p.fixedIncome.length)
+  // Sem nenhum preço, a curva seria só dos títulos manuais e pareceria a carteira inteira.
+  if (!holdings.length && (excluded.length || !p.fixedIncome.length))
     return { ...empty, excluded, undated };
   if (needsFx && !fxSeries.length)
     return { ...empty, excluded: holdings.map((h) => h.asset.ticker), undated };

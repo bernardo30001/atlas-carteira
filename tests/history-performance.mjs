@@ -480,3 +480,28 @@ test("ativo sem preço antigo não bloqueia a curva dos demais", () => {
   assert.equal(r.startedAt, "2026-03-02");
   near(byDate(r, "2026-03-03").portfolio, 5, "metade da carteira subiu 10%");
 });
+
+test("sem cotação nenhuma, não mostra só o CDB como se fosse a carteira", () => {
+  const r = historyPerformance(
+    portfolio({
+      tradeHistory: [trade("WEGE3", "buy", "2026-03-02", 10, 10)],
+      fixedIncome: [
+        {
+          id: "c",
+          name: "CDB",
+          cost: null,
+          value: 1000,
+          date: "2026-03-03",
+          updatedAt: "2026-03-03",
+        },
+      ],
+    }),
+    market(),
+    [],
+    "all",
+    null,
+    NOW,
+  );
+  assert.deepEqual(r.points, []);
+  assert.deepEqual(r.excluded, ["WEGE3"]);
+});

@@ -398,11 +398,13 @@ export default function Dashboard() {
     marketBusy.current = true;
     setMarketLoading(true);
     try {
+      // Com prazo: uma consulta presa não pode impedir as próximas.
       const r = await fetch(
         "/api/market" +
           (extraRef.current
             ? "?assets=" + encodeURIComponent(extraRef.current)
             : ""),
+        { signal: AbortSignal.timeout(30000) },
       );
       if (!r.ok) throw Error();
       const j: any = await r.json();
