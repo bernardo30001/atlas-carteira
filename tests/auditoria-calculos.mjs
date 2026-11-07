@@ -462,7 +462,19 @@ test("aporte: só ETFs usa os pesos escolhidos e mostra quem fica de fora", () =
   assert.equal(of("VOO"), undefined, "peso 0 não recebe");
   assert.equal(
     plan.waiting.find((x) => x.ticker === "VOO").reason,
-    "Sem peso definido",
+    "Peso 0: não recebe novos aportes",
+  );
+  // O peso de hoje usa a mesma base do recomendado: quem tem peso 0 não entra na conta.
+  const base = portfolio({
+    targets: { br: 0, rf: 0, etf: 100, crypto: 0 },
+    weights: { SPHQ: 50, VEA: 50, VOO: 0, VNQ: 0, VWO: 0, IAU: 0 },
+    transactions: [lot("VOO", 8, 20), lot("SPHQ", 1, 20), lot("VEA", 1, 20)],
+  });
+  const shares = contributionPlan(base, m, 10, "etf");
+  near(
+    shares.items.find((x) => x.ticker === "SPHQ").currentShare,
+    50,
+    "sem contar o VOO",
   );
   assert.ok(plan.items.every((x) => x.group === "etf"));
   near(plan.spent, 1000, "frações usam todo o valor");

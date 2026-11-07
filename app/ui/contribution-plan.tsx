@@ -104,7 +104,11 @@ export function ContributionPlan({
                   {hidden ? "•••" : num(item.quantity, 8)}
                 </td>
               )}
-              <td data-label="Peso hoje">{share(item.currentShare)}</td>
+              <td data-label="Peso hoje">
+                {item.group === "rf" || item.targetShare === 0
+                  ? "—"
+                  : share(item.currentShare)}
+              </td>
               <td data-label="Peso recomendado">
                 {item.group === "rf" ? "—" : share(item.targetShare)}
               </td>

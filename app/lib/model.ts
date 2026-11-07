@@ -737,7 +737,8 @@ export function contributionPlan(
       held = (a: (typeof assets)[number]) => a.value ?? 0,
       weightOf = classWeights(p, group, assets),
       weightSum = assets.reduce((s, a) => s + weightOf(a), 0),
-      heldSum = assets.reduce((s, a) => s + held(a), 0),
+      // Peso de hoje na mesma base do recomendado: sem os ativos que não recebem aporte.
+      heldSum = assets.reduce((s, a) => s + (weightOf(a) > 0 ? held(a) : 0), 0),
       planned = fillToTargets(
         assets.map((a) => ({
           key: a.ticker,
@@ -762,7 +763,8 @@ export function contributionPlan(
         executable: quantity * unit,
         gap: amount,
         quote: q,
-        currentShare: heldSum ? (held(a) / heldSum) * 100 : 0,
+        currentShare:
+          heldSum && weightOf(a) > 0 ? (held(a) / heldSum) * 100 : 0,
         targetShare: weightSum ? (weightOf(a) / weightSum) * 100 : 0,
         unit,
         precision,
@@ -808,7 +810,7 @@ export function contributionPlan(
             )
               ? "Tese marcada para revisão"
               : item.targetShare === 0
-                ? "Sem peso definido"
+                ? "Peso 0: não recebe novos aportes"
                 : row.unit <= 0
                   ? "Cotação indisponível"
                   : item.amount > 0
