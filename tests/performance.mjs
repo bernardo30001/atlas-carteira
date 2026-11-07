@@ -562,7 +562,10 @@ const simUS = simulateComposition(
 close(simUS.points.at(-1).portfolio, 20);
 close(simUS.coverage, 100);
 const simBTC = simulateComposition(
-  mixed,
+  {
+    ...mixed,
+    transactions: mixed.transactions.filter((t) => t.ticker === "BTC"),
+  },
   hm,
   rates,
   30,
