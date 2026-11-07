@@ -540,10 +540,29 @@ O site saiu do Sites da OpenAI para uma conta Cloudflare própria, com a sua apr
 
 Sem login, a página, a leitura e a gravação da carteira e o histórico redirecionam para a tela de login. O mesmo vale para token forjado no cabeçalho e no cookie, cookie de desenvolvimento e cabeçalhos antigos do ChatGPT. O subdomínio criado automaticamente pela Cloudflare deixou de existir depois da troca.
 
+Com o seu login, a API identificou o e-mail autorizado e devolveu a carteira com a mesma revisão e o mesmo hash do backup, sem aviso de migração. O cookie do Access não fica visível para o JavaScript da página. As cotações vieram completas, sem erro, e todas as rotas responderam 200.
+
+### CPU medido no site publicado
+
+Amostra pequena, de 30 requisições em uma sessão, lida com `wrangler tail`. Nenhuma foi interrompida: todas terminaram com resultado `ok` e nenhuma teve exceção.
+
+| Rota | Requisições | CPU mínimo | CPU mediano | CPU máximo |
+|---|---|---|---|---|
+| `GET /` | 8 | 7 ms | 11 ms | 42 ms |
+| `GET /api/market` | 2 | 52 ms | 55 ms | 55 ms |
+| `POST /api/performance` | 2 | 11 ms | 14 ms | 14 ms |
+| `GET /api/news` | 2 | 9 ms | 10 ms | 10 ms |
+| `GET /api/portfolio` | 9 | 3 ms | 4 ms | 9 ms |
+| `GET /api/performance` | 4 | 3 ms | 4 ms | 4 ms |
+| `GET /api/cdi` | 2 | 3 ms | 3 ms | 3 ms |
+| `GET /api/fundamentals` | 1 | 1 ms | 1 ms | 1 ms |
+
+Oito das 30 passaram dos 10 ms do plano grátis, e a de cotações passou cinco vezes. A Cloudflare não as interrompeu nesta sessão, mas isso não garante que nunca interromperá: o limite documentado continua sendo de 10 ms. A primeira leitura de notícias levou cerca de 10 segundos, quase todos à espera das fontes externas.
+
 ### O que falta
 
-1. **Entrar pela primeira vez.** Conferir o token real, a carteira pela API e o botão de sair (`/cdn-cgi/access/logout`).
-2. **Medir o CPU real.** O limite grátis é de 10 ms por requisição. Localmente, a rota de cotações ficou em 14 ms, e as de notícias e fundamentos só foram medidas com cache. Se houver erro 1102 ou falha frequente, o plano pago custa US$ 5 por mês.
+1. **Botão Sair da conta.** Não testei, porque encerraria a sua sessão. O botão aponta para `/cdn-cgi/access/logout`.
+2. **Observar o plano grátis.** Se aparecer o erro 1102 ou as cotações falharem com frequência, o plano pago custa US$ 5 por mês.
 3. **Período com os dois sites.** Registrar tudo só no site novo, para os dois não ficarem diferentes.
 4. **Desativar o site na OpenAI**, quando estiver satisfeito. Depois disso, a curva observada antiga deixa de estar disponível.
 5. **GitHub.** A branch não foi enviada. O repositório público segue sem a migração até você pedir.
