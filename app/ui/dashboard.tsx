@@ -49,7 +49,6 @@ import {
   today,
   totals,
   allocationPlan,
-  assetPlan,
   type Group,
   type Portfolio,
   type Market,
@@ -264,7 +263,6 @@ export default function Dashboard() {
     [newsError, setNewsError] = useState(""),
     [newsTime, setNewsTime] = useState(""),
     [newsProvider, setNewsProvider] = useState("Google Notícias");
-  const [evaluationTicker, setEvaluationTicker] = useState<string>();
   const dialogRef = useRef<HTMLDialogElement>(null),
     lastFocus = useRef<HTMLElement | null>(null),
     marketBusy = useRef(false),
@@ -1295,7 +1293,6 @@ export default function Dashboard() {
                 setBudget={setBudget}
                 save={save}
                 busy={saveBusy}
-                initialTicker={evaluationTicker}
                 onRegister={(ticker, quantity) =>
                   setModal({ kind: "transaction", ticker, quantity })
                 }
