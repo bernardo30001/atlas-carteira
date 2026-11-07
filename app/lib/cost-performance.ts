@@ -114,7 +114,11 @@ export function costPerformance(
     fx =
       fxQuote && !fxQuote.stale && validPrice(fxQuote.price)
         ? fxQuote.price
-        : null;
+        : null,
+    today = brDate(new Date(now)),
+    fxSeries = priceSeries(market, "USD", today),
+    // Sem o câmbio da remessa, a melhor estimativa é o dólar do dia da operação.
+    fxOn = (date: string) => atDate(fxSeries, date) ?? fx;
   let cost = 0,
     value = 0,
     income = 0,
@@ -122,8 +126,12 @@ export function costPerformance(
     estimatedFX = false;
   const included: typeof rows = [];
   for (const row of rows) {
-    const rowCost = add(row.transactions.map((tx) => costOf(tx, currency, fx)));
-    const rowIncome = add(row.incomes.map((i) => incomeOf(i, currency, fx)));
+    const rowCost = add(
+      row.transactions.map((tx) => costOf(tx, currency, fxOn(tx.date))),
+    );
+    const rowIncome = add(
+      row.incomes.map((i) => incomeOf(i, currency, fxOn(i.date))),
+    );
     const rowValue =
       row.nativeValue === null
         ? null
@@ -193,19 +201,17 @@ export function costPerformance(
   if (estimatedFX)
     warnings.push(
       currency === "USD"
-        ? "Taxas em reais sem câmbio registrado são convertidas para dólares pela cotação da data avaliada. Essa parcela do custo é uma estimativa."
-        : "Sem câmbio registrado para parte dos custos ou proventos, a conversão usa o dólar da data avaliada. O consolidado é uma estimativa e não apura o ganho cambial desde a compra. O resultado do grupo americano é calculado em dólares.",
+        ? "Taxas em reais sem câmbio registrado são convertidas para dólares pela cotação do dia da operação. Essa parcela do custo é uma estimativa."
+        : "Sem o câmbio da remessa, o custo em reais usa o dólar oficial (PTAX) do dia de cada compra. É uma estimativa: a taxa real da remessa pode ser diferente. O resultado do grupo americano é calculado em dólares.",
     );
   if (excluded.length)
     warnings.push("Fora do cálculo acumulado: " + excluded.join("; ") + ".");
   if (!included.length) return response;
 
-  const today = brDate(new Date(now)),
-    start = brDate(new Date(now - days * 86400000));
+  const start = brDate(new Date(now - days * 86400000));
   const series = new Map(
     included.map((r) => [r.ticker, priceSeries(market, r.ticker, today)]),
   );
-  const fxSeries = priceSeries(market, "USD", today);
   const dates = new Set([today]);
   for (const points of series.values())
     for (const point of points) if (point.date >= start) dates.add(point.date);
@@ -230,11 +236,16 @@ export function costPerformance(
       received = 0,
       complete = true;
     for (const row of included) {
-      // Saldos iniciais contêm um custo médio, sem as datas das compras originais.
-      const state = replayLedger(ledgers.get(row.ticker)!, date);
+      // Saldo inicial sem datas de compra: só existe a partir da data de referência.
+      // Valorizá-lo antes disso criaria um retorno que a carteira não teve.
+      const ledger = ledgers.get(row.ticker)!;
+      if (ledger.baseline.some((lot) => lot.date > date)) continue;
+      const state = replayLedger(ledger, date);
       if (state.quantity === 0) continue;
       const price = atDate(series.get(row.ticker)!, date);
-      const lotCost = add(state.lots.map((tx) => costOf(tx, currency, dayFx)));
+      const lotCost = add(
+        state.lots.map((tx) => costOf(tx, currency, fxOn(tx.date))),
+      );
       const lotValue =
         price === null
           ? null
@@ -261,7 +272,7 @@ export function costPerformance(
         date,
       );
       for (const i of kept) {
-        const amount = incomeOf(i, currency, dayFx);
+        const amount = incomeOf(i, currency, fxOn(i.date));
         if (amount === null) {
           complete = false;
           break;
@@ -291,7 +302,7 @@ export function costPerformance(
     );
   if (included.some((row) => ledgers.get(row.ticker)!.baseline.length > 0))
     warnings.push(
-      "Posições sem histórico de operações continuam reconstruídas com a quantidade e o preço médio informados. Não presumimos datas de compra para essas posições.",
+      "Posições sem histórico de operações entram na curva na data de referência, com a quantidade e o preço médio informados. Não presumimos datas de compra para elas.",
     );
   if (incomes.some((i) => i.kind === "opening"))
     warnings.push(

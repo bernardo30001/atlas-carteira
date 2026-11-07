@@ -11,11 +11,8 @@ import {
   totals,
 } from "../app/lib/model.ts";
 import {
-  benchmarkLevels,
   brDate,
-  capturePerformance,
   cdiFactor,
-  recordedChart,
   simulateComposition,
 } from "../app/lib/performance.ts";
 import { costPerformance } from "../app/lib/cost-performance.ts";
@@ -127,119 +124,6 @@ test("proventos: não entram de novo no patrimônio", () => {
   near(withIncome.byGroup.br, 1500, "classe");
 });
 
-test("TWR: aporte e resgate não inflam nem reduzem o retorno", () => {
-  // +10%, aporte de 1100 ao preço da observação, +10%: (1,1 × 1,1) − 1 = 21%.
-  // Sem neutralizar, 2420 / 1000 − 1 daria 142%.
-  const start = portfolio({ transactions: [lot("WEGE3", 100, 10)] });
-  const bigger = portfolio({
-    transactions: [
-      ...start.transactions,
-      lot("WEGE3", 100, 11, { kind: "buy" }),
-    ],
-  });
-  const at = (price) => market(quote("WEGE3", price));
-  const a = capturePerformance(
-    start,
-    at(10),
-    undefined,
-    1,
-    "2026-11-02T18:00:00Z",
-  );
-  const b = capturePerformance(
-    start,
-    at(11),
-    a.state,
-    1,
-    "2026-11-03T18:00:00Z",
-  );
-  const c = capturePerformance(
-    bigger,
-    at(11),
-    b.state,
-    2,
-    "2026-11-03T18:05:00Z",
-  );
-  const d = capturePerformance(
-    bigger,
-    at(12.1),
-    c.state,
-    2,
-    "2026-11-04T18:00:00Z",
-  );
-  near(a.point.index, 100, "base");
-  near(b.point.index, 110, "após +10%");
-  near(c.point.index, 110, "aporte neutro");
-  near(c.point.flow, 1100, "fluxo acumulado");
-  near(d.point.index, 121, "após segundo +10%");
-  near(d.point.value, 2420, "saldo");
-  const e = capturePerformance(
-    start,
-    at(12.1),
-    d.state,
-    3,
-    "2026-11-04T18:05:00Z",
-  );
-  near(e.point.index, 121, "resgate neutro");
-  near(e.point.flow, 1100 - 1210, "fluxo após resgate");
-  const chart = recordedChart(
-    {
-      points: [a, b, c, d, e].map((x) => x.point),
-      startedAt: a.state.startedAt,
-      updatedAt: e.state.capturedAt,
-      warnings: [],
-    },
-    30,
-    [],
-    NOW,
-  );
-  near(chart.at(-1).portfolio, 21, "curva");
-});
-
-test("TWR: provento novo conta uma vez; acumulado anterior fica fora", () => {
-  // 100 de provento sobre 1000 = 10%, sem repetir nas observações seguintes.
-  const lots = [lot("WEGE3", 100, 10)];
-  const m = market(quote("WEGE3", 10));
-  const base = capturePerformance(
-    portfolio({ transactions: lots }),
-    m,
-    undefined,
-    1,
-    "2026-11-02T18:00:00Z",
-  );
-  const paid = portfolio({
-    transactions: lots,
-    incomes: [income("WEGE3", 100, "2026-11-03")],
-  });
-  const first = capturePerformance(
-    paid,
-    m,
-    base.state,
-    2,
-    "2026-11-03T18:00:00Z",
-  );
-  const again = capturePerformance(
-    paid,
-    m,
-    first.state,
-    2,
-    "2026-11-04T18:00:00Z",
-  );
-  near(first.point.index, 110, "provento novo");
-  near(again.point.index, 110, "sem repetir");
-  near(first.point.value, 1000, "patrimônio sem provento");
-  const opening = capturePerformance(
-    portfolio({
-      transactions: lots,
-      incomes: [income("WEGE3", 100, "2026-11-03", { kind: "opening" })],
-    }),
-    m,
-    base.state,
-    2,
-    "2026-11-03T18:00:00Z",
-  );
-  near(opening.point.index, 100, "acumulado anterior");
-});
-
 test("câmbio: custo em USD sem câmbio de compra fica preservado", () => {
   // 10 × 100 = US$ 1000; saldo 10 × 110 = US$ 1100; resultado US$ 100.
   // Consolidado sem câmbio de compra: 1000 × 5,5 = R$ 5500 (estimativa), 10%.
@@ -287,63 +171,6 @@ test("Bitcoin: custo em reais e cotação em dólar", () => {
     costPerformance(p, m, "btc", 365, NOW).returnPercent,
     (500 / 3000) * 100,
     "percentual",
-  );
-});
-
-test("referências: acumulação composta e S&P 500 em reais", () => {
-  // S&P 100 × 5 = 500 → 110 × 5,5 = 605: +21%. CDI: 1,01² − 1 = 2,01%, não 2%.
-  const level = benchmarkLevels(
-    market(quote("IBOV", 100), quote("SP500", 100), quote("USD", 5)),
-  );
-  const later = benchmarkLevels(
-    market(quote("IBOV", 121), quote("SP500", 110), quote("USD", 5.5)),
-  );
-  near(level.sp500, 500, "nível inicial");
-  near(later.sp500, 605, "nível final");
-  const chart = recordedChart(
-    {
-      points: [
-        {
-          time: "2026-11-02T18:00:00Z",
-          value: 1,
-          index: 100,
-          flow: 0,
-          income: 0,
-          benchmarks: level,
-          baseline: true,
-        },
-        {
-          time: "2026-11-04T18:00:00Z",
-          value: 1,
-          index: 100,
-          flow: 0,
-          income: 0,
-          benchmarks: later,
-          baseline: false,
-        },
-      ],
-      startedAt: "2026-11-02T18:00:00Z",
-      updatedAt: "2026-11-04T18:00:00Z",
-      warnings: [],
-    },
-    30,
-    [],
-    NOW,
-  );
-  near(chart[0].ibov, 0, "base do Ibovespa");
-  near(chart[0].sp500, 0, "base do S&P 500");
-  near(chart[1].ibov, 21, "Ibovespa");
-  near(chart[1].sp500, 21, "S&P 500 em R$");
-  const rates = [
-    { date: "2026-11-02", rate: 1 },
-    { date: "2026-11-03", rate: 1 },
-    { date: "2026-11-04", rate: 1 },
-  ];
-  near(cdiFactor(rates, "2026-11-02", "2026-11-04"), 1.0201, "CDI composto");
-  near(
-    cdiFactor(rates, "2026-11-02", "2026-11-04", 120),
-    1.012 ** 2,
-    "120% do CDI",
   );
 });
 
@@ -545,7 +372,6 @@ test("divisões por zero e posições zeradas", () => {
   const r = costPerformance(empty, m, "all", 365, NOW);
   assert.equal(r.returnPercent, undefined);
   assert.deepEqual(r.points, []);
-  assert.deepEqual(recordedChart(undefined, 30, [], NOW), []);
   assert.equal(simulateComposition(empty, m, [], 30, [], NOW).points.length, 0);
   const flat = Array.from({ length: 30 }, (_, i) => ({
     date: String(i),

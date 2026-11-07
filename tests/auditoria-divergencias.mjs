@@ -7,11 +7,7 @@ import { readFileSync } from "node:fs";
 import { registerHooks } from "node:module";
 import { assetPlan, positions, totals } from "../app/lib/model.ts";
 import { percent, tone } from "../app/lib/format.ts";
-import {
-  cdiFactor,
-  recordedChart,
-  simulateComposition,
-} from "../app/lib/performance.ts";
+import { cdiFactor, simulateComposition } from "../app/lib/performance.ts";
 import { costPerformance } from "../app/lib/cost-performance.ts";
 import { purchasesForPoints, replayTrades } from "../app/lib/trade-history.ts";
 import { portfolioSchema } from "../app/lib/validation.ts";
@@ -72,8 +68,13 @@ globalThis.fetch = async () =>
       ],
     },
   });
-const { loadMarket } = await import("../app/lib/market-server.ts");
+const { loadMarket, loadHistories } =
+  await import("../app/lib/market-server.ts");
 const fetched = await loadMarket();
+const fetchedHistory = await loadHistories(
+  [{ ticker: "USD", symbol: "BRL=X" }],
+  "2026-07-01",
+);
 globalThis.fetch = realFetch;
 
 // ---------------------------------------------------------------- CRÍTICO
@@ -157,48 +158,9 @@ test("I2 curva termina no mesmo valor do acumulado com histórico parcial", () =
   near(r.points.at(-1)?.portfolio, r.returnPercent, "último ponto da curva");
 });
 
-test("I3 CDI continua no acompanhamento real enquanto a taxa do dia não sai", () => {
-  // O Banco Central só publica a taxa do dia depois. Às 14h37 de 06/11/2026 a última
-  // era 05/11. Sem CDI no último ponto, performance-chart marca "sem dados" e oculta a linha.
-  const rates = [
-    { date: "2026-11-03", rate: 0.05 },
-    { date: "2026-11-04", rate: 0.05 },
-    { date: "2026-11-05", rate: 0.05 },
-  ];
-  const point = (time, index) => ({
-    time,
-    value: 1000,
-    index,
-    flow: 0,
-    income: 0,
-    benchmarks: {},
-    baseline: false,
-  });
-  const chart = recordedChart(
-    {
-      points: [
-        point("2026-11-04T18:00:00Z", 100),
-        point("2026-11-05T18:00:00Z", 100),
-        point("2026-11-06T17:00:00Z", 100),
-      ],
-      startedAt: "2026-11-04T18:00:00Z",
-      updatedAt: "2026-11-06T17:00:00Z",
-      warnings: [],
-    },
-    30,
-    rates,
-    NOW,
-  );
-  assert.notEqual(
-    chart.at(-1).cdi,
-    undefined,
-    "último ponto: exibido 'sem dados', correto CDI acumulado até a última taxa",
-  );
-});
-
 test("I4 datas de USD/BRL seguem o fuso da bolsa, sem adiantar o câmbio", () => {
   // 150 de 262 barras reais vêm às 23:00 UTC. Em UTC, a segunda vira domingo.
-  assert.equal(fetched.quotes.USD.history[0].date, "2026-07-06");
+  assert.equal(fetchedHistory.items.USD.history[0].date, "2026-07-06");
 });
 
 test("I5 preço médio inclui as taxas, como o custo exibido ao lado", () => {

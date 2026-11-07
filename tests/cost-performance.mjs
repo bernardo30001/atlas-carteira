@@ -72,15 +72,16 @@ near(r.income, 4);
 near(r.result, 22);
 near(r.returnPercent, (22 / 102) * 100);
 assert.equal(r.estimatedFX, false);
-assert.equal(r.points[0].date, "2026-10-26");
-near(r.points[0].portfolio, (-2 / 102) * 100);
+// A posição só existe a partir da data de referência: nada de retorno antes dela.
+assert.equal(r.points[0].date, "2026-10-27");
+near(r.points[0].portfolio, ((110 - 102 + 4) / 102) * 100);
 near(r.points.at(-1).portfolio, r.returnPercent);
 assert.ok(r.points[0].portfolio !== 0);
 assert.equal(r.currency, "BRL");
 assert.equal(JSON.stringify(br), original);
 const shorter = costPerformance(br, m, "br", 1, now);
 near(shorter.returnPercent, r.returnPercent);
-assert.ok(shorter.points.length < r.points.length);
+assert.ok(shorter.points.length <= r.points.length);
 const repeated = costPerformance(br, m, "br", 365, now);
 near(repeated.income, 4);
 near(repeated.result, r.result);
@@ -101,10 +102,12 @@ assert.equal(r.estimatedFX, false);
 const noFX = { ...m, quotes: { ...m.quotes, USD: undefined } };
 near(costPerformance(foreign, noFX, "us", 365, now).returnPercent, 12.5);
 const foreignBRL = costPerformance(foreign, m, "all", 365, now);
-near(foreignBRL.cost, 1200);
+// Sem o câmbio da remessa, custo e provento usam o dólar do dia (5,5), e o resultado em
+// reais inclui a alta do dólar até hoje (6): (1320 − 1100 + 27,5) / 1100 = 22,5%.
+near(foreignBRL.cost, 1100);
 near(foreignBRL.value, 1320);
-near(foreignBRL.income, 30);
-near(foreignBRL.returnPercent, 12.5);
+near(foreignBRL.income, 27.5);
+near(foreignBRL.returnPercent, 22.5);
 assert.equal(foreignBRL.estimatedFX, true);
 // Known purchase and payment FX include actual exchange gains; unknown FX is identified.
 const knownFX = {

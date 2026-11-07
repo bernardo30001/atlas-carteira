@@ -56,7 +56,11 @@ import {
 } from "../lib/model";
 import { fixed, money, num, plainPercent, signedMoney } from "../lib/format";
 import { portfolioSchema } from "../lib/validation";
-import { ledgerIssues, migratePortfolio } from "../lib/trade-history";
+import {
+  ledgerIssues,
+  migratePortfolio,
+  PORTFOLIO_SCHEMA,
+} from "../lib/trade-history";
 import { MovementHistory } from "./movement-history";
 import { AssetForm } from "./asset-form";
 import { ImportPanel } from "./import-panel";
@@ -64,7 +68,9 @@ import { Change } from "./change";
 import { ContributionPreview } from "./contribution-preview";
 import { ValidatedForm, FormInput } from "./validated-form";
 import { PerformanceChart } from "./performance-chart";
-import { usePerformance } from "./use-performance";
+import { useCdi } from "./use-cdi";
+import { useMarketHistory } from "./use-market-history";
+import { mergeMarket } from "../lib/market-history";
 import { CurrencySummary } from "./currency-summary";
 import { AssetTable } from "./asset-table";
 import { IncomePanel } from "./income-panel";
@@ -136,38 +142,78 @@ function Empty({
     </div>
   );
 }
-function demoPortfolio(): Portfolio {
+/** Carteira fictícia com compras datadas, pelos preços reais de cada dia quando já
+ * carregados, para que a demonstração mostre a curva e os pontos de compra. */
+function demoPortfolio(market: Market): Portfolio {
+  const dayOffset = (days: number) =>
+      new Date(Date.now() - days * 86400000).toISOString().slice(0, 10),
+    start = dayOffset(300),
+    priceOn = (ticker: string, date: string, fallback: number) =>
+      (market.quotes[ticker]?.priceHistory ?? []).findLast(
+        (point) => point.date <= date,
+      )?.close ?? fallback;
+  const positions: [string, number, number][] = [
+    ["WEGE3", 80, 34],
+    ["ITUB4", 150, 29],
+    ["VALE3", 70, 50],
+    ["ALUP11", 80, 25],
+    ["AUPO11", 60, 105],
+    ["SPHQ", 10, 55],
+    ["VEA", 15, 46],
+    ["VNQ", 10, 80],
+    ["IAU", 8, 43],
+    ["VWO", 10, 42],
+    ["BTC", 0.018, 80000],
+    ["ABTC11", 12, 120],
+  ];
+  const monthly: [string, number, number][] = [
+    ["WEGE3", 6, 34],
+    ["SPHQ", 1.5, 55],
+    ["AUPO11", 8, 105],
+    ["BTC", 0.0008, 80000],
+  ];
+  const currencyOf = (ticker: string) =>
+    ASSETS.find((a) => a.ticker === ticker)?.currency ?? "BRL";
   return {
     ...EMPTY,
-    transactions: [
-      ["WEGE3", 80, 34],
-      ["ITUB4", 150, 29],
-      ["VALE3", 70, 50],
-      ["ALUP11", 80, 25],
-      ["SPHQ", 10, 55],
-      ["VEA", 15, 46],
-      ["VNQ", 10, 80],
-      ["IAU", 8, 43],
-      ["VWO", 10, 42],
-      ["BTC", 0.018, 80000],
-    ].map(([ticker, quantity, price]) => ({
+    schemaVersion: PORTFOLIO_SCHEMA,
+    transactions: positions.map(([ticker, quantity, fallback]) => ({
       id: crypto.randomUUID(),
-      ticker: String(ticker),
+      ticker,
       kind: "opening",
-      quantity: Number(quantity),
-      price: Number(price),
-      fx: ASSETS.find((a) => a.ticker === ticker)?.currency === "USD" ? 5.1 : 1,
+      quantity,
+      price: priceOn(ticker, start, fallback),
+      fx: currencyOf(ticker) === "USD" ? null : 1,
       fees: 0,
-      date: today(),
+      date: start,
       note: "Demonstração — posição fictícia",
     })),
+    tradeHistory: [270, 225, 180, 135, 90, 45].flatMap((days) =>
+      monthly.map(([ticker, quantity, fallback]) => {
+        const date = dayOffset(days),
+          price = priceOn(ticker, date, fallback);
+        return {
+          id: crypto.randomUUID(),
+          ticker,
+          kind: "buy" as const,
+          quantity,
+          price,
+          total: quantity * price,
+          currency: currencyOf(ticker),
+          fx: currencyOf(ticker) === "USD" ? null : 1,
+          fees: 0,
+          date,
+          source: "Demonstração",
+        };
+      }),
+    ),
     fixedIncome: [
       {
         id: crypto.randomUUID(),
         name: "CDB · exemplo fictício",
         cost: 18000,
         value: 19150,
-        date: today(),
+        date: start,
         updatedAt: today(),
       },
     ],
@@ -184,7 +230,7 @@ export default function Dashboard() {
     [changes, setChanges] = useState<
       { ticker: string; before: number; after: number }[]
     >([]),
-    [market, setMarket] = useState<Market>(blankMarket),
+    [quotes, setQuotes] = useState<Market>(blankMarket),
     [marketLoading, setMarketLoading] = useState(true),
     [marketError, setMarketError] = useState(""),
     [account, setAccount] = useState<"loading" | "ready" | "signin" | "error">(
@@ -222,6 +268,11 @@ export default function Dashboard() {
     importRef = useRef<HTMLInputElement>(null),
     extraRef = useRef("");
   const p = demo ?? portfolio,
+    marketHistory = useMarketHistory(p),
+    market = useMemo(
+      () => mergeMarket(quotes, marketHistory.histories, marketHistory.ptax),
+      [quotes, marketHistory.histories, marketHistory.ptax],
+    ),
     t = useMemo(() => totals(p, market), [p, market]),
     classPlan = allocationPlan(p, market, budget),
     fx = market.quotes.USD?.price;
@@ -351,14 +402,14 @@ export default function Dashboard() {
       );
       if (!r.ok) throw Error();
       const j: any = await r.json();
-      setMarket(j);
+      setQuotes(j);
       setMarketError(
         j.errors.length
           ? `Sem atualização: ${j.errors.join(", ")}. Dados anteriores, quando disponíveis, estão marcados.`
           : "",
       );
     } catch {
-      setMarket((old) => ({
+      setQuotes((old) => ({
         ...old,
         quotes: Object.fromEntries(
           Object.entries(old.quotes).map(([k, v]) => [
@@ -521,11 +572,7 @@ export default function Dashboard() {
     }
   }
   const overview = page === "overview";
-  const performance = usePerformance(
-    account === "ready" && !demo,
-    revision,
-    market.fetchedAt,
-  );
+  const cdi = useCdi();
 
   const donutSegments = (() => {
     let offset = 0;
@@ -971,7 +1018,7 @@ export default function Dashboard() {
               {account !== "loading" && (
                 <button
                   className="button outline"
-                  onClick={() => setDemo(demoPortfolio())}
+                  onClick={() => setDemo(demoPortfolio(market))}
                 >
                   Explorar demonstração
                 </button>
@@ -1009,7 +1056,7 @@ export default function Dashboard() {
                   </div>
                   <button
                     className="button outline"
-                    onClick={() => setDemo(demoPortfolio())}
+                    onClick={() => setDemo(demoPortfolio(market))}
                   >
                     Explorar demonstração
                   </button>
@@ -1025,15 +1072,12 @@ export default function Dashboard() {
                 <PerformanceChart
                   portfolio={p}
                   market={market}
-                  data={performance.data}
-                  rates={performance.rates}
-                  busy={performance.busy}
-                  cdiError={performance.cdiError}
-                  demo={!!demo}
+                  rates={cdi.rates}
+                  historyLoading={marketHistory.loading}
+                  cdiError={cdi.cdiError}
                   hidden={hidden}
-                  cdiBusy={performance.cdiBusy}
-                  onRetryCdi={performance.retryCdi}
-                  onRetryHistory={performance.retryHistory}
+                  cdiBusy={cdi.cdiBusy}
+                  onRetryCdi={cdi.retryCdi}
                 />
                 <div className="overview-aside">
                   <section className="panel allocation">
@@ -1730,7 +1774,7 @@ export default function Dashboard() {
                 <button
                   className="button outline"
                   onClick={() => {
-                    setDemo(demoPortfolio());
+                    setDemo(demoPortfolio(market));
                     setModal(null);
                   }}
                 >
@@ -1808,15 +1852,15 @@ export default function Dashboard() {
                   reais ficam pendentes. O resultado por ativo é saldo na moeda
                   de origem menos custo mais proventos registrados. Dividendos
                   não são adicionados novamente ao patrimônio. Bitcoin pode ter
-                  custo informado em reais. Renda fixa usa o saldo
-                  manual do extrato; custo ausente permanece desconhecido. O
-                  resultado das posições em carteira não inclui vendas, que
-                  aparecem à parte em Resultado realizado. Impostos não são
-                  calculados. Cada ETF conta na classe a que dá exposição:
-                  AUPO11 em renda fixa e ABTC11 em Bitcoin, nas metas, nos
-                  resumos e nos filtros. O ABTC11 segue a estratégia do próprio
-                  fundo, então sua variação pode diferir da do BTC. Valores e rendimentos do extrato recebido ficam
-                  preservados separadamente das cotações atuais.
+                  custo informado em reais. Renda fixa usa o saldo manual do
+                  extrato; custo ausente permanece desconhecido. O resultado das
+                  posições em carteira não inclui vendas, que aparecem à parte
+                  em Resultado realizado. Impostos não são calculados. Cada ETF
+                  conta na classe a que dá exposição: AUPO11 em renda fixa e
+                  ABTC11 em Bitcoin, nas metas, nos resumos e nos filtros. O
+                  ABTC11 segue a estratégia do próprio fundo, então sua variação
+                  pode diferir da do BTC. Valores e rendimentos do extrato
+                  recebido ficam preservados separadamente das cotações atuais.
                 </p>
                 <h3>Limites</h3>
                 <p>

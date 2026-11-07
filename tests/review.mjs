@@ -4,7 +4,6 @@ import vm from 'node:vm';
 import {ASSETS,EMPTY,positions,totals,allocationPlan,assetPlan,trackedPortfolio} from '../app/lib/model.ts';
 import {costPerformance} from '../app/lib/cost-performance.ts';
 import {evaluatePortfolio} from '../app/lib/evaluation.ts';
-import {capturePerformance,recordedChart} from '../app/lib/performance.ts';
 import {datedTrades} from '../app/lib/trade-history.ts';
 import {newsSelection} from '../app/lib/news.ts';
 import {portfolioSchema} from '../app/lib/validation.ts';
@@ -29,13 +28,6 @@ const foreign={...EMPTY,transactions:[tx('SPHQ',2,9.99,{costNative:20,currency:'
 market={...m,quotes:{SPHQ:quote('SPHQ',12,'USD'),USD:quote('USD',5)}};row=positions(foreign,market).find(a=>a.ticker==='SPHQ');near(row.average,10.1);assert.equal(row.costEstimated,true); // Taxa em reais sem câmbio de compra: usa o câmbio atual e fica marcada como estimativa, sem apagar o custo em dólar (I6 da revisão).
 row=positions({...foreign,transactions:[{...foreign.transactions[0],fx:5}]},market).find(a=>a.ticker==='SPHQ');near(row.average,10.1);
 for(const price of [0,-1,NaN,Infinity]){const invalid={...m,quotes:{WEGE3:quote('WEGE3',price)}};assert.equal(positions(exact,invalid).find(r=>r.ticker==='WEGE3').value,null);assert.equal(totals(exact,invalid).result,null);assert.deepEqual(allocationPlan(exact,invalid,1000),[]);}
-const old=capturePerformance({...EMPTY,transactions:[kept]},m,undefined,1,'2026-10-29T15:00:00Z');
-old.state.holdings.push({ticker:'KLBN11',quantity:1000});old.state.value+=10000;old.state.segments.br.holdings.push({ticker:'KLBN11',quantity:1000});old.state.segments.br.value+=10000;
-const rebased=capturePerformance(p,m,old.state,1,'2026-10-30T15:00:00Z');assert.equal(rebased.point.baseline,true);near(rebased.state.value,60);near(rebased.point.index,100);assert.ok(rebased.warnings.some(w=>w.includes('recomeçou')));assert.ok(!rebased.state.holdings.some(r=>r.ticker==='KLBN11'));
-const moved=capturePerformance(p,{...m,quotes:{KLBN4:quote('KLBN4',6.6)}},rebased.state,1,'2026-10-30T16:00:00Z');near(moved.point.index,110);
-const observed={points:[{...old.point,index:150},rebased.point,moved.point],startedAt:rebased.state.startedAt,updatedAt:moved.state.capturedAt,warnings:[]};
-const chart=recordedChart(observed,365,[],Date.parse('2026-10-30T17:00:00Z'));assert.equal(chart.length,2);near(chart[0].portfolio,0);near(chart.at(-1).portfolio,10);assert.equal(observed.points.length,3);
-assert.deepEqual(recordedChart({...observed,pendingScopes:['all','br']},365,[],now,'all'),[]);
 assert.equal(resolveTheme('dark',false),'dark');assert.equal(resolveTheme('light',true),'light');assert.equal(resolveTheme(null,true),'dark');assert.equal(resolveTheme('invalid',false),'light');
 for(const {saved,system,blocked,expected} of [{saved:'dark',system:false,expected:'dark'},{saved:'light',system:true,expected:'light'},{saved:null,system:true,expected:'dark'},{saved:'invalid',system:false,expected:'light'},{saved:null,system:true,blocked:true,expected:'dark'}]){
  const root={dataset:{},style:{}};vm.runInNewContext(THEME_BOOT_SCRIPT,{localStorage:{getItem(){if(blocked)throw Error('blocked');return saved;}},matchMedia:()=>({matches:system}),document:{documentElement:root}});assert.equal(root.dataset.theme,expected);assert.equal(root.style.colorScheme,expected);

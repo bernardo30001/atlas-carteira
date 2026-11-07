@@ -20,7 +20,7 @@ export async function loadCdi(force = false): Promise<CdiResponse> {
   pending = (async () => {
     try {
       const end = new Date(),
-        start = new Date(end.getTime() - 400 * 86400000),
+        start = new Date(end.getTime() - 1100 * 86400000),
         format = (d: Date) =>
           `${String(d.getUTCDate()).padStart(2, "0")}/${String(d.getUTCMonth() + 1).padStart(2, "0")}/${d.getUTCFullYear()}`;
       const url = `https://api.bcb.gov.br/dados/serie/bcdata.sgs.12/dados?formato=json&dataInicial=${format(start)}&dataFinal=${format(end)}`;
@@ -69,4 +69,48 @@ export async function loadCdi(force = false): Promise<CdiResponse> {
     pending = undefined;
   });
   return pending;
+}
+
+export type PtaxResponse = { points: { date: string; close: number }[] };
+let ptaxCache: PtaxResponse | undefined,
+  ptaxChecked = 0,
+  ptaxPending: Promise<PtaxResponse> | undefined;
+/** Dólar oficial do Banco Central, no boletim de fechamento de cada dia útil. O histórico
+ * do Yahoo para BRL=X chega um dia atrasado em relação à B3. */
+export function loadPtax(): Promise<PtaxResponse> {
+  if (ptaxCache && Date.now() - ptaxChecked < 3600000)
+    return Promise.resolve(ptaxCache);
+  ptaxPending ??= (async () => {
+    try {
+      const end = new Date(),
+        start = new Date(end.getTime() - 1100 * 86400000),
+        format = (d: Date) =>
+          `${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}-${d.getUTCFullYear()}`;
+      const r = await fetch(
+        `https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/odata/CotacaoDolarPeriodo(dataInicial=@dataInicial,dataFinalCotacao=@dataFinalCotacao)?@dataInicial='${format(start)}'&@dataFinalCotacao='${format(end)}'&$format=json&$select=cotacaoVenda,dataHoraCotacao&$top=2000`,
+        { signal: AbortSignal.timeout(12000) },
+      );
+      if (!r.ok) throw new Error("Fonte indisponível");
+      const rows = ((await r.json()) as any).value as {
+        cotacaoVenda: number;
+        dataHoraCotacao: string;
+      }[];
+      const points = rows
+        .map((row) => ({
+          date: row.dataHoraCotacao.slice(0, 10),
+          close: row.cotacaoVenda,
+        }))
+        .filter((p) => Number.isFinite(p.close) && p.close > 0)
+        .sort((a, b) => a.date.localeCompare(b.date));
+      if (!points.length) throw new Error("Sem dados");
+      ptaxCache = { points };
+    } catch {
+      ptaxCache ??= { points: [] };
+    }
+    ptaxChecked = Date.now();
+    return ptaxCache;
+  })().finally(() => {
+    ptaxPending = undefined;
+  });
+  return ptaxPending;
 }

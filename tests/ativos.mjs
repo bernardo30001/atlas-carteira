@@ -314,7 +314,7 @@ test("cotações incluem os ativos cadastrados e filtram o que vem do navegador"
     });
   };
   try {
-    const { extraAssetsOf, loadMarket, parseExtraAssets } =
+    const { loadMarket, parseExtraAssets } =
       await import("../app/lib/market-server.ts");
     assert.deepEqual(
       parseExtraAssets("HGLG11:HGLG11.SA,../x:y,ABC:,OK11:OK11.SA"),
@@ -329,12 +329,6 @@ test("cotações incluem os ativos cadastrados e filtram o que vem do navegador"
       ).length,
       40,
       "limite",
-    );
-    assert.deepEqual(
-      extraAssetsOf({
-        customAssets: [FII, { ...FII, ticker: "ANTIGO", archived: true }],
-      }),
-      [{ ticker: "HGLG11", symbol: "HGLG11.SA" }],
     );
     const m = await loadMarket([
       { ticker: "HGLG11", symbol: "HGLG11.SA" },

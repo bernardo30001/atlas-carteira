@@ -56,7 +56,7 @@ try {
     await new Promise((done) => setTimeout(done, 500));
   }
   exitCode = 0;
-  for (const file of ["tests/api.mjs", "tests/performance-api.mjs"]) {
+  for (const file of ["tests/api.mjs"]) {
     const run = spawnSync(process.execPath, [file], {
       env: { ...process.env, ATLAS_TEST_BASE: base },
       stdio: "inherit",

@@ -1,7 +1,7 @@
 "use client";
 import { useMemo, useState } from "react";
 import { niceAxis } from "../lib/chart-axis";
-import { fixed, num, percent } from "../lib/format";
+import { fixed, money, num, percent } from "../lib/format";
 import {
   ResponsiveContainer,
   ComposedChart,
@@ -17,15 +17,14 @@ import { Activity, Info, TrendingUp, Check, RefreshCw } from "lucide-react";
 import {
   PERFORMANCE_SCOPES,
   performancePortfolio,
-  recordedChart,
   simulateComposition,
   type PerformanceScope,
   type BenchmarkKey,
-  type PerformanceData,
   type CdiRate,
 } from "../lib/performance";
 import type { Portfolio, Market } from "../lib/model";
 import { costPerformance } from "../lib/cost-performance";
+import { historyPerformance } from "../lib/history-performance";
 import { CostReturnSummary, CostReturnMethod } from "./cost-return";
 import { hasHolding, purchasesForPoints } from "../lib/trade-history";
 import { purchaseLabelLayout } from "../lib/purchase-label-layout";
@@ -34,11 +33,32 @@ import {
   PurchaseTooltipHeader,
   PurchaseTable,
 } from "./purchase-markers";
-const references: { key: BenchmarkKey; name: string; color: string }[] = [
-  { key: "ibov", name: "Ibovespa", color: "var(--chart-ibov)" },
-  { key: "sp500", name: "S&P 500 em R$", color: "var(--chart-sp500)" },
-  { key: "cdi", name: "CDI", color: "var(--chart-cdi)" },
-  { key: "bitcoin", name: "Bitcoin em R$", color: "var(--chart-bitcoin)" },
+
+type Mode = "return" | "wealth" | "cost" | "simulation";
+const MODES: { key: Mode; name: string; title: string }[] = [
+  { key: "return", name: "Rentabilidade", title: "Rentabilidade da carteira" },
+  {
+    key: "wealth",
+    name: "Patrimônio",
+    title: "Patrimônio e dinheiro aportado",
+  },
+  {
+    key: "cost",
+    name: "Sobre o investido",
+    title: "Resultado sobre o investido",
+  },
+  {
+    key: "simulation",
+    name: "Simular",
+    title: "Simulação da composição atual",
+  },
+];
+const PERIODS: [number | null, string][] = [
+  [30, "1M"],
+  [90, "3M"],
+  [180, "6M"],
+  [365, "1A"],
+  [null, "Tudo"],
 ];
 const pct = (v: number | undefined) => (v === undefined ? "—" : percent(v));
 const date = (d: string) =>
@@ -46,31 +66,25 @@ const date = (d: string) =>
 type Props = {
   portfolio: Portfolio;
   market: Market;
-  data?: PerformanceData;
   rates: CdiRate[];
-  busy: boolean;
+  historyLoading: boolean;
   cdiError: string;
-  demo: boolean;
   hidden: boolean;
   cdiBusy: boolean;
   onRetryCdi: () => void;
-  onRetryHistory: () => void;
 };
 export function PerformanceChart({
   portfolio,
   market,
-  data,
   rates,
-  busy,
+  historyLoading,
   cdiError,
-  demo,
   hidden,
   cdiBusy,
   onRetryCdi,
-  onRetryHistory,
 }: Props) {
-  const [mode, setMode] = useState<"cost" | "simulation" | "recorded">("cost"),
-    [days, setDays] = useState(365),
+  const [mode, setMode] = useState<Mode>("return"),
+    [days, setDays] = useState<number | null>(null),
     [scope, setScope] = useState<PerformanceScope>("all"),
     [showPurchases, setShowPurchases] = useState(true),
     [selected, setSelected] = useState<BenchmarkKey[]>([
@@ -79,35 +93,36 @@ export function PerformanceChart({
       "cdi",
     ]);
   const [chartSize, setChartSize] = useState({ width: 720, height: 288 });
+  // "Tudo" nos modos que precisam de um número: maior que qualquer histórico carregado.
+  const windowDays = days ?? 3650;
+  const history = useMemo(
+    () => historyPerformance(portfolio, market, rates, scope, days),
+    [portfolio, market, rates, scope, days],
+  );
   const simulation = useMemo(
     () =>
       simulateComposition(
         portfolio,
         market,
         rates,
-        days,
+        windowDays,
         selected,
         Date.now(),
         scope,
       ),
-    [portfolio, market, rates, days, selected, scope],
-  );
-  const actual = useMemo(
-    () => recordedChart(data, days, rates, Date.now(), scope),
-    [data, days, rates, scope],
+    [portfolio, market, rates, windowDays, selected, scope],
   );
   const accumulated = useMemo(
-    () => costPerformance(portfolio, market, scope, days),
-    [portfolio, market, scope, days],
+    () => costPerformance(portfolio, market, scope, windowDays),
+    [portfolio, market, scope, windowDays],
   );
-  const rawPoints =
-    mode === "cost"
-      ? accumulated.points
-      : mode === "simulation"
-        ? simulation.points
-        : demo
-          ? []
-          : actual;
+  const wealth = mode === "wealth",
+    rawPoints =
+      mode === "cost"
+        ? accumulated.points
+        : mode === "simulation"
+          ? simulation.points
+          : history.points;
   const points = useMemo(
       () =>
         purchasesForPoints(performancePortfolio(portfolio, scope), rawPoints),
@@ -115,45 +130,72 @@ export function PerformanceChart({
     ),
     last = points.at(-1),
     first = points[0],
-    returnValue = mode === "cost" ? accumulated.returnPercent : last?.portfolio;
+    returnValue =
+      mode === "cost"
+        ? accumulated.returnPercent
+        : mode === "simulation"
+          ? last?.portfolio
+          : history.returnPercent;
+  const dataKey = wealth ? "value" : "portfolio";
   const labelLayout = useMemo(
-    () => purchaseLabelLayout(points, chartSize.width, chartSize.height),
-    [points, chartSize],
+    () =>
+      purchaseLabelLayout(
+        wealth
+          ? points.map((p) => ({ ...p, portfolio: p.value ?? 0 }))
+          : points,
+        chartSize.width,
+        chartSize.height,
+      ),
+    [points, chartSize, wealth],
   );
   const visiblePurchases = points.flatMap((point) => point.purchases);
-  const shownReferences = mode === "cost" ? [] : references;
-  const warnings =
-      mode === "simulation" ? simulation.warnings : (data?.warnings ?? []),
-    partial =
-      mode === "simulation" &&
-      simulation.coverage > 0 &&
-      simulation.coverage < 99.99;
+  const curveCurrency = mode === "simulation" ? "BRL" : history.currency,
+    references: { key: BenchmarkKey; name: string; color: string }[] = [
+      ...(curveCurrency === "USD"
+        ? []
+        : [
+            {
+              key: "ibov" as const,
+              name: "Ibovespa",
+              color: "var(--chart-ibov)",
+            },
+          ]),
+      {
+        key: "sp500",
+        name: curveCurrency === "USD" ? "S&P 500" : "S&P 500 em R$",
+        color: "var(--chart-sp500)",
+      },
+      ...(curveCurrency === "USD"
+        ? []
+        : [{ key: "cdi" as const, name: "CDI", color: "var(--chart-cdi)" }]),
+      {
+        key: "bitcoin",
+        name: curveCurrency === "USD" ? "Bitcoin" : "Bitcoin em R$",
+        color: "var(--chart-bitcoin)",
+      },
+    ];
+  const shownReferences =
+    mode === "return" || mode === "simulation" ? references : [];
+  const partial =
+    mode === "simulation" &&
+    simulation.coverage > 0 &&
+    simulation.coverage < 99.99;
   const unavailable =
-    mode === "simulation"
-      ? simulation.unavailable
-      : references
-          .filter(
-            (r) =>
-              selected.includes(r.key) &&
-              points.length > 0 &&
-              last?.[r.key] === undefined,
-          )
-          .map((r) => r.key);
+    mode === "simulation" ? simulation.unavailable : history.unavailable;
   const axis = useMemo(
     () =>
       niceAxis(
         points.flatMap((point) => [
-          point.portfolio,
-          ...(mode === "cost"
-            ? []
-            : references
-                .filter((r) => selected.includes(r.key))
-                .flatMap((r) =>
-                  point[r.key] === undefined ? [] : [point[r.key]!],
-                )),
+          wealth ? (point.value ?? 0) : point.portfolio,
+          ...(wealth && "invested" in point ? [point.invested as number] : []),
+          ...(mode === "return" || mode === "simulation"
+            ? selected.flatMap((key) =>
+                point[key] === undefined ? [] : [point[key]!],
+              )
+            : []),
         ]),
       ),
-    [points, mode, selected],
+    [points, mode, selected, wealth],
   );
   const toggle = (key: BenchmarkKey) =>
     setSelected((old) =>
@@ -168,92 +210,34 @@ export function PerformanceChart({
   const seriesName =
     mode === "cost" && accumulated.manualFixedCount > 0
       ? "Ativos com cotação"
-      : scope === "all"
-        ? mode === "simulation"
-          ? "Carteira simulada"
-          : "Minha carteira"
-        : scopeInfo.name;
+      : wealth
+        ? "Patrimônio"
+        : scope === "all"
+          ? mode === "simulation"
+            ? "Carteira simulada"
+            : "Minha carteira"
+          : scopeInfo.name;
   const labels: Record<string, string> = {
     portfolio: seriesName,
+    value: "Patrimônio",
+    invested: "Dinheiro aportado",
     ...Object.fromEntries(references.map((r) => [r.key, r.name])),
   };
+  const estimated = mode === "cost" && accumulated.estimatedFX;
   const result = (v: number | undefined) =>
-    hidden
-      ? "••••••"
-      : `${mode === "cost" && accumulated.estimatedFX && v !== undefined ? "≈ " : ""}${pct(v)}`;
+    hidden ? "••••••" : `${estimated && v !== undefined ? "≈ " : ""}${pct(v)}`;
+  const cash = (v: number | undefined) =>
+    hidden || v === undefined ? "••••••" : money(v, history.currency);
   const currencyName =
-    mode === "cost" && accumulated.currency === "USD" ? "dólares" : "reais";
-  const startedAt =
-    scope === "all"
-      ? data?.startedAt
-      : data?.points.find((p) => p.segments?.[scope])?.segments?.[scope]
-          ?.startedAt;
-  const started = startedAt
-    ? new Date(startedAt).toLocaleDateString("pt-BR", {
-        timeZone: "America/Sao_Paulo",
-      })
-    : undefined;
-  const contextBox = (
-    <div
-      className={
-        "performance-context " +
-        (mode === "simulation" ? "simulated" : "observed")
-      }
-    >
-      <b>
-        {mode === "cost"
-          ? "ACUMULADO DESDE O PREÇO MÉDIO"
-          : mode === "simulation"
-            ? "SIMULAÇÃO · " +
-              (partial ? "COBERTURA PARCIAL" : "COMPOSIÇÃO ATUAL")
-            : started
-              ? "HISTÓRICO REAL DESDE " + started
-              : "ACOMPANHAMENTO REAL"}
-      </b>
-      <span>
-        {mode === "cost"
-          ? "Saldo atual − valor investido + proventos. Inclui ganhos e perdas anteriores ao cadastro."
-          : mode === "simulation"
-            ? "Não representa o rendimento que você obteve nas compras anteriores."
-            : "Novos aportes são separados da valorização entre observações."}
-      </span>
-    </div>
-  );
-  const about = (
-    <>
-      <p>
-        {mode === "cost"
-          ? "Inclui o resultado acumulado antes do cadastro no Atlas."
-          : mode === "simulation"
-            ? "Estimativa histórica com os pesos de hoje."
-            : "Valorização e desvalorização do patrimônio registrado."}
-      </p>
-      <p>
-        {mode === "cost" && scope === "us"
-          ? "Ativos negociados em dólar, com custo, saldo e proventos em US$."
-          : scopeInfo.description}{" "}
-        Todos os retornos deste gráfico são em {currencyName}.
-      </p>
-      {mode !== "simulation" && contextBox}
-      {mode === "cost" && (
-        <div className="cost-chart-note">
-          <b>Curva retroativa pelo preço médio</b>
-          <p>
-            {accumulated.datedPositionCount
-              ? `${accumulated.datedPositionCount} posições com compras e vendas datadas. Demais posições pelo preço médio`
-              : "Estimativa das posições com cotações históricas"}
-            {first && last ? ` · ${date(first.date)} — ${date(last.date)}` : ""}
-            .{" "}
-            {scope === "all" && portfolio.fixedIncome.length > 0
-              ? "Renda fixa manual aparece apenas no acumulado acima. "
-              : ""}
-            O período muda a janela da curva; o acumulado continua desde o preço
-            médio.
-          </p>
-        </div>
-      )}
-    </>
-  );
+    (mode === "cost" ? accumulated.currency : curveCurrency) === "USD"
+      ? "dólares"
+      : "reais";
+  const undatedNote =
+    (mode === "return" || wealth) && history.undated.length > 0;
+  const gain =
+    history.value !== undefined && history.invested !== undefined
+      ? history.value - history.invested
+      : undefined;
   return (
     <section
       className="panel performance-panel"
@@ -262,13 +246,7 @@ export function PerformanceChart({
       <div className="panel-title">
         <div>
           <span className="eyebrow">SUA CARTEIRA EM PERSPECTIVA</span>
-          <h2>
-            {mode === "cost"
-              ? "Rendimento desde o preço médio"
-              : mode === "simulation"
-                ? "Simulação da composição atual"
-                : "Acompanhamento real da carteira"}
-          </h2>
+          <h2>{MODES.find((m) => m.key === mode)!.title}</h2>
         </div>
         <TrendingUp size={21} />
       </div>
@@ -276,55 +254,39 @@ export function PerformanceChart({
         <div
           className="performance-modes"
           role="group"
-          aria-label="Tipo de acompanhamento"
+          aria-label="Tipo de gráfico"
         >
-          <button
-            aria-pressed={mode === "cost"}
-            className={mode === "cost" ? "active" : ""}
-            onClick={() => setMode("cost")}
-          >
-            Desde o preço médio
-          </button>
-          <button
-            aria-pressed={mode === "recorded"}
-            className={mode === "recorded" ? "active" : ""}
-            onClick={() => setMode("recorded")}
-          >
-            Acompanhamento real
-          </button>
-          <button
-            aria-pressed={mode === "simulation"}
-            className={mode === "simulation" ? "active" : ""}
-            onClick={() => setMode("simulation")}
-          >
-            Simular histórico
-          </button>
+          {MODES.map((m) => (
+            <button
+              key={m.key}
+              aria-pressed={mode === m.key}
+              className={mode === m.key ? "active" : ""}
+              onClick={() => setMode(m.key)}
+            >
+              {m.name}
+            </button>
+          ))}
         </div>
         <div
           className="period-tabs"
           role="group"
           aria-label="Período do gráfico"
         >
-          {[
-            [30, "1M"],
-            [90, "3M"],
-            [180, "6M"],
-            [365, "1A"],
-          ].map(([v, l]) => (
+          {PERIODS.map(([value, label]) => (
             <button
-              key={v}
-              aria-label={String(l)}
-              aria-pressed={days === v}
-              className={days === v ? "active" : ""}
-              onClick={() => setDays(Number(v))}
+              key={label}
+              aria-label={label}
+              aria-pressed={days === value}
+              className={days === value ? "active" : ""}
+              onClick={() => setDays(value)}
             >
-              {l}
+              {label}
             </button>
           ))}
         </div>
       </div>
       <div className="performance-filters">
-        <span id="performance-filter-label">Filtrar rendimento</span>
+        <span id="performance-filter-label">Filtrar por classe</span>
         <div role="group" aria-labelledby="performance-filter-label">
           {PERFORMANCE_SCOPES.map((s) => (
             <button
@@ -338,7 +300,17 @@ export function PerformanceChart({
           ))}
         </div>
       </div>
-      {mode === "simulation" && contextBox}
+      {mode === "simulation" && (
+        <div className="performance-context simulated">
+          <b>
+            SIMULAÇÃO · {partial ? "COBERTURA PARCIAL" : "COMPOSIÇÃO ATUAL"}
+          </b>
+          <span>
+            Não é o seu rendimento: aplica os pesos de hoje ao passado, como
+            comparação.
+          </span>
+        </div>
+      )}
       {mode === "simulation" && simulation.coverage > 0 && (
         <div
           className={"coverage-note " + (partial ? "partial" : "")}
@@ -361,38 +333,50 @@ export function PerformanceChart({
       <div className="performance-result">
         <div>
           <span className="performance-scope">
-            {mode === "cost"
-              ? "Rendimento acumulado"
-              : mode === "simulation"
-                ? partial
-                  ? "Retorno simulado da parcela incluída"
-                  : "Retorno simulado no período"
-                : "Retorno real no período"}{" "}
+            {wealth
+              ? "Patrimônio"
+              : mode === "cost"
+                ? "Resultado sobre o investido"
+                : mode === "simulation"
+                  ? partial
+                    ? "Retorno simulado da parcela incluída"
+                    : "Retorno simulado no período"
+                  : "Rentabilidade no período"}{" "}
             · {scopeInfo.name}
           </span>
           <strong
             className={
-              !hidden && returnValue !== undefined && returnValue < 0
+              !hidden && !wealth && returnValue !== undefined && returnValue < 0
                 ? "negative"
                 : ""
             }
           >
-            {result(returnValue)}
+            {wealth ? cash(history.value) : result(returnValue)}
           </strong>
           <p>
-            {mode === "cost"
-              ? `Desde o custo das posições cadastradas · em ${currencyName}`
-              : first && last
-                ? `${date(first.date)} — ${date(last.date)}`
-                : mode === "simulation"
-                  ? "Aguardando histórico dos ativos"
-                  : "Aguardando a primeira observação confirmada"}
+            {wealth
+              ? `Aportado ${cash(history.invested)} · ${
+                  hidden || gain === undefined
+                    ? "••••••"
+                    : `${gain >= 0 ? "+" : "−"}${money(Math.abs(gain), history.currency)}`
+                } sem contar proventos`
+              : mode === "cost"
+                ? `Desde o custo das posições · em ${currencyName}`
+                : first && last
+                  ? `${date(first.date)} a ${date(last.date)} · em ${currencyName}`
+                  : historyLoading
+                    ? "Carregando o histórico…"
+                    : "Aguardando histórico dos ativos"}
           </p>
         </div>
         <span className="performance-base">
-          {mode === "cost" ? "Preço médio" : "Base 0%"}
+          {mode === "cost" ? "Custo" : wealth ? currencyName : "Base 0%"}
           <small>
-            {mode === "cost" ? "base do acumulado" : "na mesma data inicial"}
+            {mode === "cost"
+              ? "base do resultado"
+              : wealth
+                ? "com aportes"
+                : "na mesma data inicial"}
           </small>
         </span>
       </div>
@@ -400,13 +384,19 @@ export function PerformanceChart({
         className="performance-legend"
         role="group"
         aria-label={
-          mode === "cost" ? "Série da carteira" : "Índices para comparação"
+          shownReferences.length ? "Índices para comparação" : "Séries"
         }
       >
         <span>
           <i style={{ background: "var(--chart-line)" }} />
           {seriesName}
         </span>
+        {wealth && (
+          <span>
+            <i style={{ background: "var(--chart-invested)" }} />
+            Dinheiro aportado
+          </span>
+        )}
         {shownReferences.map((r) => (
           <button
             key={r.key}
@@ -429,7 +419,7 @@ export function PerformanceChart({
           </button>
         ))}
       </div>
-      {mode !== "cost" && cdiError && (
+      {shownReferences.length > 0 && cdiError && (
         <div className="source-recovery" role="status">
           <span>
             <b>CDI temporariamente indisponível.</b> As séries disponíveis
@@ -446,20 +436,6 @@ export function PerformanceChart({
           </button>
         </div>
       )}
-      {mode === "simulation" &&
-        simulation.unavailable.some((k) => k !== "cdi") && (
-          <p className="data-status">
-            Sem histórico comum para{" "}
-            {references
-              .filter(
-                (r) =>
-                  simulation.unavailable.includes(r.key) && r.key !== "cdi",
-              )
-              .map((r) => r.name)
-              .join(", ")}
-            . As demais referências foram preservadas.
-          </p>
-        )}
       <div className="performance-chart">
         {points.length > 0 ? (
           <ResponsiveContainer
@@ -483,12 +459,12 @@ export function PerformanceChart({
                   <stop
                     offset="0%"
                     stopColor="var(--chart-line)"
-                    stopOpacity={0.15}
+                    stopOpacity={0.18}
                   />
                   <stop
                     offset="100%"
                     stopColor="var(--chart-line)"
-                    stopOpacity={0.015}
+                    stopOpacity={0.01}
                   />
                 </linearGradient>
               </defs>
@@ -497,11 +473,13 @@ export function PerformanceChart({
                 stroke="var(--chart-grid)"
                 strokeDasharray="3 5"
               />
-              <ReferenceLine
-                y={0}
-                stroke="var(--chart-axis)"
-                strokeDasharray="4 4"
-              />
+              {!wealth && (
+                <ReferenceLine
+                  y={0}
+                  stroke="var(--chart-axis)"
+                  strokeDasharray="4 4"
+                />
+              )}
               <XAxis
                 dataKey="time"
                 type="number"
@@ -521,35 +499,37 @@ export function PerformanceChart({
               <YAxis
                 axisLine={false}
                 tickLine={false}
-                width={60}
+                width={wealth ? 72 : 60}
                 tick={{ fontSize: "0.75rem", fill: "var(--text-secondary)" }}
-                tickFormatter={(v) => `${num(Number(v), 2)}%`}
+                tickFormatter={(v) =>
+                  wealth
+                    ? hidden
+                      ? "•••"
+                      : Number(v).toLocaleString("pt-BR", {
+                          notation: "compact",
+                          maximumFractionDigits: 1,
+                        })
+                    : `${num(Number(v), 2)}%`
+                }
                 domain={axis.domain}
                 ticks={axis.ticks}
               />
               <Tooltip
                 contentStyle={{
-                  borderRadius: 9,
+                  borderRadius: 12,
                   border: "1px solid var(--line-strong)",
                   background: "var(--surface)",
                   fontSize: "0.875rem",
                   color: "var(--ink)",
-                  boxShadow: "0 8px 24px var(--shadow-soft)",
+                  boxShadow: "0 12px 32px var(--shadow-soft)",
                 }}
                 labelFormatter={(v, items) => (
                   <PurchaseTooltipHeader
-                    label={new Date(Number(v)).toLocaleString(
-                      "pt-BR",
-                      mode === "recorded"
-                        ? {
-                            timeZone: "America/Sao_Paulo",
-                            day: "2-digit",
-                            month: "2-digit",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          }
-                        : { day: "2-digit", month: "2-digit", year: "numeric" },
-                    )}
+                    label={new Date(Number(v)).toLocaleDateString("pt-BR", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "numeric",
+                    })}
                     purchases={
                       showPurchases
                         ? (items?.[0]?.payload?.purchases ?? [])
@@ -559,16 +539,20 @@ export function PerformanceChart({
                   />
                 )}
                 formatter={(v: any, n: any) => [
-                  n === "portfolio" ? result(Number(v)) : pct(Number(v)),
+                  n === "value" || n === "invested"
+                    ? cash(Number(v))
+                    : n === "portfolio"
+                      ? result(Number(v))
+                      : pct(Number(v)),
                   labels[String(n)] ?? n,
                 ]}
               />
               <Area
-                dataKey="portfolio"
-                type="linear"
+                dataKey={dataKey}
+                type="monotone"
                 stroke="var(--chart-line)"
                 fill="url(#portfolioFill)"
-                strokeWidth={2.6}
+                strokeWidth={2.4}
                 dot={
                   showPurchases
                     ? (props: any) => (
@@ -586,6 +570,17 @@ export function PerformanceChart({
                 }
                 isAnimationActive={false}
               />
+              {wealth && (
+                <Line
+                  dataKey="invested"
+                  type="stepAfter"
+                  stroke="var(--chart-invested)"
+                  strokeWidth={1.8}
+                  strokeDasharray="5 4"
+                  dot={false}
+                  isAnimationActive={false}
+                />
+              )}
               {shownReferences
                 .filter(
                   (r) =>
@@ -595,9 +590,9 @@ export function PerformanceChart({
                   <Line
                     key={r.key}
                     dataKey={r.key}
-                    type="linear"
+                    type="monotone"
                     stroke={r.color}
-                    strokeWidth={1.7}
+                    strokeWidth={1.5}
                     dot={points.length < 3 ? { r: 3 } : false}
                     connectNulls={false}
                     isAnimationActive={false}
@@ -609,35 +604,35 @@ export function PerformanceChart({
           <div className="performance-empty">
             <Activity size={25} />
             <b>
-              {mode === "cost"
-                ? !hasPositions
+              {historyLoading
+                ? "Carregando o histórico de preços…"
+                : !hasPositions
                   ? "Nenhuma posição neste grupo"
-                  : !hasHolding(scoped)
+                  : mode === "cost" && !hasHolding(scoped)
                     ? "Renda fixa usa saldos manuais"
-                    : "Aguardando cotações para reconstruir a curva"
-                : mode === "recorded"
-                  ? demo
-                    ? "O exemplo não registra histórico real"
-                    : busy
-                      ? "Registrando a primeira observação…"
-                      : !hasPositions
-                        ? "Nenhuma posição neste grupo"
-                        : "O histórico deste grupo começa nas próximas observações"
-                  : "Aguardando dados para comparar"}
+                    : "Aguardando dados para montar a curva"}
             </b>
             <p>
-              {mode === "cost"
-                ? "O resultado acumulado acima usa os custos registrados e não depende do início das observações."
-                : mode === "recorded"
-                  ? !hasPositions
-                    ? "Cadastre posições neste grupo ou escolha outro filtro."
-                    : "A curva cresce a cada consulta com a aba aberta. O histórico anterior ao registro separado por grupo permanece disponível em Tudo agregado."
-                  : (simulation.warnings[0] ??
-                    "Cadastre suas posições e aguarde as cotações.")}
+              {mode === "simulation"
+                ? (simulation.warnings[0] ??
+                  "Cadastre suas posições e aguarde as cotações.")
+                : hasPositions
+                  ? "A curva é montada com as suas operações e os preços de cada dia."
+                  : "Cadastre posições neste grupo ou escolha outro filtro."}
             </p>
           </div>
         )}
       </div>
+      {undatedNote && (
+        <div className="performance-record-note">
+          <Info size={16} />
+          <span>
+            {hidden
+              ? "Parte das posições não tem datas de compra."
+              : `${history.undated.join(", ")} sem datas de compra: entra na curva na data de referência, pelo valor de mercado. Com o histórico de compras, a curva passa a incluir o período anterior.`}
+          </span>
+        </div>
+      )}
       {mode === "cost" && (
         <CostReturnSummary data={accumulated} hidden={hidden} />
       )}
@@ -658,33 +653,20 @@ export function PerformanceChart({
             Pontos de compra <b>{showPurchases ? "Ativados" : "Desativados"}</b>
           </button>
           <span>
-            {visiblePurchases.length} compras com data conhecida nesta janela.
-            Posições e ciclos encerrados ficam fora.
+            {visiblePurchases.length} compras nesta janela. Ciclos encerrados
+            ficam fora.
           </span>
         </div>
       )}
       {showPurchases && (
         <PurchaseTable purchases={visiblePurchases} hidden={hidden} />
       )}
-      {mode === "recorded" && points.length > 0 && (
-        <div className="performance-record-note">
-          <Info size={16} />
-          <span>
-            {points.length < 3
-              ? "Ainda há poucas observações. O histórico será formado daqui para a frente."
-              : "Aportes e correções são descontados do retorno ao preço da observação."}
-            {last?.value !== undefined && !hidden
-              ? ` Saldo observado: ${last.value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}.`
-              : ""}
-          </span>
-        </div>
-      )}
       <div className="performance-comparison">
         {shownReferences
           .filter((r) => selected.includes(r.key))
           .map((r) => {
             const v = last?.[r.key],
-              gap =
+              difference =
                 v !== undefined && returnValue !== undefined
                   ? returnValue - v
                   : undefined;
@@ -696,31 +678,22 @@ export function PerformanceChart({
                 </span>
                 <b>{pct(v)}</b>
                 <small>
-                  {gap === undefined
+                  {difference === undefined
                     ? "Sem dado comum no período"
                     : hidden
                       ? "Comparação pessoal oculta"
-                      : `${scopeInfo.name}: ${percent(gap).replace("%", "")} p.p.`}
+                      : `${scopeInfo.name}: ${percent(difference).replace("%", "")} p.p.`}
                 </small>
               </div>
             );
           })}
       </div>
-      {mode === "recorded" && data?.error && (
-        <div className="source-recovery" role="status">
-          <span>{data.error}</span>
-          <button
-            className="button outline"
-            onClick={onRetryHistory}
-            disabled={busy}
-          >
-            {busy ? "Consultando…" : "Atualizar histórico"}
-          </button>
-        </div>
-      )}
       {mode === "cost" ? (
         <CostReturnMethod data={accumulated} hidden={hidden}>
-          {about}
+          <p>
+            {scopeInfo.description} Todos os retornos deste gráfico são em{" "}
+            {currencyName}.
+          </p>
         </CostReturnMethod>
       ) : (
         <details className="performance-method">
@@ -729,51 +702,82 @@ export function PerformanceChart({
             Como este gráfico é calculado
           </summary>
           <div>
-            {about}
             <p>
-              {mode === "simulation"
-                ? "A estimativa usa os pesos atuais como alocação inicial, mantém as posições e compara a variação no período disponível. Faltam as datas reais das compras para reconstruir seu passado."
-                : "O retorno encadeia a variação das posições entre consultas e os novos proventos registrados como pagamento. Mudanças de quantidade e capital são neutralizadas pelos preços da observação; podem diferir da rentabilidade apurada pela corretora nos horários reais das operações."}
+              {scopeInfo.description} Todos os retornos deste gráfico são em{" "}
+              {currencyName}.
             </p>
-            {hidden && warnings.length ? (
-              <p>Detalhes das posições ficam ocultos no modo de privacidade.</p>
+            {mode === "simulation" ? (
+              <>
+                <p>
+                  A estimativa usa os pesos atuais como alocação inicial, mantém
+                  as posições e compara a variação no período disponível. Não
+                  usa as suas datas de compra.
+                </p>
+                {hidden
+                  ? null
+                  : simulation.warnings.map((w, i) => <p key={i}>{w}</p>)}
+              </>
             ) : (
-              warnings.map((w, i) => <p key={i}>{w}</p>)
+              <>
+                <p>
+                  A curva refaz a carteira dia a dia com as suas compras, vendas
+                  e proventos e o preço de fechamento de cada dia. O retorno de
+                  cada dia é (saldo final + vendas + proventos) ÷ (saldo
+                  anterior + compras) − 1, e os dias são encadeados. Assim, um
+                  aporte novo não conta como ganho, como na cota de um fundo, e
+                  a comparação com os índices é justa qualquer que seja o
+                  tamanho de cada aporte.
+                </p>
+                <p>
+                  Por isso este número é diferente do resultado sobre o
+                  investido: aqui cada dia pesa igual; lá, cada real investido
+                  pesa igual. Quem aportou mais depois de uma alta vê as duas
+                  medidas se afastarem.
+                </p>
+                <p>
+                  Posições em dólar usam o dólar oficial (PTAX) de cada dia,
+                  menos quando o registro traz o câmbio da remessa. Títulos
+                  manuais entram na data do saldo informado e, depois dela, são
+                  estimados pelo índice contratado, sem impostos.
+                </p>
+                {!hidden && history.estimatedFixed.length > 0 && (
+                  <p>
+                    Estimados pelo índice desde o último saldo:{" "}
+                    {history.estimatedFixed.join(", ")}.
+                  </p>
+                )}
+                {!hidden && history.excluded.length > 0 && (
+                  <p>
+                    Sem cotação histórica, fora da curva:{" "}
+                    {history.excluded.join(", ")}.
+                  </p>
+                )}
+              </>
             )}
             <p>
-              O filtro recalcula o retorno apenas com as posições e proventos do
-              grupo escolhido. Tudo agregado inclui também renda fixa e ETFs na
-              B3. Cada grupo tem seu próprio início de acompanhamento;
-              observações antigas apenas do consolidado não são usadas para
-              presumir retornos separados.
-            </p>
-            <p>
-              Todos começam em 0% na mesma data. S&P 500 e Bitcoin incluem a
-              variação histórica do dólar frente ao real. Ibovespa é um índice
+              Todas as séries começam em 0% na mesma data. Ibovespa é um índice
               de retorno total; S&P 500 (^GSPC) é de preços, sem reinvestimento
               de dividendos. O CDI usa as taxas diárias já publicadas pelo Banco
-              Central, que divulga a taxa do dia depois do fechamento.
+              Central.
             </p>
-            {mode === "recorded" && (
-              <p>
-                Renda fixa usa saldos manuais. Sem capital inicial, mudanças de
-                saldo são ajustes de posição. Proventos iniciais do extrato não
-                entram no período novo. Consultas são consolidadas em intervalos
-                de 15 minutos; no passado, a curva exibe a última observação do
-                dia. O acompanhamento depende da aba aberta e das fontes
-                disponíveis.
-              </p>
-            )}
             <p>
-              Dados de mercado: Yahoo Finance. CDI:{" "}
+              Dados de mercado: Yahoo Finance. Câmbio e CDI:{" "}
+              <a
+                href="https://dadosabertos.bcb.gov.br/dataset/dolar-americano-usd-todos-os-boletins-diarios"
+                target="_blank"
+                rel="noreferrer"
+              >
+                PTAX ↗
+              </a>{" "}
+              e{" "}
               <a
                 href="https://api.bcb.gov.br/dados/serie/bcdata.sgs.12/dados?formato=json"
                 target="_blank"
                 rel="noreferrer"
               >
-                Banco Central, série 12 ↗
-              </a>
-              .{" "}
+                série 12 ↗
+              </a>{" "}
+              do Banco Central.{" "}
               <a
                 href="https://b3.com.br/pt_br/market-data-e-indices/indices/indices-amplos/ibovespa-b3.htm"
                 target="_blank"
@@ -797,17 +801,20 @@ export function PerformanceChart({
           >
             <table>
               <caption>
-                {mode === "cost"
-                  ? "Curva retroativa pelo preço médio"
-                  : mode === "simulation"
-                    ? "Simulação da composição atual"
-                    : "Histórico real da carteira"}{" "}
-                · {scopeInfo.name} · retornos em {currencyName}
+                {MODES.find((m) => m.key === mode)!.title} · {scopeInfo.name} ·
+                em {currencyName}
               </caption>
               <thead>
                 <tr>
                   <th scope="col">Data</th>
-                  <th scope="col">{labels.portfolio}</th>
+                  {wealth ? (
+                    <>
+                      <th scope="col">Patrimônio</th>
+                      <th scope="col">Dinheiro aportado</th>
+                    </>
+                  ) : (
+                    <th scope="col">{labels.portfolio}</th>
+                  )}
                   {shownReferences
                     .filter((r) => selected.includes(r.key))
                     .map((r) => (
@@ -821,7 +828,20 @@ export function PerformanceChart({
                 {points.map((p) => (
                   <tr key={p.time}>
                     <th scope="row">{date(p.date)}</th>
-                    <td>{result(p.portfolio)}</td>
+                    {wealth ? (
+                      <>
+                        <td>{cash(p.value)}</td>
+                        <td>
+                          {cash(
+                            "invested" in p
+                              ? (p.invested as number)
+                              : undefined,
+                          )}
+                        </td>
+                      </>
+                    ) : (
+                      <td>{result(p.portfolio)}</td>
+                    )}
                     {shownReferences
                       .filter((r) => selected.includes(r.key))
                       .map((r) => (

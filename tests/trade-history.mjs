@@ -187,7 +187,7 @@ const partialResult = costPerformance(
   market,
   "br",
   365,
-  Date.parse("2026-10-28T18:00:00Z"),
+  Date.parse("2026-10-29T18:00:00Z"),
 );
 near(partialResult.value, 280);
 near(partialResult.cost, 208);
@@ -235,7 +235,7 @@ const withCostAdjustment = costPerformance(
   market,
   "br",
   365,
-  Date.parse("2026-10-28T18:00:00Z"),
+  Date.parse("2026-10-29T18:00:00Z"),
 );
 near(
   withCostAdjustment.points.at(-1).portfolio,
@@ -259,7 +259,7 @@ const conservative = costPerformance(
   market,
   "br",
   365,
-  Date.parse("2026-10-28T18:00:00Z"),
+  Date.parse("2026-10-29T18:00:00Z"),
 );
 near(conservative.points.at(-1).value, 70);
 near(conservative.points.at(-1).portfolio, conservative.returnPercent);

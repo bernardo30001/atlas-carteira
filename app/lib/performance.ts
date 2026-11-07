@@ -1,10 +1,8 @@
-import { currentTicker, hasHolding } from "./trade-history.ts";
+import { currentTicker } from "./trade-history.ts";
 import {
   assetOf,
   totals,
   trackedPortfolio,
-  isTrackedTicker,
-  usableQuote,
   type Portfolio,
   type Market,
 } from "./model.ts";
@@ -36,7 +34,6 @@ export const PERFORMANCE_SCOPES = [
   },
 ] as const;
 export type PerformanceScope = (typeof PERFORMANCE_SCOPES)[number]["key"];
-type Segment = Exclude<PerformanceScope, "all">;
 export function performancePortfolio(
   p: Portfolio,
   scope: PerformanceScope,
@@ -63,47 +60,6 @@ export function performancePortfolio(
   };
 }
 export type BenchmarkKey = "ibov" | "sp500" | "bitcoin" | "cdi";
-export type Benchmarks = Partial<Record<Exclude<BenchmarkKey, "cdi">, number>>;
-export type TrackedHolding = { ticker: string; quantity: number };
-export type TrackedFixed = { id: string; value: number; cost: number | null };
-export type PerformanceState = {
-  startedAt: string;
-  capturedAt: string;
-  unitIndex: number;
-  value: number;
-  totalFlow: number;
-  holdings: TrackedHolding[];
-  fixed: TrackedFixed[];
-  incomeIds: string[];
-  portfolioRevision: number;
-  segments?: Partial<Record<Segment, PerformanceState>>;
-};
-export type SegmentPoint = {
-  startedAt: string;
-  value: number;
-  index: number;
-  flow: number;
-  income: number;
-  baseline: boolean;
-};
-export type RecordedPoint = {
-  time: string;
-  value: number;
-  index: number;
-  flow: number;
-  income: number;
-  benchmarks: Benchmarks;
-  baseline: boolean;
-  segments?: Partial<Record<Segment, SegmentPoint>>;
-};
-export type PerformanceData = {
-  points: RecordedPoint[];
-  startedAt: string;
-  updatedAt: string;
-  warnings: string[];
-  pendingScopes?: PerformanceScope[];
-  error?: string;
-};
 export type ChartPoint = {
   time: number;
   date: string;
@@ -123,194 +79,7 @@ export const brDate = (d: Date) =>
     month: "2-digit",
     day: "2-digit",
   }).format(d);
-function priceBRL(p: Portfolio, ticker: string, m: Market): number | null {
-  const a = assetOf(p, ticker),
-    q = m.quotes[ticker];
-  if (!a || !usableQuote(q) || q.currency !== a.currency) return null;
-  if (a.currency === "BRL") return q.price;
-  const fx = m.quotes.USD;
-  return usableQuote(fx) ? q.price * fx.price : null;
-}
-export function benchmarkLevels(m: Market): Benchmarks {
-  const fx =
-      m.quotes.USD && !m.quotes.USD.stale ? m.quotes.USD.price : undefined,
-    b: Benchmarks = {};
-  if (m.quotes.IBOV && !m.quotes.IBOV.stale) b.ibov = m.quotes.IBOV.price;
-  if (fx && m.quotes.SP500 && !m.quotes.SP500.stale)
-    b.sp500 = m.quotes.SP500.price * fx;
-  if (fx && m.quotes.BTC && !m.quotes.BTC.stale)
-    b.bitcoin = m.quotes.BTC.price * fx;
-  return b;
-}
-// Link observed holding returns; position changes are neutralized at observation prices.
-// This measures the registered portfolio, not trades before registration or intraday broker cash flows.
-function captureSnapshot(
-  p: Portfolio,
-  m: Market,
-  previous: PerformanceState | undefined,
-  revision: number,
-  at: string,
-) {
-  p = trackedPortfolio(p);
-  const changedUniverse = !!previous?.holdings.some(
-    (h) => !isTrackedTicker(h.ticker),
-  );
-  if (changedUniverse) previous = undefined;
-  const t = totals(p, m);
-  if (t.missing.length)
-    throw new Error(
-      "Aguarde as cotações da carteira e o câmbio para registrar o histórico.",
-    );
-  if (!previous && !(t.value > 0))
-    throw new Error("Cadastre posições para iniciar o acompanhamento.");
-  let unitIndex = previous?.unitIndex ?? 100,
-    flow = 0,
-    income = 0;
-  const warnings: string[] = changedUniverse
-    ? [
-        "O acompanhamento registrado recomeçou após a exclusão de um ativo. As observações anteriores foram preservadas e não são ligadas à nova composição como ganho ou perda.",
-      ]
-    : [];
-  if (previous) {
-    let beforeChange = previous.fixed.reduce((s, r) => s + r.value, 0);
-    for (const a of previous.holdings) {
-      const price = priceBRL(p, a.ticker, m);
-      if (price === null)
-        throw new Error("Cotação anterior pendente: " + a.ticker);
-      beforeChange += a.quantity * price;
-    }
-    for (const old of previous.fixed) {
-      const current = p.fixedIncome.find((r) => r.id === old.id);
-      if (!current || current.value === old.value) continue;
-      if (old.cost !== null && current.cost !== null)
-        beforeChange += current.value - old.value - (current.cost - old.cost);
-      else
-        warnings.push(
-          "Alteração de saldo manual sem capital inicial foi tratada como ajuste de posição, sem presumir rendimento.",
-        );
-    }
-    const known = new Set(previous.incomeIds),
-      startDay = brDate(new Date(previous.startedAt));
-    for (const i of p.incomes ?? []) {
-      if (known.has(i.id) || i.kind !== "payment") continue;
-      if (i.date < startDay) {
-        warnings.push(
-          "Provento anterior ao início do acompanhamento permanece no resultado do ativo, fora da curva registrada.",
-        );
-        continue;
-      }
-      if (i.currency === "BRL") income += i.amount;
-      else {
-        const fx = m.quotes.USD;
-        if (!fx || fx.stale)
-          throw new Error("Câmbio pendente para registrar provento em dólar.");
-        income += i.amount * fx.price;
-      }
-    }
-    if (previous.value > 0)
-      unitIndex =
-        (previous.unitIndex * (beforeChange + income)) / previous.value;
-    flow = t.value - beforeChange;
-  }
-  if (!Number.isFinite(unitIndex) || unitIndex < 0)
-    throw new Error("Não foi possível calcular o retorno desta observação.");
-  const state: PerformanceState = {
-    startedAt: previous?.startedAt ?? at,
-    capturedAt: at,
-    unitIndex,
-    value: t.value,
-    totalFlow: (previous?.totalFlow ?? 0) + flow,
-    holdings: t.rows
-      .filter((a) => a.quantity > 0 && !a.archived)
-      .map((a) => ({ ticker: a.ticker, quantity: a.quantity })),
-    fixed: p.fixedIncome.map((r) => ({
-      id: r.id,
-      value: r.value,
-      cost: r.cost,
-    })),
-    incomeIds: (p.incomes ?? []).map((i) => i.id),
-    portfolioRevision: revision,
-  };
-  const point: RecordedPoint = {
-    time: at,
-    value: t.value,
-    index: unitIndex,
-    flow: state.totalFlow,
-    income,
-    benchmarks: benchmarkLevels(m),
-    baseline: !previous,
-  };
-  return { state, point, warnings };
-}
-export function capturePerformance(
-  p: Portfolio,
-  m: Market,
-  previous: PerformanceState | undefined,
-  revision: number,
-  at: string,
-) {
-  const captured = captureSnapshot(p, m, previous, revision, at);
-  captured.state.segments = {};
-  captured.point.segments = {};
-  for (const scope of ["us", "br", "rf", "btc"] as const) {
-    const subset = performancePortfolio(p, scope),
-      prior = previous?.segments?.[scope];
-    if (!prior && !hasHolding(subset)) continue;
-    const segment = captureSnapshot(subset, m, prior, revision, at);
-    captured.state.segments[scope] = segment.state;
-    const { value, index, flow, income, baseline } = segment.point;
-    captured.point.segments[scope] = {
-      startedAt: segment.state.startedAt,
-      value,
-      index,
-      flow,
-      income,
-      baseline,
-    };
-  }
-  return captured;
-}
 const pct = (v: number, b: number) => (v / b - 1) * 100;
-export function recordedChart(
-  data: PerformanceData | undefined,
-  days: number,
-  rates: CdiRate[],
-  now = Date.now(),
-  scope: PerformanceScope = "all",
-): ChartPoint[] {
-  if (data?.pendingScopes?.includes(scope)) return [];
-  const observations = (data?.points ?? [])
-    .flatMap((p) => {
-      if (scope === "all") return [p];
-      const segment = p.segments?.[scope];
-      return segment ? [{ ...p, ...segment }] : [];
-    })
-    .sort((a, b) => a.time.localeCompare(b.time));
-  const latestBaseline = observations.findLast((p) => p.baseline)?.time;
-  const points = observations.filter(
-    (p) =>
-      Date.parse(p.time) >= now - days * 86400000 &&
-      (!latestBaseline || p.time >= latestBaseline),
-  );
-  const first = points[0];
-  if (!first || first.index <= 0) return [];
-  const start = brDate(new Date(first.time));
-  return points.map((p) => ({
-    time: Date.parse(p.time),
-    date: brDate(new Date(p.time)),
-    portfolio: pct(p.index, first.index),
-    value: p.value,
-    flow: p.flow - first.flow,
-    ...Object.fromEntries(
-      (["ibov", "sp500", "bitcoin"] as const)
-        .filter((k) => first.benchmarks[k] && p.benchmarks[k])
-        .map((k) => [k, pct(p.benchmarks[k]!, first.benchmarks[k]!)]),
-    ),
-    ...(rates.length && start >= rates[0].date
-      ? { cdi: (cdiFactor(rates, start, brDate(new Date(p.time))) - 1) * 100 }
-      : {}),
-  }));
-}
 // A taxa de D remunera de D até o próximo dia útil: início inclusive e fim exclusive.
 // Assim a taxa do dia, publicada só depois, não falta para acumular até hoje.
 export function cdiFactor(

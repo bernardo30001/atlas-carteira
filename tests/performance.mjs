@@ -1,9 +1,7 @@
 import assert from "node:assert/strict";
 import { EMPTY, totals } from "../app/lib/model.ts";
 import {
-  capturePerformance,
   simulateComposition,
-  recordedChart,
   cdiFactor,
   performancePortfolio,
 } from "../app/lib/performance.ts";
@@ -46,101 +44,7 @@ const tx = (ticker, quantity, price, currency = "BRL") => ({
   note: "",
 });
 const p = { ...EMPTY, transactions: [tx("WEGE3", 10, 8)], incomes: [] };
-let c = capturePerformance(p, market(), undefined, 1, "2026-10-27T15:00:00Z");
-close(c.point.index, 100);
-close(c.point.value, 100);
-const more = {
-  ...p,
-  transactions: [
-    ...p.transactions,
-    { ...tx("WEGE3", 10, 10), id: "new", kind: "buy" },
-  ],
-};
-let next = capturePerformance(
-  more,
-  market(),
-  c.state,
-  2,
-  "2026-10-27T15:01:00Z",
-);
-close(next.point.index, 100);
-close(next.point.flow, 100);
-close(next.point.value, 200);
-next = capturePerformance(
-  more,
-  market(11),
-  next.state,
-  2,
-  "2026-10-28T15:00:00Z",
-);
-close(next.point.index, 110);
-const dividend = {
-  ...more,
-  incomes: [
-    {
-      id: "pay",
-      ticker: "WEGE3",
-      amount: 4,
-      currency: "BRL",
-      date: "2026-10-28",
-      kind: "payment",
-      note: "",
-    },
-    {
-      id: "opening",
-      ticker: "WEGE3",
-      amount: 900,
-      currency: "BRL",
-      date: "2026-10-27",
-      kind: "opening",
-      note: "",
-    },
-  ],
-};
-let paid = capturePerformance(
-  dividend,
-  market(11),
-  next.state,
-  3,
-  "2026-10-28T15:01:00Z",
-);
-close(paid.point.index, 112);
-close(paid.point.flow, 100);
-let repeat = capturePerformance(
-  dividend,
-  market(11),
-  paid.state,
-  3,
-  "2026-10-28T15:02:00Z",
-);
-close(repeat.point.index, 112);
-const corrected = capturePerformance(
-  p,
-  market(11),
-  repeat.state,
-  4,
-  "2026-10-28T15:03:00Z",
-);
-close(corrected.point.index, 112);
-close(corrected.point.flow, -10);
 const foreign = { ...EMPTY, transactions: [tx("VOO", 1, 90, "USD")] };
-const fm = {
-  ...market(),
-  quotes: { ...market().quotes, VOO: quote("VOO", 100, "USD") },
-};
-const fc = capturePerformance(
-  foreign,
-  fm,
-  undefined,
-  1,
-  "2026-10-27T15:00:00Z",
-);
-const fxChanged = { ...fm, quotes: { ...fm.quotes, USD: quote("USD", 6) } };
-close(
-  capturePerformance(foreign, fxChanged, fc.state, 1, "2026-10-28T15:00:00Z")
-    .point.index,
-  120,
-);
 const fixed = {
   ...EMPTY,
   fixedIncome: [
@@ -154,56 +58,10 @@ const fixed = {
     },
   ],
 };
-const f0 = capturePerformance(
-  fixed,
-  market(),
-  undefined,
-  1,
-  "2026-10-27T15:00:00Z",
-);
-const f1 = capturePerformance(
-  { ...fixed, fixedIncome: [{ ...fixed.fixedIncome[0], value: 1100 }] },
-  market(),
-  f0.state,
-  2,
-  "2026-10-28T15:00:00Z",
-);
-close(f1.point.index, 100);
-close(f1.point.flow, 100);
-assert.ok(f1.warnings.length);
 const known = {
   ...fixed,
   fixedIncome: [{ ...fixed.fixedIncome[0], cost: 1000 }],
 };
-const k0 = capturePerformance(
-  known,
-  market(),
-  undefined,
-  1,
-  "2026-10-27T15:00:00Z",
-);
-close(
-  capturePerformance(
-    {
-      ...known,
-      fixedIncome: [{ ...known.fixedIncome[0], value: 1110, cost: 1100 }],
-    },
-    market(),
-    k0.state,
-    2,
-    "2026-10-28T15:00:00Z",
-  ).point.index,
-  101,
-);
-assert.throws(() =>
-  capturePerformance(
-    p,
-    { ...market(), quotes: {} },
-    c.state,
-    1,
-    "2026-10-28T15:00:00Z",
-  ),
-);
 const rates = [
   { date: "2026-10-26", rate: 0.05 },
   { date: "2026-10-27", rate: 0.05 },
@@ -285,15 +143,6 @@ const partial = simulateComposition(
 );
 close(partial.coverage, 50);
 assert.ok(partial.excluded.includes("CDB"));
-const hist = {
-  points: [c.point, next.point],
-  startedAt: c.point.time,
-  updatedAt: next.point.time,
-  warnings: [],
-};
-const plotted = recordedChart(hist, 30, [], Date.parse("2026-10-28T18:00:00Z"));
-close(plotted[0].portfolio, 0);
-close(plotted.at(-1).portfolio, 10);
 const br = {
   ...EMPTY,
   transactions: [tx("WEGE3", 10, 10), tx("ABTC11", 2, 10), tx("AUPO11", 3, 10)],
@@ -313,7 +162,7 @@ close(bt.fixedQuoted.value, 30);
 close(bt.byGroup.crypto, 20);
 close(bt.byGroup.rf, 30);
 console.log(
-  "Performance: contributions neutral, linked price/FX returns, income once, manual fixed income, CDI, common dates, coverage and B3 segments passed.",
+  "Simulation: FX, CDI, common dates, coverage and class summaries passed.",
 );
 // A missing reference must not erase independently available portfolio history.
 const noCdi = simulateComposition(
@@ -381,7 +230,7 @@ console.log(
   "Outdated CDI does not block available portfolio and index history.",
 );
 
-// Each filter has independent holdings, cash flows, income and inception.
+// Each filter has independent holdings.
 const mixed = {
   ...EMPTY,
   transactions: [
@@ -394,144 +243,6 @@ const mixed = {
   fixedIncome: [{ ...known.fixedIncome[0], value: 1000, cost: 1000 }],
   incomes: [],
 };
-const mixedMarket = {
-  ...fm,
-  quotes: {
-    ...fm.quotes,
-    ABTC11: quote("ABTC11", 10),
-    AUPO11: quote("AUPO11", 10),
-  },
-};
-const base = capturePerformance(
-  mixed,
-  mixedMarket,
-  undefined,
-  1,
-  "2026-10-27T15:00:00Z",
-);
-close(base.point.value, 1750);
-close(base.point.segments.br.value, 100);
-close(base.point.segments.us.value, 500);
-close(base.point.segments.btc.value, 120);
-const movedMarket = {
-  ...mixedMarket,
-  quotes: {
-    ...mixedMarket.quotes,
-    WEGE3: quote("WEGE3", 11),
-    VOO: quote("VOO", 120, "USD"),
-    USD: quote("USD", 6),
-    BTC: quote("BTC", 90, "USD"),
-    ABTC11: quote("ABTC11", 15),
-  },
-};
-const withPayments = {
-  ...mixed,
-  incomes: [
-    {
-      id: "br-payment",
-      ticker: "WEGE3",
-      amount: 4,
-      currency: "BRL",
-      date: "2026-10-28",
-      kind: "payment",
-      note: "",
-    },
-    {
-      id: "us-payment",
-      ticker: "VOO",
-      amount: 2,
-      currency: "USD",
-      date: "2026-10-28",
-      kind: "payment",
-      note: "",
-    },
-  ],
-};
-const movement = capturePerformance(
-  withPayments,
-  movedMarket,
-  base.state,
-  2,
-  "2026-10-28T15:00:00Z",
-);
-close(movement.point.segments.br.index, 114);
-close(movement.point.segments.us.index, 146.4);
-close(movement.point.segments.btc.index, 115);
-close(movement.point.index, (2014 / 1750) * 100);
-const bought = {
-  ...withPayments,
-  transactions: [
-    ...mixed.transactions,
-    { ...tx("VOO", 1, 120, "USD"), id: "us-buy", kind: "buy" },
-  ],
-};
-const contribution = capturePerformance(
-  bought,
-  movedMarket,
-  movement.state,
-  3,
-  "2026-10-28T15:01:00Z",
-);
-close(contribution.point.segments.us.index, 146.4);
-close(contribution.point.segments.us.flow, 720);
-close(contribution.point.segments.br.flow, 0);
-close(contribution.point.segments.btc.flow, 0);
-close(contribution.point.index, movement.point.index);
-const mixedData = {
-  points: [base.point, movement.point, contribution.point],
-  startedAt: base.state.startedAt,
-  updatedAt: contribution.state.capturedAt,
-  warnings: [],
-};
-for (const [scope, expected] of [
-  ["br", 14],
-  ["us", 46.4],
-  ["btc", 15],
-]) {
-  const chart = recordedChart(
-    mixedData,
-    30,
-    [],
-    Date.parse("2026-10-28T18:00:00Z"),
-    scope,
-  );
-  close(chart[0].portfolio, 0);
-  close(chart.at(-1).portfolio, expected);
-}
-const oldState = { ...base.state };
-delete oldState.segments;
-const oldPoint = { ...base.point };
-delete oldPoint.segments;
-const upgraded = capturePerformance(
-  mixed,
-  movedMarket,
-  oldState,
-  2,
-  "2026-10-28T15:00:00Z",
-);
-close(upgraded.point.segments.us.index, 100);
-assert.equal(upgraded.point.segments.us.baseline, true);
-assert.equal(upgraded.point.baseline, false);
-assert.equal(upgraded.state.startedAt, base.state.startedAt);
-assert.deepEqual(
-  recordedChart(
-    { ...mixedData, points: [oldPoint] },
-    30,
-    [],
-    Date.parse("2026-10-28T18:00:00Z"),
-    "br",
-  ),
-  [],
-);
-const delayed = capturePerformance(
-  { ...p, transactions: [...p.transactions, tx("VOO", 1, 100, "USD")] },
-  mixedMarket,
-  c.state,
-  2,
-  "2026-10-28T15:00:00Z",
-);
-assert.equal(delayed.point.segments.us.baseline, true);
-assert.equal(delayed.point.segments.br.baseline, false);
 assert.deepEqual(
   performancePortfolio(mixed, "btc").transactions.map((t) => t.ticker),
   ["BTC", "ABTC11"],
@@ -586,5 +297,5 @@ const noSelectedPositions = simulateComposition(
 );
 assert.deepEqual(noSelectedPositions.points, []);
 console.log(
-  "Filters passed: isolated BR/US/BTC returns, dividends, FX, neutral contributions, legacy history, new group inception, scoped simulation weights and missing quotes outside the selected group.",
+  "Filters passed: scoped simulation weights and missing quotes outside the selected group.",
 );
