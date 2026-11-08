@@ -68,3 +68,7 @@ const foreignMissing={...p,transactions:[...p.transactions,{...tx('SPHQ',1,50),c
 result=evaluatePortfolio(foreignMissing,market,data,100,now,'stocks');assert.equal(result.portfolioComplete,false);assert.equal(result.missingStocks,false);near(result.classAmount,100);near(result.allocated,100);
 result=dedicated(undefined,undefined,undefined,Number.NaN);near(result.classAmount,0);near(result.allocated,0);
 console.log('Contribution simulation passed: entire amount for stocks, optional portfolio allocation, proportional distribution across candidates, explicit zero amounts and reasons, cash accounting, whole units, rounding, issuer limits with archived Klabin records ignored, unrelated missing quotes and zero/invalid budgets.');
+// Lucro deprimido (P/L 130): sem referência, em vez de um "preço justo" absurdo que indica redução.
+{const depressed={...data,items:{...data.items,ALUP11:f('ALUP11',{pe:130,eps:0.77})}};const r=row(evaluatePortfolio(p,market,depressed,100,now),'ALUP11');assert.equal(r.reference,null);assert.equal(r.valuation,'unknown');assert.equal(r.action,'missing');assert.ok(r.reasons.some(x=>x.includes('fora do intervalo de 2x a 60x')));
+const normal=row(evaluatePortfolio(p,market,data,100,now),'ALUP11');assert.ok(normal.reference>0,'P/L 10 continua com referência');
+const edge=row(evaluatePortfolio(p,market,{...data,items:{...data.items,ALUP11:f('ALUP11',{pe:60})}},100,now),'ALUP11');assert.ok(edge.reference>0,'60x ainda vale');}

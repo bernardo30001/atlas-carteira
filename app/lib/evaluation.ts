@@ -42,8 +42,11 @@ export function evaluatePortfolio(p:Portfolio,m:Market,data:FundamentalData|unde
   const manual=override?.referencePrice??null,manualFresh=!!override&&(now-Date.parse(override.updatedAt+'T12:00:00Z'))/86400000<=180;
   const scenario=override?.scenario??settings.scenario??DEFAULT_SCENARIO,method=override?.method??'auto';
   const freshPeer=!!peer&&!!f&&freshFundamentals({...f,quoteDate:peer.oldestQuote,balanceDate:peer.oldestBalance},now);
-  const peerValue=fresh&&freshPeer&&peer&&f.eps!==null&&f.eps>0?f.eps*peer.medianPE:null;
-  const scenarioValue=fresh?earningsValue(f?.eps??null,scenario):null;
+  // O mesmo filtro dos pares vale para a própria ação: com P/L fora de 2x a 60x, o lucro de
+  // 12 meses está fora do normal, como num ano de baixa de uma empresa cíclica.
+  const earningsUsable=!!f&&f.pe!==null&&f.pe>=2&&f.pe<=60;
+  const peerValue=fresh&&freshPeer&&peer&&earningsUsable&&f.eps!==null&&f.eps>0?f.eps*peer.medianPE:null;
+  const scenarioValue=fresh&&earningsUsable?earningsValue(f?.eps??null,scenario):null;
   const referenceKind=method==='manual'||method==='auto'&&manual!==null?'manual':method==='scenario'?'scenario':method==='peers'?'peers':peerValue!==null?'peers':'scenario';
   const reference=referenceKind==='manual'?(manual!==null&&manualFresh?manual:null):referenceKind==='peers'?peerValue:scenarioValue;
   const manualOnly=manual!==null&&manualFresh&&override?.thesis==='intact'&&!!override.note.trim();
@@ -58,6 +61,7 @@ export function evaluatePortfolio(p:Portfolio,m:Market,data:FundamentalData|unde
   else if(referenceKind==='peers'&&peerValue!==null)reasons.push('Referência = LPA dos últimos 12 meses × P/L mediano de '+peer!.tickers.length+' outros emissores do mesmo subsetor.');
   else if(referenceKind==='scenario'&&scenarioValue!==null)reasons.push('Referência pelo cenário: lucro cresce '+scenario.growth+'% a.a. por '+scenario.years+' anos, retorno exigido '+scenario.discountRate+'% a.a., payout '+scenario.payout+'% e P/L de saída '+scenario.terminalPE+'x. São premissas editáveis, não previsões.');
   else reasons.push(referenceKind==='peers'?'Sem referência por pares: são necessários ao menos 3 outros emissores lucrativos, líquidos e com datas válidas no mesmo subsetor.':'Falta uma referência válida pelo método escolhido.');
+  if(fresh&&f&&!earningsUsable&&f.eps!==null&&f.eps>0&&f.pe!==null)reasons.push('P/L de '+f.pe.toLocaleString('pt-BR',{maximumFractionDigits:1})+'x, fora do intervalo de 2x a 60x: o lucro de 12 meses parece fora do normal e não serve de referência. Use um preço de referência próprio, se tiver um.');
   if(fresh&&f?.eps!==null&&f?.eps!==undefined&&f.eps<=0)reasons.push('Lucro por ação negativo ou nulo: múltiplo baixo não comprova desconto.');
   if(fresh&&f?.roe!==null&&f?.roe!==undefined&&f.roe<=0)reasons.push('Retorno sobre o patrimônio não positivo.');
   if(fresh&&!f?.financial&&f?.netDebtEbit!==null&&f?.netDebtEbit!==undefined&&f.netDebtEbit>4)reasons.push('Dívida líquida acima de 4 vezes o EBIT; novas compras ficam suspensas pelo modelo.');
