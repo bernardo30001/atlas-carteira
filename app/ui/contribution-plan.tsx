@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ArrowRight, Target } from "lucide-react";
 import { money, num, plainPercent } from "../lib/format";
 import {
@@ -9,6 +9,8 @@ import {
   type PlanDestination,
   type Portfolio,
 } from "../lib/model";
+import { ACTIONS, evaluatePortfolio } from "../lib/evaluation";
+import type { FundamentalData } from "../lib/evaluation-config";
 
 const DESTINATIONS: { key: PlanDestination; name: string; text: string }[] = [
   {
@@ -51,7 +53,32 @@ export function ContributionPlan({
   onStrategy: () => void;
   onEvaluation: () => void;
 }) {
-  const [destination, setDestination] = useState<PlanDestination>("all");
+  const [destination, setDestination] = useState<PlanDestination>("all"),
+    [fundamentals, setFundamentals] = useState<FundamentalData>();
+  // O parecer da Avaliação aparece ao lado de cada ação, só como informação.
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch("/api/fundamentals", {
+      signal: AbortSignal.any([controller.signal, AbortSignal.timeout(30000)]),
+    })
+      .then((r) => (r.ok ? (r.json() as Promise<FundamentalData>) : undefined))
+      .then((data) => data && setFundamentals(data))
+      .catch(() => {});
+    return () => controller.abort();
+  }, []);
+  const opinions = useMemo(() => {
+    if (!fundamentals) return new Map<string, string>();
+    return new Map(
+      evaluatePortfolio(
+        portfolio,
+        market,
+        fundamentals,
+        0,
+        Date.now(),
+        "stocks",
+      ).rows.map((r) => [r.ticker, ACTIONS[r.action]]),
+    );
+  }, [portfolio, market, fundamentals]);
   const plan = useMemo(
     () => contributionPlan(portfolio, market, budget, destination),
     [portfolio, market, budget, destination],
@@ -90,6 +117,11 @@ export function ContributionPlan({
               <th scope="row">
                 <b>{item.ticker}</b>
                 <small>{GROUPS[item.group].short}</small>
+                {opinions.get(item.ticker) && (
+                  <small className="plan-opinion">
+                    Avaliação: {opinions.get(item.ticker)}
+                  </small>
+                )}
               </th>
               {buying && (
                 <td data-label="Comprar">
@@ -284,7 +316,8 @@ export function ContributionPlan({
             )}
             <p>
               Os pesos vêm de Estratégia e metas. Aqui valem só os seus
-              percentuais; o filtro de preço e fundamentos está em{" "}
+              percentuais. O parecer da Avaliação aparece ao lado de cada ação,
+              sem mudar os valores; o simulador por preço e fundamentos está em{" "}
               <button className="text-button" onClick={onEvaluation}>
                 Avaliação <ArrowRight size={14} />
               </button>

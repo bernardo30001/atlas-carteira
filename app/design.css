@@ -636,6 +636,9 @@ table.plan-table td small {
   display: block;
   font-weight: 400;
 }
+table.plan-table .plan-opinion {
+  color: var(--warn-text);
+}
 .plan-status {
   margin: 1.1rem 0 0;
   padding: 0.75rem 0.9rem;
