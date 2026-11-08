@@ -384,7 +384,7 @@ Executada de novo ao fim da revisão da seção 16, na ordem pedida. As três ú
 |---|---|
 | `npx tsc --noEmit` | Passa |
 | `npm run lint` | 30 erros e 9 avisos, todos anteriores a estas mudanças. Antes da revisão eram 33 e 17 |
-| `npm test` | 22 de 22 arquivos, incluindo a curva refeita, os três destinos do aporte e a consulta cancelada |
+| `npm test` | 22 de 22 arquivos, incluindo a curva refeita, os três destinos do aporte, a consulta cancelada e o lucro fora do normal na Avaliação |
 | `npm run test:api` | Passa, em banco temporário. A carteira de produção continuou na mesma revisão |
 | `npm run build` | Passa |
 | Instalação do zero em cópia limpa do commit (`npm ci`, build e testes) | Passa |
@@ -613,6 +613,25 @@ Em "Carteira inteira", o topo mostrava R$ 0 em ações e várias linhas de "não
 | Só ETFs americanos | Todo o valor nos ETFs, pelos pesos salvos na carteira |
 
 **Mudança de critério:** em Aportes valem só os seus percentuais. O filtro de preço e fundamentos, que antes podia deixar quase tudo em caixa, continua na aba Avaliação. Uma tese marcada para revisão segue sem receber aporte. Os percentuais dos ETFs ficam nos dados da carteira, fora do repositório.
+
+### Revisão geral de 08/11/2026
+
+A revisão percorreu todas as telas e controles numa cópia local com a carteira real, numa base temporária apagada no fim, lendo só o texto da tela. Foram 100 combinações do gráfico, 21 cenários de aporte, os filtros das tabelas e as 13 ações da Avaliação. Não houve erro de página, `NaN`, valor vazio nem rolagem horizontal. Apareceram quatro problemas do mesmo tipo do relatado em Aportes, além de uma falha de método na Avaliação.
+
+| Problema | Correção |
+|---|---|
+| Avaliação, opção "Carteira inteira": mostrava R$ 0 em ações e a tabela inteira, sem dizer para onde ia o dinheiro | A opção saiu da Avaliação, que agora simula só as ações. A divisão entre classes fica em Aportes, com um link |
+| "Base preservada" aparecia em ações cujo peso sugerido mudou, porque o peso retirado das outras é redistribuído | O rótulo diz se o peso subiu com o ajuste das outras ou desceu pelos limites |
+| O gráfico de patrimônio mostrava um valor diferente do cartão de patrimônio | O gráfico avisa que os títulos manuais são estimados pelo índice desde o último saldo |
+| Ao voltar pelo navegador, a tabela de ativos mantinha o filtro da página anterior | Voltar limpa o filtro e a busca |
+
+### Contas da indicação de investimento
+
+- **Dados:** preço ÷ LPA bate com o P/L da fonte em todas as ações, inclusive nas units. Não há mistura de lucro por ação com preço da unit.
+- **Fórmulas:** referência por pares (LPA × P/L mediano) e por cenário (dividendos e valor de saída descontados) estão corretas e conferidas por teste.
+- **Falha de método:** os pares precisavam ter P/L entre 2x e 60x, mas a própria ação não. Com lucro deprimido, como num ano ruim de uma empresa cíclica, o modelo calculava uma referência muito abaixo do preço e indicava prêmio. Agora a própria ação passa pelo mesmo filtro e fica sem referência, com o motivo explicado. `tests/evaluation.mjs` falha sem a correção e passa com ela.
+- **Limites que continuam:** o cenário padrão (crescimento de 5%, retorno exigido de 15%, P/L de saída 12x) tende a ver prêmio em empresas de crescimento e qualidade acima da média. O modelo pode deixar boa parte do aporte em caixa quando poucas ações têm margem de compra. As premissas são editáveis e não são previsões.
+- **Aportes e Avaliação:** Aportes segue os seus percentuais e mostra o parecer da Avaliação ao lado de cada ação, sem mudar os valores. A Avaliação continua sendo o simulador por preço, fundamentos e limites.
 
 ### Otimização
 
