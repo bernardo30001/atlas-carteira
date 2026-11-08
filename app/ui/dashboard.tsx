@@ -313,6 +313,9 @@ export default function Dashboard() {
   useEffect(() => {
     const sync = () => {
       const tab = new URLSearchParams(window.location.search).get("tab");
+      // Voltar pelo navegador não pode deixar a tabela com o filtro da página anterior.
+      setFilter("all");
+      setQuery("");
       setPage(
         tab && [...nav.map((n) => n.id), "strategy"].includes(tab)
           ? tab
@@ -1296,6 +1299,7 @@ export default function Dashboard() {
                 onRegister={(ticker, quantity) =>
                   setModal({ kind: "transaction", ticker, quantity })
                 }
+                onContributions={() => navigate("contributions")}
               />
             )}
             {portfolioReady && page === "contributions" && (

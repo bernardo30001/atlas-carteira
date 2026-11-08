@@ -360,7 +360,11 @@ export function PerformanceChart({
                   hidden || gain === undefined
                     ? "••••••"
                     : `${gain >= 0 ? "+" : "−"}${money(Math.abs(gain), history.currency)}`
-                } sem contar proventos`
+                } sem contar proventos${
+                  history.estimatedFixed.length
+                    ? " · títulos manuais estimados pelo índice desde o último saldo"
+                    : ""
+                }`
               : mode === "cost"
                 ? `Desde o custo das posições · em ${currencyName}`
                 : first && last

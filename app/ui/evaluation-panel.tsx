@@ -14,7 +14,6 @@ import {
   ACTIONS,
   evaluatePortfolio,
   normalizedWeights,
-  type EvaluationBudgetScope,
 } from "../lib/evaluation";
 import {
   BASE_STOCK_WEIGHTS,
@@ -50,6 +49,7 @@ type Props = {
   save: (p: Portfolio) => Promise<boolean>;
   busy: boolean;
   onRegister?: (ticker: string, quantity: number) => void;
+  onContributions?: () => void;
 };
 export function EvaluationPanel({
   portfolio,
@@ -60,6 +60,7 @@ export function EvaluationPanel({
   save,
   busy,
   onRegister,
+  onContributions,
 }: Props) {
   const [data, setData] = useState<FundamentalData>(),
     [loading, setLoading] = useState(true),
@@ -67,7 +68,6 @@ export function EvaluationPanel({
     [selected, setSelected] = useState("ALUP11"),
     [filter, setFilter] = useState("all"),
     [query, setQuery] = useState(""),
-    [budgetScope, setBudgetScope] = useState<EvaluationBudgetScope>("stocks"),
     [view, setView] = useState("allocation"),
     [message, setMessage] = useState("");
   async function load(signal?: AbortSignal) {
@@ -112,15 +112,8 @@ export function EvaluationPanel({
   }, []);
   const analysis = useMemo(
     () =>
-      evaluatePortfolio(
-        portfolio,
-        market,
-        data,
-        budget,
-        Date.now(),
-        budgetScope,
-      ),
-    [portfolio, market, data, budget, budgetScope],
+      evaluatePortfolio(portfolio, market, data, budget, Date.now(), "stocks"),
+    [portfolio, market, data, budget],
   );
   const current = analysis.rows.find((r) => r.ticker === selected)!,
     visible = analysis.rows.filter(
@@ -165,11 +158,10 @@ export function EvaluationPanel({
       hidden={hidden}
       budget={budget}
       setBudget={setBudget}
-      scope={budgetScope}
-      setScope={setBudgetScope}
       pending={loading && !data}
       onAsset={showAsset}
       onRegister={onRegister}
+      onContributions={onContributions}
     />
   );
   return (
@@ -454,11 +446,15 @@ export function EvaluationPanel({
                     <td>
                       <b>{pct(r.targetWeight)}</b>
                       <small>
-                        {r.factor === 1
-                          ? "Base preservada"
-                          : r.factor > 1
-                            ? "Ajuste por desconto"
-                            : "Ajuste por preço / revisão"}
+                        {r.factor > 1
+                          ? "Ajuste por desconto"
+                          : r.factor < 1
+                            ? "Ajuste por preço / revisão"
+                            : Math.abs(r.targetWeight - r.baseWeight) < 0.05
+                              ? "Base preservada"
+                              : r.targetWeight > r.baseWeight
+                                ? "Sobe com o ajuste das outras"
+                                : "Desce pelos limites"}
                       </small>
                     </td>
                     <td>
@@ -704,16 +700,15 @@ export function EvaluationPanel({
             posição e seu preço médio não determinam venda.
           </p>
           <p>
-            No modo “Ações brasileiras”, todo o valor informado é o orçamento
-            para as ações. No modo “Carteira inteira”, primeiro são respeitadas
-            suas metas entre classes. A verba é distribuída entre as candidatas
-            proporcionalmente ao que falta para atingir o peso sugerido, com
-            limites por emissor e setor. As quantidades são arredondadas para
-            unidades inteiras; a sobra só vai para compras ainda elegíveis e
-            dentro dos limites. O que não puder ser aplicado fica em caixa.
-            Renda fixa, ETFs e Bitcoin entram na avaliação da alocação total; a
-            análise fundamentalista individual desta aba cobre as ações
-            brasileiras cadastradas.
+            Todo o valor informado é o orçamento para as ações. A divisão entre
+            as classes fica em Aportes. A verba é distribuída entre as
+            candidatas proporcionalmente ao que falta para atingir o peso
+            sugerido, com limites por emissor e setor. As quantidades são
+            arredondadas para unidades inteiras; a sobra só vai para compras
+            ainda elegíveis e dentro dos limites. O que não puder ser aplicado
+            fica em caixa. Renda fixa, ETFs e Bitcoin entram na avaliação da
+            alocação total; a análise fundamentalista individual desta aba cobre
+            as ações brasileiras cadastradas.
           </p>
           <p>
             As indicações ajudam a organizar a decisão; não executam ordens.
@@ -736,27 +731,22 @@ function ContributionAllocation({
   hidden,
   budget,
   setBudget,
-  scope,
-  setScope,
   pending,
   onAsset,
   onRegister,
+  onContributions,
 }: {
   analysis: ReturnType<typeof evaluatePortfolio>;
   hidden: boolean;
   budget: number;
   setBudget: (v: number) => void;
-  scope: EvaluationBudgetScope;
-  setScope: (v: EvaluationBudgetScope) => void;
   pending: boolean;
   onAsset: (ticker: string) => void;
   onRegister?: (ticker: string, quantity: number) => void;
+  onContributions?: () => void;
 }) {
   const cash = (v: number) => (hidden ? "••••••" : money(v)),
-    ready =
-      !pending &&
-      !analysis.missingStocks &&
-      (scope === "stocks" || analysis.portfolioComplete);
+    ready = !pending && !analysis.missingStocks;
   const ordered = analysis.rows.toSorted(
     (a, b) => b.executable - a.executable || a.ticker.localeCompare(b.ticker),
   );
@@ -814,44 +804,20 @@ function ContributionAllocation({
             ))}
           </div>
         </div>
-        <fieldset className="contribution-allocation-scope">
-          <legend>Este valor é destinado a</legend>
-          <label>
-            <input
-              type="radio"
-              name="evaluation-budget-scope"
-              value="stocks"
-              checked={scope === "stocks"}
-              onChange={() => setScope("stocks")}
-            />
-            <span>
-              <b>Ações brasileiras</b>
-              <small>Usar todo o valor como orçamento para estas ações.</small>
-            </span>
-          </label>
-          <label>
-            <input
-              type="radio"
-              name="evaluation-budget-scope"
-              value="portfolio"
-              checked={scope === "portfolio"}
-              onChange={() => setScope("portfolio")}
-            />
-            <span>
-              <b>Carteira inteira</b>
-              <small>
-                Separar primeiro a parcela das ações, conforme suas metas entre
-                classes.
-              </small>
-            </span>
-          </label>
-        </fieldset>
       </div>
       <p className="contribution-allocation-context">
-        {scope === "stocks"
-          ? "O valor informado está reservado para ações. O modelo pode deixar uma parte em caixa quando faltar preço atrativo, dados válidos ou espaço nos limites."
-          : "O valor informado considera todas as classes. Esta tabela distribui somente a parcela destinada às ações brasileiras."}{" "}
-        A distribuição atualiza automaticamente quando você muda o valor.
+        Todo o valor vai para as ações, pelo preço, pelos fundamentos e pelos
+        limites. O modelo pode deixar uma parte em caixa quando faltar preço
+        atrativo, dados válidos ou espaço nos limites. Para dividir entre as
+        classes ou seguir só os seus percentuais, use{" "}
+        {onContributions ? (
+          <button className="text-button" onClick={onContributions}>
+            Aportes <ArrowRight size={14} />
+          </button>
+        ) : (
+          "Aportes"
+        )}
+        .
       </p>
       <div
         className="contribution-allocation-totals"
@@ -878,12 +844,6 @@ function ContributionAllocation({
           <strong>{ready ? cash(analysis.reserve) : "Calculando…"}</strong>
         </div>
       </div>
-      {scope === "portfolio" && ready && analysis.otherClasses > 0 && (
-        <p className="contribution-allocation-context">
-          Outras classes da carteira: <b>{cash(analysis.otherClasses)}</b>. A
-          distribuição completa fica em Aportes.
-        </p>
-      )}
       {!ready && (
         <div className="contribution-allocation-status" role="status">
           Aguardando os dados necessários para calcular a sugestão. Nenhuma
@@ -897,9 +857,9 @@ function ContributionAllocation({
       )}
       {ready && budget > 0 && analysis.allocated === 0 && (
         <div className="contribution-allocation-status">
-          {analysis.classAmount === 0
-            ? "As metas entre classes não reservam verba para ações neste aporte. Você pode selecionar “Ações brasileiras” se o valor já estiver destinado a essa classe."
-            : "Nenhuma ação atende aos critérios de compra e ao orçamento neste cenário. A sugestão é aguardar com o valor em caixa; confira o motivo em cada linha."}
+          Nenhuma ação atende aos critérios de compra e ao orçamento neste
+          cenário. O modelo sugere aguardar com o valor em caixa; confira o
+          motivo em cada linha.
         </div>
       )}
       {(() => {
