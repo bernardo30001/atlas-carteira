@@ -69,13 +69,10 @@ export function ContributionPlan({
   const opinions = useMemo(() => {
     if (!fundamentals) return new Map<string, string>();
     return new Map(
-      evaluatePortfolio(
-        portfolio,
-        market,
-        fundamentals,
-        0,
-        Date.now(),
-      ).rows.map((r) => [r.ticker, ACTIONS[r.action]]),
+      evaluatePortfolio(portfolio, market, fundamentals, 0).rows.map((r) => [
+        r.ticker,
+        ACTIONS[r.action],
+      ]),
     );
   }, [portfolio, market, fundamentals]);
   const plan = useMemo(

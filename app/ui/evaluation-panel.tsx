@@ -22,6 +22,7 @@ import {
   type FundamentalData,
   type EvaluationSettings,
   type EarningsScenario,
+  type EvaluationOverride,
 } from "../lib/evaluation-config";
 import { ValidatedForm, FormInput } from "./validated-form";
 const stocks = ASSETS.filter((a) => a.group === "br");
@@ -70,48 +71,49 @@ export function EvaluationPanel({
     [query, setQuery] = useState(""),
     [view, setView] = useState("allocation"),
     [message, setMessage] = useState("");
-  async function load(signal?: AbortSignal) {
-    setLoading(true);
-    setError("");
-    try {
-      const response = await fetch("/api/fundamentals", { signal });
-      const result = (await response.json()) as FundamentalData;
-      if (signal?.aborted) return;
-      if (!response.ok)
-        throw Error(
-          "A fonte de fundamentos não respondeu. Tente consultar novamente.",
-        );
-      setData(result);
-      if (result.errors?.length)
-        setError(
-          "Parte dos indicadores não foi atualizada. As linhas afetadas mostram a limitação.",
-        );
-    } catch (e) {
-      if (!signal?.aborted) {
-        setError(
-          e instanceof Error
-            ? e.message
-            : "Não foi possível consultar os fundamentos.",
-        );
-        setData((old) => (old ? { ...old, stale: true } : undefined));
-      }
-    } finally {
-      if (!signal?.aborted) setLoading(false);
-    }
-  }
+  // A consulta automática roda em silêncio; o aviso de carregando vem de quem a pede.
+  const [reload, setReload] = useState(0);
   useEffect(() => {
-    const controller = new AbortController();
-    load(controller.signal);
+    const controller = new AbortController(),
+      { signal } = controller;
+    const load = async () => {
+      try {
+        const response = await fetch("/api/fundamentals", { signal });
+        const result = (await response.json()) as FundamentalData;
+        if (signal.aborted) return;
+        if (!response.ok)
+          throw Error(
+            "A fonte de fundamentos não respondeu. Tente consultar novamente.",
+          );
+        setData(result);
+        if (result.errors?.length)
+          setError(
+            "Parte dos indicadores não foi atualizada. As linhas afetadas mostram a limitação.",
+          );
+      } catch (e) {
+        if (!signal.aborted) {
+          setError(
+            e instanceof Error
+              ? e.message
+              : "Não foi possível consultar os fundamentos.",
+          );
+          setData((old) => (old ? { ...old, stale: true } : undefined));
+        }
+      } finally {
+        if (!signal.aborted) setLoading(false);
+      }
+    };
+    load();
     const timer = setInterval(() => {
-      if (!document.hidden) load(controller.signal);
+      if (!document.hidden) load();
     }, 3600000);
     return () => {
       controller.abort();
       clearInterval(timer);
     };
-  }, []);
+  }, [reload]);
   const analysis = useMemo(
-    () => evaluatePortfolio(portfolio, market, data, budget, Date.now()),
+    () => evaluatePortfolio(portfolio, market, data, budget),
     [portfolio, market, data, budget],
   );
   const current = analysis.rows.find((r) => r.ticker === selected)!,
@@ -180,7 +182,11 @@ export function EvaluationPanel({
         <button
           className="button outline"
           disabled={loading}
-          onClick={() => load()}
+          onClick={() => {
+            setLoading(true);
+            setError("");
+            setReload((n) => n + 1);
+          }}
         >
           <RefreshCw size={16} className={loading ? "spin" : ""} />
           {loading ? "Consultando fundamentos…" : "Consultar fundamentos"}
@@ -1022,10 +1028,10 @@ function IndividualSettings({
               ...settings.overrides,
               [ticker]: {
                 referencePrice: price ? Number(price) : null,
-                thesis: form.get("thesis") as any,
+                thesis: form.get("thesis") as EvaluationOverride["thesis"],
                 note: String(form.get("note") ?? ""),
                 updatedAt: today(),
-                method: form.get("method") as any,
+                method: form.get("method") as EvaluationOverride["method"],
                 scenario: readScenario(form),
               },
             },

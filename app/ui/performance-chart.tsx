@@ -121,7 +121,7 @@ export function PerformanceChart({
             rates,
             windowDays,
             selected,
-            Date.now(),
+            undefined,
             scope,
           )
         : NO_SIMULATION,
@@ -573,7 +573,7 @@ export function PerformanceChart({
                     hidden={hidden}
                   />
                 )}
-                formatter={(v: any, n: any) => [
+                formatter={(v, n) => [
                   n === "value" || n === "invested"
                     ? cash(Number(v))
                     : n === "portfolio"
@@ -590,7 +590,12 @@ export function PerformanceChart({
                 strokeWidth={2.4}
                 dot={
                   showPurchases
-                    ? (props: any) => (
+                    ? (props: {
+                        index: number;
+                        cx?: number;
+                        cy?: number;
+                        payload?: (typeof points)[number];
+                      }) => (
                         <PurchaseDot
                           key={props.index}
                           {...props}
