@@ -41,11 +41,6 @@ body {
 .page-heading {
   margin-bottom: 1.25rem;
 }
-.page-heading h1 {
-  font-size: clamp(1.5rem, 2vw, 1.85rem);
-  font-weight: 700;
-  letter-spacing: -0.03em;
-}
 .page-heading p {
   margin-top: 0.15rem;
   font-size: 0.9375rem;
@@ -123,13 +118,10 @@ body {
   padding: 1.35rem 1.45rem;
   border-radius: var(--radius-lg);
   border: 0;
-  background: linear-gradient(150deg, var(--hero-from), var(--hero-to));
   box-shadow: var(--elevation);
 }
 .summary-grid .stat-card.wealth .stat-value {
   font-size: clamp(1.75rem, 2.6vw, 2.35rem);
-  font-weight: 700;
-  letter-spacing: -0.03em;
   margin: 0.35rem 0 0.9rem;
 }
 .class-cards {
@@ -286,8 +278,6 @@ body {
 }
 .performance-result strong {
   font-size: clamp(1.9rem, 3vw, 2.5rem);
-  font-weight: 700;
-  letter-spacing: -0.03em;
   line-height: 1.1;
 }
 .performance-result p {

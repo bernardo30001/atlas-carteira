@@ -44,7 +44,6 @@
   --surface-subtle: #f7f9f3;
   --surface-selected: #edf2e6;
   --text-secondary: #375a2e;
-  --border-strong: #a6b69a;
   --action: #26775d;
   --on-action: #fff;
   --warning-bg: #faf3e7;
@@ -111,7 +110,6 @@ html[data-theme="dark"] {
   --surface-subtle: #1c2520;
   --surface-selected: #232e28;
   --text-secondary: #d3dfcf;
-  --border-strong: #5d6e62;
   --action: #87d8ad;
   --on-action: #0e2c1c;
   --warning-bg: #2a2416;
@@ -133,13 +131,6 @@ html[data-theme="dark"] {
   --danger-bg: #b24d44;
   --danger-text: #fff;
 }
-html[data-theme="dark"] .asset-mark {
-  background: var(--surface-3) !important;
-  color: var(--ink-2) !important;
-}
-:root {
-  --sidebar: 14.125rem;
-}
 * {
   box-sizing: border-box;
 }
@@ -147,29 +138,7 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--ink);
-  font:
-    13px "DM Sans",
-    sans-serif;
   -webkit-font-smoothing: antialiased;
-  line-height: 1.55;
-}
-button,
-input,
-select {
-  font: inherit;
-}
-button,
-a,
-input,
-select {
-  -webkit-tap-highlight-color: transparent;
-}
-button,
-a {
-  transition:
-    background 0.15s,
-    color 0.15s,
-    box-shadow 0.15s;
 }
 button {
   cursor: pointer;
@@ -179,10 +148,6 @@ button {
   border: 0;
   background: none;
 }
-button:disabled {
-  opacity: 1;
-  cursor: not-allowed;
-}
 a {
   color: inherit;
   text-decoration: none;
@@ -190,11 +155,6 @@ a {
 input,
 select {
   color: var(--ink);
-}
-button:focus-visible,
-a:focus-visible {
-  outline: 2px solid var(--line-strong);
-  outline-offset: 3px;
 }
 input:focus,
 select:focus {
@@ -207,35 +167,14 @@ h3,
 p {
   margin: 0;
 }
-h1,
-h2,
-h3 {
-  font-family: inherit;
-}
 h1 {
-  font-size: 1.9375rem;
-  letter-spacing: -1.3px;
   font-weight: 750;
-  line-height: 1.3;
 }
 h2 {
-  font-size: 0.9375rem;
-  letter-spacing: -0.3px;
   font-weight: 750;
 }
 h3 {
-  font-size: 0.875rem;
   font-weight: 700;
-}
-p {
-  color: var(--muted);
-  line-height: 1.65;
-}
-.positive {
-  color: var(--positive) !important;
-}
-.muted {
-  color: var(--muted);
 }
 .numeric {
   font-variant-numeric: tabular-nums;
@@ -245,20 +184,12 @@ p {
   gap: 0.5rem;
   align-items: center;
   justify-content: center;
-  border-radius: 0.4375rem;
-  padding: 0.75rem 1rem;
-  font-size: 0.875rem;
-  font-weight: 600;
-  white-space: nowrap;
-  min-height: 2.4375rem;
 }
 .primary {
-  background: var(--accent);
   color: var(--on-brand);
   box-shadow: 0 3px 6px var(--focus);
 }
 .primary:hover {
-  background: var(--brand);
   box-shadow: 0 4px 12px var(--focus);
 }
 .outline {
@@ -268,21 +199,14 @@ p {
 .outline:hover {
   background: var(--surface-3);
 }
-.danger {
-  background: var(--negative);
-  color: var(--on-brand);
-}
 .full {
   width: 100%;
 }
 .icon-button {
-  height: 2rem;
-  width: 2rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: 0.375rem;
-  color: var(--muted);
 }
 .icon-button:hover {
   background: var(--surface-3);
@@ -293,18 +217,12 @@ p {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 0.75rem;
   font-weight: 650;
-  white-space: nowrap;
 }
 .text-button:hover {
   color: var(--ink);
 }
 .eyebrow {
-  font-size: 0.75rem;
-  letter-spacing: 1.4px;
-  color: var(--muted);
-  font-weight: 650;
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
@@ -318,9 +236,6 @@ p {
   left: 0;
   top: 0;
   bottom: 0;
-  background: var(--surface-2);
-  border-right: 1px solid var(--line);
-  padding: 2rem 1.25rem 0;
   display: flex;
   flex-direction: column;
   z-index: 30;
@@ -331,11 +246,7 @@ p {
   gap: 0.5rem;
   font-family: inherit;
   font-weight: 800;
-  letter-spacing: -2px;
-  font-size: 2.125rem;
   color: var(--ink);
-  padding-left: 0.75rem;
-  margin-bottom: 3rem;
 }
 .brand-icon {
   width: 2.25rem;
@@ -352,11 +263,7 @@ p {
   color: var(--muted);
 }
 .workspace-label {
-  font-size: 0.75rem;
-  letter-spacing: 1.1px;
-  color: var(--muted);
   font-weight: 600;
-  padding-left: 1rem;
   margin-bottom: 1rem;
 }
 .sidebar nav {
@@ -370,23 +277,12 @@ p {
   align-items: center;
   text-align: left;
   gap: 0.75rem;
-  padding: 0.75rem 1rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  border-radius: 0.4375rem;
-  color: var(--muted);
 }
 .nav-item svg {
   stroke-width: 1.5;
 }
 .nav-item:hover {
-  background: var(--surface-3);
   color: var(--accent);
-}
-.nav-item.active {
-  background: var(--surface-3);
-  color: var(--muted);
-  font-weight: 650;
 }
 .nav-dot {
   margin-left: auto;
@@ -407,15 +303,9 @@ p {
   align-items: center;
   justify-content: center;
   gap: 0.25rem;
-  color: var(--muted);
-  font-size: 0.75rem;
-  padding-bottom: 1.5rem;
 }
 .profile {
   border-top: 1px solid var(--line);
-  margin: 0 -1.25rem;
-  width: calc(100% + 2.375rem);
-  padding: 1.25rem 1.5rem;
   display: flex;
   gap: 0.5rem;
   align-items: center;
@@ -438,14 +328,11 @@ p {
   flex: none;
 }
 .profile b {
-  font-size: 0.75rem;
   font-weight: 600;
   display: block;
 }
 .profile small {
   display: block;
-  font-size: 0.75rem;
-  color: var(--muted);
   margin-top: 0.25rem;
 }
 .profile > svg {
@@ -456,10 +343,7 @@ p {
   margin-left: var(--sidebar);
 }
 .topbar {
-  height: 4.5rem;
-  padding: 0 2.25rem;
   border-bottom: 1px solid var(--line);
-  background: var(--surface);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -468,11 +352,9 @@ p {
   display: flex;
   gap: 0.75rem;
   align-items: center;
-  font-size: 0.75rem;
   color: var(--muted);
 }
 .breadcrumbs b {
-  font-size: 0.75rem;
   font-weight: 500;
   color: var(--muted);
 }
@@ -481,15 +363,12 @@ p {
 }
 .top-actions {
   display: flex;
-  gap: 0.75rem;
   align-items: center;
 }
 .currency-button {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 0.75rem;
-  color: var(--muted);
   padding: 0.5rem;
 }
 .top-divider {
@@ -500,26 +379,17 @@ p {
   width: 1.8125rem;
   height: 1.8125rem;
   border: 0;
-  font-size: 0.75rem;
 }
 .mobile-menu {
   display: none;
 }
 .market-strip {
-  height: 2.6875rem;
-  background: var(--surface);
-  border-bottom: 1px solid var(--line);
   display: flex;
   align-items: center;
-  padding: 0 2.25rem;
-  gap: 1.5rem;
   overflow-x: auto;
   white-space: nowrap;
-  font-size: 0.75rem;
 }
 .strip-label {
-  color: var(--muted);
-  font-size: 0.75rem;
   letter-spacing: 1.1px;
   display: flex;
   align-items: center;
@@ -543,12 +413,9 @@ p {
   color: var(--muted);
 }
 .market-strip b {
-  font-size: 0.75rem;
   font-weight: 550;
-  color: var(--muted);
 }
 .market-strip .change {
-  font-size: 0.75rem;
   gap: 2px;
 }
 .market-strip .change svg {
@@ -557,7 +424,6 @@ p {
 .market-strip > button {
   margin-left: auto;
   width: 1.4375rem;
-  height: 1.4375rem;
 }
 .spinning svg {
   animation: spin 1.5s linear infinite;
@@ -568,26 +434,15 @@ p {
   }
 }
 main {
-  max-width: 97.5rem;
-  padding: 2rem 2.25rem 0;
   margin: 0 auto;
 }
 .page-heading {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
-  gap: 1.25rem;
 }
 .page-heading .eyebrow {
-  font-size: 0.75rem;
-  margin-bottom: 0.5rem;
   letter-spacing: 1.1px;
-}
-.page-heading p {
-  font-size: 0.75rem;
-  margin-top: 0.5rem;
-  color: var(--muted);
 }
 .page-heading > .button {
   margin-top: 0.75rem;
@@ -599,11 +454,8 @@ main {
   background: var(--surface-3);
   border: 1px solid var(--line);
   color: var(--muted);
-  padding: 0.75rem 1rem;
   border-radius: 0.5rem;
   margin-bottom: 1rem;
-  font-size: 0.75rem;
-  line-height: 1.6;
 }
 .notice > svg {
   flex: none;
@@ -619,12 +471,6 @@ main {
   font-weight: 650;
   color: var(--muted);
   white-space: nowrap;
-  font-size: 0.75rem;
-}
-.notice.warn {
-  background: var(--warn-bg);
-  border-color: var(--warn-line);
-  color: var(--muted);
 }
 .notice.demo {
   background: var(--info-bg);
@@ -644,8 +490,6 @@ main {
   min-height: 8.625rem;
 }
 .stat-label {
-  font-size: 0.75rem;
-  color: var(--muted);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -666,34 +510,17 @@ main {
   white-space: nowrap;
 }
 .stat-foot {
-  font-size: 0.75rem;
-  display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: var(--muted);
-  margin-top: 0.75rem;
   position: relative;
   z-index: 1;
   min-height: 0.875rem;
-  white-space: normal;
-  line-height: 1.6;
 }
 .stat-foot .change {
   font-size: 0.75rem;
 }
 .wealth {
-  background: var(--brand);
   border-color: var(--accent);
-  color: var(--on-brand);
-}
-.wealth .stat-label,
-.wealth .stat-label svg {
-  color: var(--muted);
-}
-.wealth .stat-foot {
-  color: var(--muted);
-  font-size: 0.75rem;
-  line-height: 1.4;
 }
 .wealth .stat-value {
   font-size: 1.625rem;
@@ -701,54 +528,25 @@ main {
 .panel {
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 0.625rem;
 }
 .panel-title {
   display: flex;
   justify-content: space-between;
-  align-items: center;
   gap: 1rem;
-  padding: 1.5rem 1.5rem 0;
-  padding-bottom: 1rem;
 }
 .panel-title h2 {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 0.875rem;
 }
 .panel-title p {
-  font-size: 0.75rem;
   margin-top: 0.5rem;
-  color: var(--muted);
 }
 .panel-title > svg {
   color: var(--muted);
 }
-.overview-grid {
-  display: grid;
-  grid-template-columns: 1.75fr 1fr;
-  gap: 1.25rem;
-  margin-bottom: 1.25rem;
-}
-.period-tabs {
-  display: flex;
-  background: var(--surface-2);
-  border: 1px solid var(--line);
-  border-radius: 0.3125rem;
-  padding: 2px;
-  gap: 1px;
-}
-.period-tabs button {
-  padding: 0.25rem 0.5rem;
-  font-size: 0.75rem;
-  color: var(--muted);
-  border-radius: 3px;
-}
 .period-tabs .active {
   background: var(--surface);
-  box-shadow: 0 1px 4px var(--shadow-soft);
-  color: var(--muted);
   font-weight: 650;
 }
 .target-card > span > i {
@@ -758,16 +556,8 @@ main {
   display: inline-block;
   flex: none;
 }
-.allocation .panel-title {
-  padding: 1.5rem 1.25rem 0;
-}
-.allocation .panel-title h2 {
-  font-size: 0.875rem;
-}
 .onboarding {
-  padding: 1rem 1.25rem;
   display: flex;
-  gap: 1rem;
   align-items: center;
   border: 1px dashed var(--line);
   background: var(--surface-3);
@@ -788,25 +578,17 @@ main {
 .onboarding > div {
   flex: 1;
 }
-.onboarding h3 {
-  font-size: 0.875rem;
-}
 .onboarding p {
-  font-size: 0.75rem;
   margin-top: 0.25rem;
-  color: var(--muted);
 }
 .onboarding > .button {
   font-size: 0.75rem;
   padding: 0.5rem 0.75rem;
 }
 .asset-panel {
-  margin-bottom: 1.75rem;
   overflow: hidden;
 }
 .count {
-  font-size: 0.75rem;
-  color: var(--muted);
   background: var(--surface-3);
   border: 1px solid var(--line);
   border-radius: 0.3125rem;
@@ -816,26 +598,10 @@ main {
 }
 .table-tools {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  padding: 1.25rem 1.5rem 0;
-  gap: 0.75rem;
 }
 .tabs {
-  display: flex;
-  gap: 0.5rem;
   align-items: center;
-}
-.tabs button {
-  font-size: 0.75rem;
-  color: var(--muted);
-  padding: 0.5rem 0.75rem;
-  border-radius: 0.3125rem;
-}
-.tabs button.active {
-  background: var(--surface-3);
-  color: var(--muted);
-  font-weight: 650;
 }
 .search {
   display: flex;
@@ -848,13 +614,6 @@ main {
   border: 0;
   outline: 0;
   min-width: 0;
-  font-size: 0.75rem;
-  width: 7.5rem;
-  padding: 0.5rem;
-  color: var(--muted);
-}
-.search input::placeholder {
-  color: var(--muted);
 }
 .table-wrap {
   overflow: auto;
@@ -867,17 +626,10 @@ table {
   white-space: nowrap;
 }
 th {
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: var(--muted);
-  padding: 1rem 1.5rem 0.75rem;
   border-bottom: 1px solid var(--line);
 }
 td {
-  font-size: 0.75rem;
-  padding: 0.75rem 1.5rem;
   border-bottom: 1px solid var(--line);
-  color: var(--muted);
 }
 tr:last-child td {
   border-bottom: 0;
@@ -890,8 +642,6 @@ td b {
   color: var(--muted);
 }
 td small {
-  font-size: 0.75rem;
-  color: var(--muted);
   display: block;
   margin-top: 0.25rem;
 }
@@ -907,19 +657,13 @@ th:nth-child(3) {
 .asset-name {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
   text-align: left;
   padding: 0;
 }
 .asset-name b {
-  font-size: 0.75rem;
   font-weight: 650;
-  color: var(--muted);
 }
 .asset-name small {
-  font-size: 0.75rem;
-  color: var(--muted);
-  max-width: 8.75rem;
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
@@ -930,7 +674,6 @@ th:nth-child(3) {
   align-items: center;
   border-radius: 0.5rem;
   font-family: inherit;
-  font-size: 0.75rem;
   font-weight: 800;
   letter-spacing: -0.6px;
   flex: none;
@@ -938,17 +681,13 @@ th:nth-child(3) {
 .change {
   display: inline-flex;
   align-items: center;
-  font-size: 0.75rem;
   gap: 3px;
   white-space: nowrap;
 }
 .panel-foot {
-  font-size: 0.75rem;
-  color: var(--muted);
   display: flex;
   justify-content: space-between;
   gap: 1rem;
-  padding: 0.75rem 1.5rem;
   background: var(--surface);
   border-top: 1px solid var(--line);
   line-height: 1.6;
@@ -962,53 +701,35 @@ th:nth-child(3) {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 0.75rem;
   margin-bottom: 1rem;
 }
 .section-title .eyebrow {
-  font-size: 0.75rem;
   margin-bottom: 0.5rem;
   letter-spacing: 1.5px;
 }
 .section-title h2 {
-  font-size: 1.1875rem;
   letter-spacing: -0.7px;
-}
-.section-title .text-button {
-  font-size: 0.75rem;
 }
 .news-filters {
   display: flex;
-  gap: 0.5rem;
-  overflow: auto;
   white-space: nowrap;
-  padding-bottom: 1rem;
 }
 .chip {
-  padding: 0.5rem 0.75rem;
   border: 1px solid var(--line);
   border-radius: 0.3125rem;
-  font-size: 0.75rem;
-  color: var(--muted);
   white-space: nowrap;
   background: var(--surface);
 }
 .chip.active {
-  background: var(--surface-4);
-  border-color: var(--line);
-  color: var(--muted);
   font-weight: 550;
 }
 .chip:hover {
   background: var(--surface-3);
 }
 .news-filters select {
-  font-size: 0.75rem;
   border: 1px solid var(--line);
   border-radius: 0.3125rem;
   background: var(--surface);
-  color: var(--muted);
-  padding: 0.25rem 0.5rem;
   max-width: 7.5rem;
 }
 .news-grid {
@@ -1017,10 +738,8 @@ th:nth-child(3) {
   gap: 1rem;
 }
 .news-card {
-  padding: 1.25rem 1.25rem 1rem;
   display: flex;
   flex-direction: column;
-  min-height: 11.875rem;
 }
 .news-card:hover {
   border-color: var(--line-strong);
@@ -1030,23 +749,16 @@ th:nth-child(3) {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 0.75rem;
-  color: var(--muted);
 }
 .news-ticker {
   background: var(--surface-3);
   padding: 0.25rem 0.5rem;
   border-radius: 0.25rem;
-  color: var(--muted);
-  font-size: 0.75rem;
   font-weight: 650;
   letter-spacing: 0.2px;
 }
 .news-card h3 {
-  font-size: 0.875rem;
-  color: var(--muted);
   font-weight: 650;
-  line-height: 1.65;
   letter-spacing: -0.2px;
   margin: 1rem 0 1.5rem;
 }
@@ -1056,17 +768,12 @@ th:nth-child(3) {
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-  color: var(--muted);
-  font-size: 0.75rem;
 }
 .news-source svg {
   color: var(--muted);
 }
 .source-note {
-  font-size: 0.75rem;
-  color: var(--muted);
   margin-top: 0.75rem;
-  line-height: 1.7;
 }
 .skeleton span {
   display: block;
@@ -1108,13 +815,7 @@ th:nth-child(3) {
   border-radius: 0.8125rem;
   margin-bottom: 2px;
 }
-.empty h3 {
-  font-size: 0.875rem;
-  color: var(--muted);
-}
 .empty p {
-  font-size: 0.75rem;
-  color: var(--muted);
   max-width: 21.875rem;
 }
 .empty .button {
@@ -1139,15 +840,11 @@ th:nth-child(3) {
   margin-bottom: 1.5rem;
 }
 .planner .panel-title h2 {
-  font-size: 1.4375rem;
   margin-top: 0.5rem;
 }
 .field {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  font-size: 0.75rem;
-  color: var(--muted);
   margin-bottom: 1rem;
 }
 .field > input,
@@ -1155,18 +852,11 @@ th:nth-child(3) {
   border: 1px solid var(--line);
   border-radius: 0.375rem;
   background: var(--surface);
-  padding: 0.75rem;
-  font-size: 0.875rem;
   width: 100%;
   min-width: 0;
 }
-.field > span {
-  font-size: 0.75rem;
-  color: var(--muted);
-}
 .planner > .field input {
   font-family: inherit;
-  font-size: 1.5625rem;
   padding: 0.75rem;
 }
 .quick-budgets {
@@ -1185,9 +875,7 @@ th:nth-child(3) {
 .total-pill {
   background: var(--surface-3);
   border: 1px solid var(--line);
-  color: var(--muted);
   border-radius: 1.25rem;
-  font-size: 0.75rem;
   padding: 0.5rem 0.75rem;
 }
 .total-pill.invalid {
@@ -1210,20 +898,14 @@ th:nth-child(3) {
   display: flex;
   gap: 0.5rem;
   align-items: center;
-  color: var(--muted);
-  font-size: 0.75rem;
 }
 .target-card > div {
-  display: flex;
-  align-items: center;
-  gap: 2px;
   margin: 1rem 0 0.5rem;
 }
 .target-card input {
   width: 5.625rem;
   border: 0;
   background: none;
-  font-size: 2.1875rem;
   letter-spacing: -1px;
   font-family: inherit;
   color: var(--muted);
@@ -1232,10 +914,6 @@ th:nth-child(3) {
 }
 .target-card > div > span {
   font-size: 1.5rem;
-  color: var(--muted);
-}
-.target-card > small {
-  font-size: 0.75rem;
   color: var(--muted);
 }
 .target-strip {
@@ -1263,22 +941,17 @@ th:nth-child(3) {
 }
 .weight-item b {
   display: block;
-  font-size: 0.75rem;
   color: var(--muted);
   font-weight: 600;
 }
 .weight-item small {
   display: block;
-  font-size: 0.75rem;
-  color: var(--muted);
   margin-top: 0.25rem;
 }
 .weight-item input {
-  width: 3.375rem;
   border: 1px solid var(--line);
   border-radius: 0.3125rem;
   padding: 0.5rem 0.25rem 0.5rem 0.5rem;
-  font-size: 0.75rem;
   color: var(--muted);
 }
 .save-row {
@@ -1306,13 +979,7 @@ th:nth-child(3) {
 }
 .method-grid h3 {
   margin: 0.75rem 0;
-  font-size: 0.875rem;
   color: var(--muted);
-}
-.method-grid p {
-  font-size: 0.75rem;
-  color: var(--muted);
-  line-height: 1.9;
 }
 .method-panel > .text-button {
   margin-left: 1.5rem;
@@ -1325,7 +992,6 @@ th:nth-child(3) {
   gap: 1.25rem;
 }
 .backup-panel p {
-  font-size: 0.75rem;
   margin-top: 0.5rem;
 }
 .button-row {
@@ -1338,16 +1004,13 @@ th:nth-child(3) {
 footer {
   display: flex;
   align-items: center;
-  gap: 1rem;
   border-top: 1px solid var(--line);
   margin-top: 2.25rem;
-  padding: 1.5rem 0;
   color: var(--muted);
   font-size: 0.75rem;
 }
 .footer-brand {
   font-family: inherit;
-  font-size: 1.1875rem;
   letter-spacing: -1px;
   font-weight: 800;
   color: var(--muted);
@@ -1364,10 +1027,6 @@ footer > button {
   font-size: 0.75rem;
   margin-left: 0.5rem;
 }
-.footer-right {
-  margin-left: auto;
-  font-size: 0.75rem;
-}
 .toast {
   position: fixed;
   bottom: 1.375rem;
@@ -1380,11 +1039,7 @@ footer > button {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 1rem 1rem;
   z-index: 70;
-  font-size: 0.875rem;
-  max-width: calc(100vw - 2.5rem);
-  line-height: 1.7;
 }
 .toast > svg {
   flex: none;
@@ -1396,8 +1051,6 @@ footer > button {
 }
 dialog {
   border: 1px solid var(--line);
-  border-radius: 0.875rem;
-  width: min(35.625rem, calc(100% - 1.75rem));
   padding: 0;
   color: var(--ink);
   box-shadow: 0 25px 100px var(--shadow);
@@ -1409,58 +1062,32 @@ dialog::backdrop {
   backdrop-filter: blur(3px);
 }
 .dialog-content {
-  padding: 2rem;
   position: relative;
 }
 .dialog-close {
   position: absolute;
-  right: 0.8125rem;
-  top: 0.8125rem;
 }
 .dialog-content > h2 {
-  font-size: 1.5rem;
   margin: 0.5rem 0 0.5rem;
   letter-spacing: -0.9px;
-  padding-right: 1rem;
 }
 .dialog-content > p {
-  font-size: 0.75rem;
-  line-height: 1.9;
   margin-bottom: 1.5rem;
-}
-.dialog-content .eyebrow {
-  font-size: 0.75rem;
 }
 .form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0 1rem;
 }
-.segmented {
-  display: flex;
-  background: var(--surface-3);
-  border-radius: 0.4375rem;
-  padding: 0.25rem;
-  margin: 1.5rem 0;
-  gap: 0.25rem;
-}
 .segmented > button {
-  font-size: 0.75rem;
   flex: 1;
-  padding: 0.5rem;
   border-radius: 0.3125rem;
-  color: var(--muted);
 }
 .segmented .active {
   background: var(--surface);
-  color: var(--muted);
-  box-shadow: 0 1px 4px var(--shadow-soft);
   font-weight: 600;
 }
 .form-note {
-  font-size: 0.75rem;
-  color: var(--muted);
-  line-height: 1.8;
   padding: 0.75rem;
   background: var(--surface-2);
   border-radius: 0.375rem;
@@ -1472,26 +1099,16 @@ dialog::backdrop {
 .dialog-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 0.75rem;
   margin-top: 1.5rem;
 }
 .delete-title {
   display: flex;
   margin: 1.25rem auto 0;
 }
-.prose {
-  font-size: 0.75rem;
-  line-height: 1.9;
-}
 .prose h3 {
-  font-size: 0.875rem;
-  color: var(--muted);
   margin: 1.5rem 0 0.5rem;
 }
 .prose p {
-  font-size: 0.75rem;
-  line-height: 1.9;
-  color: var(--muted);
   margin-bottom: 0.75rem;
 }
 .prose a {
@@ -1507,19 +1124,16 @@ dialog::backdrop {
   margin: 0.25rem 0 1.5rem;
 }
 .asset-detail-heading h2 {
-  font-size: 1.375rem;
   margin-top: 0.25rem;
 }
 .asset-detail-heading h2 small {
   display: block;
-  font-size: 0.75rem;
   color: var(--muted);
   font-weight: 400;
   margin-top: 3px;
 }
 .asset-price {
   font-family: inherit;
-  font-size: 1.9375rem;
   letter-spacing: -1px;
   display: flex;
   align-items: center;
@@ -1541,13 +1155,11 @@ dialog::backdrop {
 }
 .detail-metrics small {
   display: block;
-  font-size: 0.75rem;
   color: var(--muted);
 }
 .detail-metrics b {
   display: block;
   font-family: inherit;
-  font-size: 1.1875rem;
   color: var(--muted);
   margin-top: 0.5rem;
 }
@@ -1558,9 +1170,6 @@ input[type="number"]::-webkit-inner-spin-button {
   opacity: 0.35;
 }
 @media (min-width: 1500px) {
-  :root {
-    --sidebar: 15.25rem;
-  }
   main {
     padding-left: 2.75rem;
     padding-right: 2.75rem;
@@ -1576,45 +1185,21 @@ input[type="number"]::-webkit-inner-spin-button {
   .wealth .stat-value {
     font-size: 1.875rem;
   }
-  .panel-title h2 {
-    font-size: 1rem;
-  }
-  .panel-title p {
-    font-size: 0.75rem;
-  }
-  .allocation .panel-title h2 {
-    font-size: 0.9375rem;
-  }
-  .market-strip {
-    gap: 2.25rem;
-  }
   td {
     padding-top: 1rem;
     padding-bottom: 1rem;
   }
 }
 @media (max-width: 1200px) {
-  :root {
-    --sidebar: 12.5rem;
-  }
   .sidebar {
     padding-left: 1rem;
     padding-right: 1rem;
   }
-  .brand {
-    padding-left: 0.5rem;
-  }
   .profile {
     margin-left: -1rem;
     margin-right: -1rem;
-    width: calc(100% + 1.75rem);
-    padding: 1rem;
   }
   .sidebar .workspace-label {
-    font-size: 0.75rem;
-  }
-  .nav-item {
-    padding: 0.75rem 0.5rem;
     font-size: 0.75rem;
   }
   .topbar,
@@ -1622,14 +1207,8 @@ input[type="number"]::-webkit-inner-spin-button {
     padding-left: 1.5rem;
     padding-right: 1.5rem;
   }
-  .market-strip {
-    gap: 1rem;
-  }
   .market-strip > div {
     gap: 0.5rem;
-  }
-  main {
-    padding: 1.5rem 1.5rem 0;
   }
   .stat-card {
     padding: 1rem 1rem;
@@ -1638,37 +1217,9 @@ input[type="number"]::-webkit-inner-spin-button {
   .wealth .stat-value {
     font-size: 1.375rem;
   }
-  .stat-label {
-    font-size: 0.75rem;
-  }
-  .stat-foot {
-    font-size: 0.75rem;
-  }
-  .overview-grid {
-    gap: 1rem;
-    grid-template-columns: 1.55fr 1fr;
-  }
-  .panel-title {
-    padding: 1.25rem 1rem 0;
-  }
-  .panel-title h2 {
-    font-size: 0.875rem;
-  }
-  .panel-title p {
-    font-size: 0.75rem;
-  }
   .allocation .panel-title {
     padding-left: 1rem;
     padding-right: 1rem;
-  }
-  .allocation .panel-title h2 {
-    font-size: 0.875rem;
-  }
-  .period-tabs button {
-    padding: 0.25rem 0.5rem;
-  }
-  .onboarding {
-    flex-wrap: wrap;
   }
   .onboarding > div {
     flex-basis: 70%;
@@ -1684,12 +1235,6 @@ input[type="number"]::-webkit-inner-spin-button {
   th:nth-child(3) {
     min-width: 7.1875rem;
   }
-  .news-card {
-    padding: 1rem;
-  }
-  .news-card h3 {
-    font-size: 0.875rem;
-  }
   .target-grid {
     padding: 1.25rem;
     gap: 0.5rem;
@@ -1697,12 +1242,8 @@ input[type="number"]::-webkit-inner-spin-button {
   .target-card {
     padding: 1rem;
   }
-  .target-card > span {
-    font-size: 0.75rem;
-  }
   .target-card input {
     width: 4.375rem;
-    font-size: 1.75rem;
   }
   .target-card > div > span {
     font-size: 1.25rem;
@@ -1723,11 +1264,7 @@ input[type="number"]::-webkit-inner-spin-button {
   .wealth .stat-value {
     font-size: 1.6875rem;
   }
-  .overview-grid {
-    grid-template-columns: 1fr;
-  }
   .allocation {
-    display: grid;
     grid-template-columns: 1fr 1fr;
   }
   .allocation > .panel-title {
@@ -1738,15 +1275,6 @@ input[type="number"]::-webkit-inner-spin-button {
   }
   .news-grid .news-card:last-child:nth-child(3) {
     display: none;
-  }
-  .table-tools {
-    padding: 1rem 1rem 0;
-  }
-  .tabs {
-    gap: 3px;
-  }
-  .tabs button {
-    padding: 0.5rem 0.5rem;
   }
   .table-tools .search input {
     width: 5.3125rem;
@@ -1784,12 +1312,6 @@ input[type="number"]::-webkit-inner-spin-button {
   .market-strip > div b {
     font-size: 0.75rem;
   }
-  .market-strip .change {
-    font-size: 0.75rem;
-  }
-  h1 {
-    font-size: 1.6875rem;
-  }
   .page-heading > .button {
     padding: 0.5rem 0.75rem;
     font-size: 0.75rem;
@@ -1799,9 +1321,6 @@ input[type="number"]::-webkit-inner-spin-button {
   }
 }
 @media (max-width: 760px) {
-  :root {
-    --sidebar: 0px;
-  }
   .sidebar {
     transform: translateX(-100%);
     width: 14rem;
@@ -1825,28 +1344,6 @@ input[type="number"]::-webkit-inner-spin-button {
   .app-main {
     margin: 0;
   }
-  .topbar {
-    height: 3.625rem;
-    padding: 0 1rem;
-  }
-  .breadcrumbs {
-    gap: 0.5rem;
-    font-size: 0.75rem;
-  }
-  .breadcrumbs b {
-    font-size: 0.75rem;
-  }
-  .top-actions {
-    gap: 0.25rem;
-  }
-  .currency-button {
-    font-size: 0.75rem;
-  }
-  .market-strip {
-    height: 2.4375rem;
-    gap: 1.25rem;
-    padding: 0 1rem;
-  }
   .market-strip > div {
     gap: 0.5rem;
     flex: none;
@@ -1854,38 +1351,19 @@ input[type="number"]::-webkit-inner-spin-button {
   .market-strip > button {
     flex: none;
   }
-  .strip-label {
-    font-size: 0.75rem;
-  }
-  main {
-    padding: 1.5rem 1rem 0;
-  }
-  .page-heading {
-    margin-bottom: 1.25rem;
-    align-items: flex-start;
-    gap: 0.5rem;
-  }
-  .page-heading h1 {
-    font-size: 1.5625rem;
-    letter-spacing: -1px;
-  }
   .page-heading p {
-    font-size: 0.75rem;
     max-width: 15rem;
   }
   .page-heading .eyebrow {
-    font-size: 0.75rem;
     letter-spacing: 0.8px;
   }
   .page-heading > .button {
     margin-top: 1rem;
-    font-size: 0;
     gap: 0;
     min-width: 2.1875rem;
     width: 2.1875rem;
     height: 2.1875rem;
     padding: 0;
-    min-height: 0;
   }
   .page-heading > .button svg {
     width: 1.125rem;
@@ -1900,44 +1378,21 @@ input[type="number"]::-webkit-inner-spin-button {
     font-size: 1.5rem;
     letter-spacing: -0.8px;
   }
-  .stat-label {
-    font-size: 0.75rem;
-  }
   .stat-foot {
-    font-size: 0.75rem;
     flex-wrap: wrap;
     gap: 0.25rem;
   }
-  .wealth .stat-foot {
-    font-size: 0.75rem;
-  }
-  .overview-grid {
-    gap: 1rem;
-    margin-bottom: 1rem;
-  }
-  .period-tabs button {
-    padding: 0.25rem 0.5rem;
-  }
-  .panel-title p {
-    font-size: 0.75rem;
-  }
   .allocation > .panel-title h2 {
     font-size: 0.875rem;
-  }
-  .onboarding {
-    padding: 1rem;
-    gap: 0.75rem;
   }
   .onboarding > div {
     flex-basis: 70%;
     max-width: calc(100% - 3.4375rem);
   }
   .onboarding h3 {
-    font-size: 0.75rem;
     line-height: 1.8;
   }
   .onboarding p {
-    font-size: 0.75rem;
     line-height: 1.8;
   }
   .onboard-icon {
@@ -1952,109 +1407,37 @@ input[type="number"]::-webkit-inner-spin-button {
     font-size: 0.75rem;
     padding: 0.5rem 0.5rem;
   }
-  .asset-panel .panel-title .text-button {
-    font-size: 0.75rem;
-  }
-  .asset-panel .panel-title h2 {
-    font-size: 0.875rem;
-  }
   .table-tools {
     padding-left: 1rem;
     padding-right: 1rem;
-  }
-  .tabs {
-    overflow: auto;
-  }
-  .tabs button {
-    font-size: 0.75rem;
-    padding: 0.5rem 0.5rem;
-    white-space: nowrap;
-  }
-  .compact {
-    display: none;
   }
   th,
   td {
     padding-left: 1rem;
     padding-right: 1rem;
   }
-  th {
-    font-size: 0.75rem;
-  }
-  .panel-foot {
-    padding: 0.75rem 1rem;
-    font-size: 0.75rem;
-  }
-  .panel-foot > span:last-child {
-    display: none;
-  }
-  .section-title h2 {
-    font-size: 1.0625rem;
-  }
   .section-title .text-button {
-    font-size: 0.75rem;
     gap: 0.25rem;
-  }
-  .news-grid {
-    grid-template-columns: 1fr;
   }
   .news-grid .news-card:last-child:nth-child(3) {
     display: flex;
   }
-  .news-card {
-    min-height: 10.625rem;
-    padding: 1.25rem;
-  }
   .news-card h3 {
-    font-size: 0.875rem;
     margin-top: 1rem;
-    line-height: 1.7;
     margin-bottom: 1.25rem;
-  }
-  .news-meta,
-  .news-source {
-    font-size: 0.75rem;
-  }
-  .news-ticker {
-    font-size: 0.75rem;
-  }
-  .source-note {
-    font-size: 0.75rem;
   }
   .fixed-panel .panel-title {
     align-items: flex-start;
   }
   .fixed-panel .button {
     padding: 0.5rem 0.5rem;
-    font-size: 0.75rem;
     min-height: 2rem;
-  }
-  .planner .panel-title h2 {
-    font-size: 1.375rem;
-  }
-  .planner {
-    padding: 0 1.25rem 1.5rem;
-  }
-  .target-card > span {
-    font-size: 0.75rem;
-  }
-  .target-card input {
-    font-size: 2.0625rem;
-    width: 5rem;
-  }
-  .target-card {
-    padding: 1rem;
-  }
-  .target-grid {
-    padding: 1rem;
-    gap: 0.5rem;
   }
   .target-panel .panel-title {
     gap: 0.5rem;
     align-items: flex-start;
   }
   .total-pill {
-    font-size: 0.75rem;
     padding: 0.5rem;
     white-space: nowrap;
   }
@@ -2063,7 +1446,6 @@ input[type="number"]::-webkit-inner-spin-button {
     margin-top: 0.25rem;
   }
   .weight-grid {
-    padding: 0.5rem 1rem;
     gap: 0 1rem;
   }
   .weight-item {
@@ -2075,43 +1457,13 @@ input[type="number"]::-webkit-inner-spin-button {
     font-size: 0.75rem;
   }
   .weight-item input {
-    width: 2.6875rem;
-    font-size: 0.75rem;
     padding: 0.5rem 0.25rem;
   }
-  .weight-item b {
-    font-size: 0.75rem;
-  }
-  .weight-item small {
-    font-size: 0.75rem;
-  }
-  .save-row {
-    padding: 1rem 1rem;
-    gap: 1rem;
-  }
-  .save-row > span {
-    font-size: 0.75rem;
-    line-height: 1.7;
-  }
   .save-row .button {
-    font-size: 0.75rem;
     padding: 0.5rem 0.75rem;
-    min-height: 2.125rem;
   }
   .weights-panel .panel-title p {
     line-height: 1.8;
-  }
-  .method-grid {
-    padding: 1.5rem 1rem;
-  }
-  .method-grid p {
-    font-size: 0.75rem;
-  }
-  .backup-panel {
-    padding: 1.25rem;
-  }
-  .backup-panel h2 {
-    font-size: 0.875rem;
   }
   .button-row {
     width: 100%;
@@ -2119,316 +1471,63 @@ input[type="number"]::-webkit-inner-spin-button {
   }
   .button-row .button {
     flex: 1;
-    font-size: 0.75rem;
   }
   footer {
     margin-top: 1.75rem;
-    padding: 1.5rem 0;
-    gap: 0.5rem;
-  }
-  footer > p {
-    font-size: 0.75rem;
   }
   footer > button {
     margin-left: auto;
-    font-size: 0.75rem;
   }
   .toast {
-    left: 50%;
     bottom: 1rem;
-    width: calc(100% - 2rem);
-    font-size: 0.75rem;
-    padding: 0.75rem 1rem;
-  }
-  .dialog-content {
-    padding: 1.75rem 1.5rem;
-  }
-  .dialog-content > h2 {
-    font-size: 1.4375rem;
   }
   .form-grid {
     gap: 0 0.75rem;
-  }
-  .dialog-content .field {
-    font-size: 0.75rem;
-  }
-  .detail-metrics {
-    gap: 0.5rem;
-  }
-  .detail-metrics small {
-    font-size: 0.75rem;
-  }
-  .detail-metrics b {
-    font-size: 1.125rem;
-  }
-  .asset-price {
-    font-size: 1.625rem;
-  }
-  .asset-detail-heading h2 {
-    font-size: 1.3125rem;
-  }
-  .notice {
-    font-size: 0.75rem;
-    flex-wrap: wrap;
-    padding: 0.75rem;
-  }
-  .notice > span {
-    min-width: 75%;
-  }
-  .notice a,
-  .notice button {
-    font-size: 0.75rem;
-  }
-  .notice.demo > button {
-    margin-left: 1.75rem;
-  }
-  .form-note {
-    font-size: 0.75rem;
   }
   .form-grid .field > input {
     font-size: 0.75rem;
     padding: 0.75rem 0.5rem;
   }
-  .dialog-actions .button {
-    font-size: 0.75rem;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  * {
-    animation: none !important;
-    scroll-behavior: auto !important;
-    transition: none !important;
-  }
 }
 /* Keep secondary information readable on both the desktop and compact views. */
-p,
-.page-heading p {
-  color: var(--muted);
-}
-.page-heading p {
-  font-size: 0.875rem;
-}
-.eyebrow,
-.workspace-label {
-  color: var(--muted);
-}
 .stat-label {
   color: var(--muted);
   font-size: 0.75rem;
 }
 .stat-foot {
-  font-size: 0.75rem;
-  color: var(--muted);
   white-space: normal;
-  line-height: 1.6;
-}
-.wealth .stat-foot {
-  font-size: 0.75rem;
-  color: var(--muted);
-}
-.panel-title p {
-  color: var(--muted);
-  font-size: 0.75rem;
-}
-.source-note,
-.panel-foot {
-  color: var(--muted);
-  font-size: 0.75rem;
-}
-.table-tools .tabs button,
-.search input {
-  font-size: 0.75rem;
-  color: var(--muted);
-}
-th {
-  font-size: 0.75rem;
-  color: var(--muted);
-}
-td {
-  font-size: 0.75rem;
-  color: var(--muted);
-}
-.asset-name b {
-  font-size: 0.875rem;
-  color: var(--muted);
-}
-.asset-name small,
-td small {
-  font-size: 0.75rem;
-  color: var(--muted);
-}
-.asset-mark {
-  font-size: 0.875rem;
-}
-.change {
-  font-size: 0.75rem;
-}
-.news-meta,
-.news-source {
-  font-size: 0.75rem;
-  color: var(--muted);
-}
-.news-ticker {
-  font-size: 0.75rem;
-  color: var(--muted);
-}
-.news-card h3 {
-  font-size: 0.875rem;
-  color: var(--muted);
-}
-.news-filters .chip {
-  font-size: 0.75rem;
-  color: var(--muted);
-}
-.section-title .eyebrow {
-  font-size: 0.75rem;
-}
-.nav-item {
-  font-size: 0.875rem;
-  color: var(--muted);
-}
-.profile small {
-  font-size: 0.75rem;
-  color: var(--muted);
-}
-.profile b {
-  font-size: 0.875rem;
 }
 .onboarding p {
   color: var(--muted);
-  font-size: 0.75rem;
-}
-.onboarding h3 {
-  font-size: 0.875rem;
-}
-.onboarding .button {
-  font-size: 0.75rem;
-}
-.prose p {
-  color: var(--muted);
-}
-.prose h3 {
-  font-size: 0.875rem;
 }
 .modal-notice {
   margin-top: 1rem;
-  font-size: 0.75rem;
-}
-.field {
-  color: var(--muted);
-}
-.field > span {
-  color: var(--muted);
-}
-.form-note {
-  color: var(--muted);
-}
-.target-card > span {
-  font-size: 0.75rem;
-  color: var(--muted);
-}
-.target-card > small {
-  font-size: 0.75rem;
-  color: var(--muted);
-}
-.weight-item b {
-  font-size: 0.75rem;
-}
-.weight-item small {
-  font-size: 0.75rem;
-  color: var(--muted);
-}
-.method-grid p {
-  color: var(--muted);
-  font-size: 0.75rem;
-}
-.footer-right {
-  font-size: 0.75rem;
-}
-footer p,
-footer button {
-  font-size: 0.75rem;
-  color: var(--muted);
 }
 .detail-chart {
   min-width: 0;
 }
 @media (max-width: 760px) {
-  .page-heading p {
-    font-size: 0.75rem;
-  }
   .stat-label {
-    font-size: 0.75rem;
-  }
-  .stat-foot {
-    font-size: 0.75rem;
-  }
-  .wealth .stat-foot {
-    font-size: 0.75rem;
-  }
-  .panel-title p {
-    font-size: 0.75rem;
-  }
-  .onboarding h3 {
-    font-size: 0.875rem;
-  }
-  .onboarding p {
-    font-size: 0.75rem;
-  }
-  .onboarding .button {
-    font-size: 0.75rem;
-  }
-  .target-card > span {
-    font-size: 0.75rem;
-  }
-  .weight-item b {
-    font-size: 0.75rem;
-  }
-  .weight-item small {
-    font-size: 0.75rem;
-  }
-  .section-title .eyebrow {
-    font-size: 0.75rem;
-  }
-  footer p,
-  footer button {
     font-size: 0.75rem;
   }
 }
 .fx-ribbon {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem 1rem;
   border: 1px solid var(--line);
   background: var(--surface-3);
   border-radius: 0.4375rem;
-  margin: -0.5rem 0 1rem;
   color: var(--muted);
-  font-size: 0.75rem;
-  line-height: 1.6;
   flex-wrap: wrap;
 }
 .fx-ribbon > b {
   font-weight: 650;
-  color: var(--muted);
-}
-.fx-ribbon > span {
-  color: var(--muted);
 }
 .fx-ribbon small {
-  font-size: 0.75rem;
-  color: var(--muted);
   margin-left: auto;
 }
 .regional-summaries {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-.regional-summary {
-  padding: 1.25rem 1.25rem;
 }
 .regional-heading {
   display: flex;
@@ -2436,34 +1535,22 @@ footer button {
   align-items: center;
   margin-bottom: 1rem;
 }
-.regional-heading h2 {
-  font-size: 0.875rem;
-}
 .regional-heading > span {
   padding: 0.25rem 0.5rem;
   background: var(--surface-3);
-  color: var(--muted);
   border-radius: 0.25rem;
-  font-size: 0.75rem;
   font-weight: 600;
 }
 .regional-summary > div:not(:first-child) {
   display: flex;
   justify-content: space-between;
-  gap: 1rem;
   margin-top: 0.75rem;
-  font-size: 0.75rem;
-  color: var(--muted);
 }
 .regional-summary b {
   font-weight: 600;
-  color: var(--muted);
 }
 .regional-summary p {
-  font-size: 0.75rem;
-  color: var(--muted);
   margin-top: 1rem;
-  line-height: 1.7;
 }
 .table-tools .tabs {
   overflow: auto;
@@ -2477,9 +1564,6 @@ footer button {
 .portfolio-table th:nth-child(3) {
   min-width: 5.625rem;
 }
-.portfolio-table .asset-name small {
-  max-width: 9.0625rem;
-}
 .portfolio-table th:last-child,
 .portfolio-table td:last-child {
   padding-right: 1rem;
@@ -2491,9 +1575,6 @@ footer button {
 }
 .income-panel .panel-title {
   padding-bottom: 0.75rem;
-}
-.income-panel .button {
-  font-size: 0.75rem;
 }
 .statement-panel {
   margin-top: 1.5rem;
@@ -2517,28 +1598,16 @@ footer button {
   flex-direction: column;
   gap: 0.5rem;
 }
-.statement-totals span {
-  font-size: 0.75rem;
-  color: var(--muted);
-}
 .statement-totals b {
   font-family: inherit;
-  font-size: 1.5rem;
-  color: var(--muted);
   letter-spacing: -0.6px;
   margin-bottom: 0.25rem;
-}
-.statement-totals small {
-  font-size: 0.75rem;
-  color: var(--muted);
 }
 .statement-note {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1.5rem;
-  font-size: 0.75rem;
-  color: var(--muted);
 }
 .statement-note svg {
   flex: none;
@@ -2548,8 +1617,6 @@ footer button {
   margin-top: 0.25rem;
 }
 .statement-panel summary {
-  font-size: 0.75rem;
-  color: var(--muted);
   font-weight: 600;
   padding: 1rem 1.5rem;
   cursor: pointer;
@@ -2560,8 +1627,6 @@ footer button {
   border-top: 1px solid var(--warn-line);
 }
 .bitcoin-reference > b {
-  font-size: 0.875rem;
-  color: var(--muted);
   display: block;
   margin-bottom: 1rem;
 }
@@ -2570,18 +1635,12 @@ footer button {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  font-size: 0.75rem;
   margin: 0.5rem 0;
-  color: var(--muted);
 }
 .bitcoin-reference strong {
   font-weight: 550;
-  color: var(--muted);
 }
 .bitcoin-reference p {
-  font-size: 0.75rem;
-  color: var(--muted);
-  line-height: 1.8;
   margin-top: 1rem;
 }
 .statement-notes {
@@ -2589,11 +1648,7 @@ footer button {
 }
 .statement-notes p {
   display: flex;
-  align-items: flex-start;
   gap: 0.5rem;
-  font-size: 0.75rem;
-  color: var(--muted);
-  line-height: 1.8;
   margin-top: 0.75rem;
 }
 .statement-notes svg {
@@ -2607,12 +1662,9 @@ footer button {
   display: flex;
   justify-content: space-between;
   gap: 1rem;
-  font-size: 0.75rem;
   margin: 1rem 0;
-  color: var(--muted);
 }
 .detail-financials b {
-  color: var(--muted);
   font-weight: 600;
 }
 @media (max-width: 1200px) {
@@ -2620,31 +1672,8 @@ footer button {
     margin-left: 0;
     flex-basis: 100%;
   }
-  .regional-summary {
-    padding: 1rem;
-  }
 }
 @media (max-width: 760px) {
-  .fx-ribbon {
-    font-size: 0.75rem;
-    gap: 0.5rem;
-  }
-  .fx-ribbon small {
-    font-size: 0.75rem;
-  }
-  .regional-summaries {
-    grid-template-columns: 1fr;
-    gap: 0.75rem;
-  }
-  .regional-summary {
-    padding: 1rem;
-  }
-  .regional-heading h2 {
-    font-size: 0.875rem;
-  }
-  .regional-summary > div:not(:first-child) {
-    font-size: 0.75rem;
-  }
   .income-panel .panel-title {
     align-items: flex-start;
     gap: 0.5rem;
@@ -2653,40 +1682,15 @@ footer button {
     font-size: 0.875rem;
   }
   .income-panel .button {
-    font-size: 0.75rem;
     padding: 0.5rem;
     min-height: 2rem;
     gap: 0.25rem;
   }
   .statement-totals {
     gap: 0.5rem;
-    padding: 1rem 1rem 0.5rem;
   }
   .statement-totals > div {
     padding: 0.75rem;
-  }
-  .statement-totals b {
-    font-size: 1.25rem;
-  }
-  .statement-totals small {
-    font-size: 0.75rem;
-  }
-  .statement-note {
-    padding: 0.75rem 1rem;
-    font-size: 0.75rem;
-  }
-  .bitcoin-reference {
-    padding: 1rem 1rem;
-  }
-  .bitcoin-reference > div {
-    font-size: 0.75rem;
-  }
-  .statement-notes {
-    padding: 0.5rem 1rem 1rem;
-  }
-  .statement-panel summary {
-    padding: 1rem 1rem;
-    font-size: 0.75rem;
   }
   .statement-panel .panel-title {
     padding-left: 1rem;
@@ -2695,217 +1699,90 @@ footer button {
 }
 .supplemental-holdings {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-  margin: -0.25rem 0 1.5rem;
 }
 .supplemental-holding {
-  padding: 1rem 1.25rem;
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  gap: 1rem;
 }
 .supplemental-holding > div {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
-.supplemental-holding > div:last-child {
-  text-align: right;
-}
-.supplemental-holding .eyebrow {
-  font-size: 0.75rem;
-}
 .supplemental-holding b {
-  font-size: 0.875rem;
-  color: var(--muted);
   font-family: inherit;
   font-weight: 650;
 }
 .supplemental-holding strong {
-  font-size: 1.0625rem;
   letter-spacing: -0.4px;
   font-weight: 650;
   font-family: inherit;
-  color: var(--muted);
 }
 .supplemental-holding small {
-  font-size: 0.75rem;
-  color: var(--muted);
   line-height: 1.7;
 }
-@media (max-width: 980px) {
-  .supplemental-holdings {
-    grid-template-columns: 1fr;
-    gap: 0.75rem;
-  }
-}
-@media (max-width: 760px) {
-  .supplemental-holding {
-    padding: 1rem;
-    gap: 0.75rem;
-  }
-  .supplemental-holding b {
-    font-size: 0.875rem;
-  }
-  .supplemental-holding strong {
-    font-size: 1rem;
-  }
-  .supplemental-holding small {
-    font-size: 0.75rem;
-  }
-}
 /* Portfolio performance and explicit exchange segments. */
-.regional-summaries {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1rem;
-}
-.regional-summary {
-  padding: 1rem;
-}
-.regional-summary > div:not(:first-child) {
-  font-size: 0.75rem;
-  gap: 0.5rem;
-}
 .supplemental-holdings {
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1rem;
 }
 .supplemental-holding {
   flex-direction: column;
   align-items: stretch;
   gap: 0.75rem;
-  padding: 1rem;
 }
 .supplemental-holding > div:last-child {
   text-align: left;
 }
 .supplemental-income {
-  padding: 1rem;
   display: flex;
   flex-direction: column;
   justify-content: center;
 }
 .supplemental-income .stat-value {
-  font-size: 1.25rem;
   margin-top: 0.75rem;
-}
-.supplemental-income .stat-foot {
-  font-size: 0.75rem;
-  color: var(--muted);
-}
-.supplemental-income .stat-foot span {
-  font-size: 0.75rem;
 }
 .asset-segment + .asset-segment {
   border-top: 1px solid var(--line);
 }
 .asset-segment-heading {
-  padding: 1rem 1.5rem;
-  background: var(--surface-2);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
   border-top: 1px solid var(--line);
 }
 .asset-segment-heading h3 {
-  font-size: 0.875rem;
   color: var(--muted);
   display: flex;
   align-items: center;
   gap: 0.5rem;
-}
-.asset-segment-heading > span {
-  font-size: 0.75rem;
-  color: var(--muted);
-}
-.overview-grid {
-  grid-template-columns: minmax(0, 1.9fr) minmax(16.5625rem, 1fr);
-  align-items: start;
 }
 .performance-panel {
   min-width: 0;
   overflow: hidden;
 }
-.performance-panel .panel-title h2 {
-  margin-top: 0.5rem;
-  font-size: 1.0625rem;
-}
 .performance-panel .panel-title .eyebrow {
-  font-size: 0.75rem;
   letter-spacing: 1.1px;
 }
-.performance-panel .panel-title p {
-  font-size: 0.75rem;
-}
-.performance-toolbar {
-  padding: 1.25rem 1.5rem 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
 .performance-modes {
-  display: flex;
   border-bottom: 1px solid var(--line);
-  gap: 1rem;
 }
 .performance-modes button {
-  font-size: 0.75rem;
-  color: var(--muted);
-  padding: 0.5rem 0 0.5rem;
-  white-space: nowrap;
   border-bottom: 2px solid transparent;
 }
 .performance-modes button.active {
-  color: var(--muted);
   border-color: var(--line-strong);
-  font-weight: 650;
-}
-.performance-result {
-  padding: 1.5rem 1.5rem 0.75rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
 }
 .performance-scope {
   display: block;
-  font-size: 0.75rem;
-  letter-spacing: 0.7px;
-  color: var(--muted);
 }
 .performance-result strong {
   display: block;
-  font-family: inherit;
-  font-size: 2.25rem;
-  letter-spacing: -1.5px;
-  font-weight: 650;
-  color: var(--accent);
-  line-height: 1.5;
-}
-.performance-result p {
-  font-size: 0.75rem;
-  color: var(--muted);
 }
 .performance-legend {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem 0.75rem;
-  padding: 0.5rem 1.5rem 0;
-  flex-wrap: wrap;
-  font-size: 0.75rem;
   color: var(--muted);
 }
 .performance-legend > span {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
   font-weight: 650;
-  color: var(--muted);
 }
 .performance-legend > small {
   font-size: 0.75rem;
@@ -2919,30 +1796,16 @@ footer button {
   flex: none;
 }
 .performance-legend button {
-  padding: 0.25rem 0;
   display: flex;
-  gap: 0.25rem;
   align-items: center;
-  color: var(--muted);
-  font-size: 0.75rem;
-}
-.performance-legend button.selected {
-  color: var(--muted);
 }
 .performance-legend button i {
-  width: 0.6875rem;
-  height: 0.6875rem;
   border: 1px solid;
   border-radius: 3px;
   color: var(--on-brand);
   display: flex;
   align-items: center;
   justify-content: center;
-}
-.performance-chart {
-  height: 15.9375rem;
-  margin: 1rem 0.5rem 0 0.25rem;
-  min-width: 0;
 }
 .performance-empty {
   height: 100%;
@@ -2951,25 +1814,12 @@ footer button {
   justify-content: center;
   text-align: center;
   flex-direction: column;
-  gap: 0.75rem;
-  padding: 1.25rem 2rem;
-  color: var(--muted);
-}
-.performance-empty b {
-  font-size: 0.875rem;
-  color: var(--muted);
 }
 .performance-empty p {
-  font-size: 0.75rem;
   max-width: 21.875rem;
 }
 .performance-record-note {
   display: flex;
-  gap: 0.5rem;
-  padding: 0.5rem 1.5rem 1rem;
-  color: var(--muted);
-  font-size: 0.75rem;
-  line-height: 1.8;
 }
 .performance-record-note svg {
   flex: none;
@@ -2980,9 +1830,6 @@ footer button {
 }
 .performance-method summary {
   cursor: pointer;
-  padding: 0.75rem 1.5rem;
-  font-size: 0.75rem;
-  color: var(--muted);
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -2996,38 +1843,18 @@ footer button {
 .performance-method[open] summary::after {
   content: "−";
 }
-.performance-method > div {
-  padding: 0 1.5rem 1rem;
-}
 .performance-method p {
-  font-size: 0.75rem;
-  color: var(--muted);
-  line-height: 1.9;
   margin-bottom: 0.5rem;
 }
 .performance-method a {
-  color: var(--muted);
   text-decoration: underline;
   text-underline-offset: 3px;
 }
 @media (max-width: 1200px) {
-  .overview-grid {
-    grid-template-columns: 1fr;
-  }
   .allocation {
-    display: grid;
     grid-template-columns: 1fr 1fr;
   }
   .allocation > .panel-title {
-    grid-column: 1/-1;
-  }
-  .regional-summaries {
-    grid-template-columns: 1fr;
-  }
-  .supplemental-holdings {
-    grid-template-columns: 1fr 1fr;
-  }
-  .supplemental-income {
     grid-column: 1/-1;
   }
   .supplemental-holding {
@@ -3039,69 +1866,8 @@ footer button {
   }
 }
 @media (max-width: 760px) {
-  .supplemental-holdings {
-    grid-template-columns: 1fr;
-  }
-  .supplemental-income {
-    grid-column: auto;
-  }
-  .performance-toolbar {
-    padding: 1rem 1rem 0;
-    gap: 0.75rem;
-  }
-  .performance-modes {
-    gap: 0.75rem;
-  }
-  .performance-modes button {
-    font-size: 0.75rem;
-  }
-  .performance-panel .panel-title {
-    padding: 1.25rem 1rem 0;
-  }
-  .performance-panel .panel-title h2 {
-    font-size: 1rem;
-  }
-  .performance-result {
-    padding: 1.25rem 1rem 0.5rem;
-  }
-  .performance-result strong {
-    font-size: 2rem;
-  }
-  .performance-result p {
-    font-size: 0.75rem;
-  }
-  .performance-scope {
-    font-size: 0.75rem;
-    max-width: 13.75rem;
-    line-height: 1.7;
-  }
-  .performance-legend {
-    padding: 0.5rem 1rem 0;
-    gap: 0.5rem 0.75rem;
-  }
   .performance-legend > small {
     display: none;
-  }
-  .performance-chart {
-    height: 15rem;
-  }
-  .performance-method summary {
-    padding: 0.75rem 1rem;
-  }
-  .performance-method > div {
-    padding: 0 1rem 1rem;
-  }
-  .performance-record-note {
-    padding: 0.5rem 1rem 1rem;
-  }
-  .asset-segment-heading {
-    padding: 1rem;
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 0.25rem;
-  }
-  .asset-segment-heading > span {
-    font-size: 0.75rem;
   }
 }
 
@@ -3217,7 +1983,6 @@ main:focus {
 }
 .button {
   padding: 0.5rem 1rem;
-  border-radius: 0.55rem;
   white-space: normal;
 }
 .primary {
@@ -3242,7 +2007,6 @@ main:focus {
 }
 .eyebrow,
 .workspace-label {
-  font-size: 0.75rem;
   letter-spacing: 0.07em;
   color: var(--muted);
 }
@@ -3277,26 +2041,17 @@ td b,
   letter-spacing: -0.06em;
 }
 .workspace-label {
-  font-size: 0.6875rem;
-  line-height: 1.5;
   padding-left: 0.5rem;
 }
 .nav-item {
   font-size: 0.875rem;
   min-height: 3rem;
   padding: 0.5rem 0.75rem;
-  color: var(--muted);
-}
-.nav-item.active {
-  color: var(--ink);
-  background: var(--surface-4);
 }
 .private-note {
-  font-size: 0.75rem;
   color: var(--muted);
 }
 .private-note {
-  line-height: 1.5;
   padding-bottom: 1rem;
 }
 .sidebar-bottom {
@@ -3311,7 +2066,6 @@ td b,
   font-size: 0.875rem;
 }
 .profile small {
-  font-size: 0.75rem;
   color: var(--muted);
 }
 .menu-close {
@@ -3339,12 +2093,10 @@ td b,
   min-height: 3rem;
   padding: 0.25rem 2rem;
   gap: 1.5rem;
-  font-size: 0.75rem;
 }
 .market-strip b,
 .market-strip .change,
 .strip-label {
-  font-size: 0.75rem;
   color: var(--muted);
 }
 .market-strip > button {
@@ -3362,7 +2114,6 @@ main {
   max-width: 105rem;
 }
 .page-heading {
-  margin-bottom: 1.25rem;
   gap: 1rem;
 }
 .page-heading .eyebrow {
@@ -3370,7 +2121,6 @@ main {
   margin-bottom: 0.5rem;
 }
 .page-heading p {
-  font-size: 0.875rem;
   color: var(--muted);
 }
 .page-heading > .button {
@@ -3378,8 +2128,6 @@ main {
   flex-shrink: 0;
 }
 .panel {
-  border-color: var(--line);
-  border-radius: 0.75rem;
   min-width: 0;
 }
 .panel-title {
@@ -3458,9 +2206,6 @@ main {
 .wealth .stat-foot {
   color: var(--on-brand-muted) !important;
 }
-.wealth .stat-value {
-  color: var(--on-brand);
-}
 .fx-ribbon {
   padding: 0.75rem 1rem;
   margin: 0 0 1.25rem;
@@ -3477,7 +2222,6 @@ main {
   font-size: 0.75rem;
 }
 .regional-summaries {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
   margin-bottom: 1.25rem;
   gap: 1rem;
 }
@@ -3619,35 +2363,14 @@ main {
 .performance-panel .panel-title p {
   font-size: 0.875rem;
 }
-.performance-toolbar {
-  padding: 1.25rem 1.25rem 0;
-  gap: 0.75rem;
-}
-.performance-modes {
-  gap: 0.75rem;
-  flex-wrap: wrap;
-}
 .performance-modes button {
-  font-size: 0.8125rem;
   line-height: 1.4;
-  min-height: 2.75rem;
-  padding: 0.5rem 0;
-  color: var(--muted);
 }
 .performance-modes button.active {
-  color: var(--ink-2);
   border-bottom-color: var(--accent);
-}
-.period-tabs {
-  padding: 0.125rem;
-  gap: 0.125rem;
 }
 .period-tabs button {
   min-width: 2.75rem;
-  min-height: 2.75rem;
-  font-size: 0.75rem;
-  padding: 0.5rem;
-  color: var(--muted);
 }
 .period-tabs .active {
   color: var(--ink);
@@ -3691,13 +2414,6 @@ main {
   padding: 0.75rem 1rem;
   border: 1px solid var(--warn-line);
   border-radius: 0.5rem;
-  background: var(--warn-bg);
-  color: var(--warn-text);
-}
-.performance-result {
-  padding: 1.25rem 1.25rem 0.75rem;
-  align-items: flex-start;
-  gap: 1rem;
 }
 .performance-scope {
   font-size: 0.8125rem !important;
@@ -3707,18 +2423,12 @@ main {
   max-width: none;
 }
 .performance-result strong {
-  font-size: clamp(1.75rem, 3vw, 2.5rem);
-  line-height: 1.5;
-  letter-spacing: -0.04em;
   color: var(--accent);
 }
 .performance-result p {
-  font-size: 0.8125rem;
   color: var(--muted);
 }
 .performance-legend {
-  padding: 0.5rem 1.25rem 0;
-  gap: 0.25rem 0.75rem;
   font-size: 0.8125rem;
 }
 .performance-legend > span {
@@ -3745,7 +2455,6 @@ main {
   color: var(--warn-text);
 }
 .performance-chart {
-  height: 18rem;
   margin: 0.75rem 0.5rem 0 0;
   min-width: 0;
 }
@@ -3763,7 +2472,6 @@ main {
   color: var(--muted);
 }
 .performance-record-note {
-  font-size: 0.8125rem;
   line-height: 1.6;
   color: var(--muted);
   padding: 0.75rem 1.25rem 1rem;
@@ -3841,8 +2549,6 @@ main {
   align-items: flex-start;
 }
 .tabs {
-  flex-wrap: wrap;
-  gap: 0.5rem;
   overflow: visible !important;
 }
 .tabs button,
@@ -3853,11 +2559,6 @@ main {
   padding: 0.5rem 0.75rem;
   color: var(--muted);
   white-space: normal;
-}
-.tabs button.active {
-  background: var(--surface-4);
-  color: var(--ink);
-  box-shadow: inset 0 0 0 1px var(--line-strong);
 }
 .compact,
 .search.compact {
@@ -3878,15 +2579,9 @@ main {
   color: var(--muted);
 }
 .asset-segment-heading {
-  padding: 1rem 1.25rem;
-  background: var(--surface-3);
   gap: 0.5rem;
 }
-.asset-segment-heading h3 {
-  font-size: 1rem;
-}
 .asset-segment-heading > span {
-  font-size: 0.8125rem;
   color: var(--muted);
 }
 .table-wrap {
@@ -4011,7 +2706,6 @@ td small,
   color: var(--muted);
 }
 .source-note {
-  font-size: 0.75rem;
   color: var(--muted);
 }
 .empty h3 {
@@ -4089,9 +2783,6 @@ td small,
 .target-card > small {
   font-size: 0.75rem;
   color: var(--muted);
-}
-.target-card > div {
-  flex-wrap: wrap;
 }
 .target-card .field-error {
   flex-basis: 100%;
@@ -4236,9 +2927,7 @@ dialog {
   padding-right: 2.5rem;
 }
 .segmented {
-  gap: 0.5rem;
   margin: 1.25rem 0;
-  flex-wrap: wrap;
 }
 .segmented > button {
   font-size: 0.875rem;
@@ -4285,9 +2974,6 @@ dialog {
     grid-template-columns: 1fr 1fr;
     align-items: start;
   }
-  .regional-summaries {
-    grid-template-columns: 1fr;
-  }
   .supplemental-holdings {
     grid-template-columns: 1fr 1fr;
   }
@@ -4310,7 +2996,6 @@ dialog {
       visibility 180ms;
   }
   .sidebar.open {
-    visibility: visible;
     pointer-events: auto;
     transform: translateX(0);
   }
@@ -4403,13 +3088,9 @@ dialog {
   .page-heading {
     align-items: flex-start;
     flex-wrap: wrap;
-    gap: 1rem;
   }
   .page-heading .eyebrow {
     font-size: 0.75rem;
-  }
-  .page-heading p {
-    font-size: 0.875rem;
   }
   .page-heading > .button {
     font-size: 0.875rem;
@@ -4471,16 +3152,6 @@ dialog {
   .performance-panel .panel-title p {
     font-size: 0.875rem;
   }
-  .performance-toolbar {
-    padding: 1rem 1rem 0;
-    gap: 0.75rem;
-  }
-  .performance-modes {
-    gap: 0.75rem;
-  }
-  .performance-modes button {
-    font-size: 0.8125rem;
-  }
   .performance-context {
     margin: 1rem 1rem 0;
     padding: 0.75rem;
@@ -4494,34 +3165,17 @@ dialog {
   .coverage-note {
     margin: 0.75rem 1rem 0;
   }
-  .performance-result {
-    padding: 1rem;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-  }
   .performance-scope {
     font-size: 0.8125rem !important;
-  }
-  .performance-result strong {
-    font-size: 2rem;
-  }
-  .performance-result p {
-    font-size: 0.8125rem;
-  }
-  .performance-legend {
-    padding: 0.25rem 1rem 0;
-    gap: 0.25rem 0.75rem;
   }
   .performance-legend button {
     font-size: 0.8125rem;
   }
   .performance-chart {
-    height: 17rem;
     margin: 0.75rem 0.25rem 0 0;
   }
   .performance-record-note {
     padding: 0.75rem 1rem 1rem;
-    font-size: 0.8125rem;
   }
   .performance-method summary {
     font-size: 0.8125rem;
@@ -4560,15 +3214,8 @@ dialog {
     flex-basis: 100%;
   }
   .asset-segment-heading {
-    padding: 1rem;
     align-items: flex-start;
     flex-direction: column;
-  }
-  .asset-segment-heading h3 {
-    font-size: 1rem;
-  }
-  .asset-segment-heading > span {
-    font-size: 0.8125rem;
   }
   .asset-segment table {
     min-width: 50rem;
@@ -4626,9 +3273,6 @@ dialog {
   }
   .news-meta,
   .news-source {
-    font-size: 0.75rem;
-  }
-  .source-note {
     font-size: 0.75rem;
   }
   .planner {
@@ -4789,9 +3433,6 @@ dialog {
   .breadcrumbs b {
     max-width: 6rem;
   }
-  .currency-button {
-    font-size: 0.6875rem;
-  }
   .topbar {
     padding: 0.5rem;
   }
@@ -4804,17 +3445,11 @@ dialog {
     background: var(--scrim);
     backdrop-filter: none;
   }
-  .topbar,
-  .sidebar {
-    background: var(--surface);
-  }
   .source-recovery {
     background: var(--warn-bg);
   }
 }
 @media (prefers-contrast: more) {
-  :root {
-  }
   .panel,
   .stat-card,
   dialog,
@@ -4829,10 +3464,6 @@ dialog {
   .wealth {
     background: var(--brand);
   }
-  .wealth .stat-label,
-  .wealth .stat-foot {
-    color: var(--on-brand) !important;
-  }
   .table-wrap th,
   .table-wrap td {
     border-color: var(--line-strong);
@@ -4844,10 +3475,6 @@ dialog {
   .performance-result p,
   .panel-title p {
     color: var(--ink) !important;
-  }
-  .wealth .stat-label,
-  .wealth .stat-foot {
-    color: var(--on-brand) !important;
   }
 }
 @media (forced-colors: active) {
@@ -4867,12 +3494,6 @@ dialog {
   }
   .wealth {
     background: Canvas;
-    color: CanvasText;
-  }
-  .wealth .stat-label,
-  .wealth .stat-value,
-  .wealth .stat-foot {
-    color: CanvasText !important;
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -4891,13 +3512,10 @@ dialog {
   }
   .button.primary:active {
     background-color: var(--brand);
-    color: var(--on-brand);
   }
 }
 .field-error-slot {
   display: block;
-  min-height: 1.5em;
-  font-size: 0.875rem;
   line-height: 1.5;
 }
 .target-card .field-error-slot,
@@ -4906,9 +3524,6 @@ dialog {
 }
 .field-error-slot:not(.field-error) {
   color: transparent;
-}
-.workspace-label {
-  font-size: 0.75rem;
 }
 @media (max-width: 980px) {
   .sidebar.open {
@@ -4924,10 +3539,6 @@ dialog {
 @media (prefers-reduced-motion: reduce) {
   .sidebar.open {
     transition: none;
-  }
-  .button.danger:active {
-    background: var(--negative);
-    color: var(--on-brand);
   }
 }
 .heading-actions {
@@ -4977,11 +3588,6 @@ textarea::placeholder {
   font-weight: 650;
   color: var(--ink-2);
   margin-bottom: 0.5rem;
-}
-.performance-filters > div {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
 }
 .performance-filters .chip,
 .news-filters .chip {
@@ -5044,7 +3650,6 @@ textarea::placeholder {
     margin: 1rem 1rem 0;
   }
   .performance-filters > div {
-    display: grid;
     grid-template-columns: 1fr 1fr;
   }
   .performance-filters .chip {
@@ -5619,7 +4224,6 @@ table,
   justify-content: space-between;
   align-items: center;
   gap: 1.5rem;
-  background: linear-gradient(110deg, var(--surface-subtle), var(--surface));
 }
 .evaluation-intro h2 {
   font-size: 1.25rem;
@@ -5716,8 +4320,6 @@ table,
   padding: 0.65rem 0.75rem;
   border: 1px solid var(--border-strong);
   border-radius: 0.4375rem;
-  background: var(--surface);
-  color: var(--ink);
   font: inherit;
 }
 .evaluation-page textarea {
@@ -5781,8 +4383,6 @@ table,
   display: inline-flex;
   align-items: center;
   border: 1px solid var(--border-strong);
-  background: var(--surface-subtle);
-  color: var(--text-secondary);
   border-radius: 2rem;
   font-size: 0.75rem;
   font-weight: 650;
@@ -5790,29 +4390,6 @@ table,
   line-height: 1.4;
   margin-top: 0.625rem;
   white-space: normal;
-}
-.evaluation-badge.buy {
-  background: var(--surface-subtle);
-  color: var(--text-secondary);
-  border-color: var(--border-strong);
-}
-.evaluation-badge.reduce,
-.evaluation-badge.sell {
-  background: var(--surface-subtle);
-  color: var(--negative);
-  border-color: var(--border-strong);
-}
-.evaluation-badge.review,
-.evaluation-badge.missing {
-  background: var(--warning-bg);
-  color: var(--warning-text);
-  border-color: var(--border-strong);
-}
-.evaluation-badge.wait,
-.evaluation-badge.unassigned {
-  background: var(--surface-subtle);
-  color: var(--text-secondary);
-  border-color: var(--border-strong);
 }
 .evaluation-apply {
   padding: 1.25rem;
@@ -5921,7 +4498,6 @@ table,
 .evaluation-method a {
   text-decoration: underline;
   text-underline-offset: 3px;
-  color: var(--text-secondary);
 }
 .evaluation-sources a svg {
   vertical-align: middle;
@@ -6074,12 +4650,10 @@ table,
 .contribution-allocation-status {
   padding: 0.875rem 1rem;
   margin: 0 1.25rem 1rem;
-  background: var(--warning-bg);
   border: 1px solid var(--border-strong);
   border-radius: 0.5rem;
   font-size: 0.8125rem;
   line-height: 1.7;
-  color: var(--warning-text);
 }
 .contribution-allocation-table {
   min-width: 56rem;
@@ -6238,9 +4812,6 @@ summary:focus-visible {
   background: color-mix(in srgb, var(--action), var(--ink) 12%);
   color: var(--on-action);
 }
-.button.danger {
-  color: #fff;
-}
 .wealth,
 .wealth .stat-value,
 .wealth .stat-label,
@@ -6309,9 +4880,6 @@ summary:focus-visible {
 }
 .recharts-tooltip-wrapper .recharts-tooltip-label {
   color: var(--ink) !important;
-}
-.recharts-text {
-  fill: var(--text-secondary);
 }
 html[data-theme="dark"] .wealth {
   background: #214f3b;
