@@ -1,12 +1,13 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   historyBatches,
   historyStart,
   historySymbols,
+  mergeMarket,
   type AssetHistory,
 } from "../lib/market-history";
-import { today, type Point, type Portfolio } from "../lib/model";
+import { today, type Market, type Point, type Portfolio } from "../lib/model";
 
 const REFRESH = 3600000;
 const CONCURRENT = 3;
@@ -60,4 +61,14 @@ export function useMarketHistory(portfolio: Portfolio) {
     return () => controller.abort();
   }, [from, symbols, key]);
   return { histories, ptax, loading: loadedKey !== key };
+}
+
+/** Cotações do minuto já juntas com o histórico diário. */
+export function useMarket(portfolio: Portfolio, quotes: Market) {
+  const { histories, ptax, loading } = useMarketHistory(portfolio);
+  const market = useMemo(
+    () => mergeMarket(quotes, histories, ptax),
+    [quotes, histories, ptax],
+  );
+  return { market, loading };
 }

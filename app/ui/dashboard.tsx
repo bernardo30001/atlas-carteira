@@ -7,7 +7,6 @@ import {
   Newspaper,
   SlidersHorizontal,
   Plus,
-  ArrowUpRight,
   ChevronRight,
   ChevronDown,
   RefreshCw,
@@ -16,50 +15,31 @@ import {
   Eye,
   EyeOff,
   X,
-  Check,
   Download,
   Upload,
   Info,
   Target,
   ArrowRight,
   Menu,
-  Bitcoin,
-  Landmark,
   ExternalLink,
   Compass,
   AlertCircle,
   Scale,
 } from "lucide-react";
 import {
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  Tooltip,
-} from "recharts";
-import {
   allAssets,
-  ASSETS,
-  GROUPS,
   EMPTY,
   isTrackedTicker,
   trackedPortfolio,
   today,
   totals,
   allocationPlan,
-  type Group,
   type Portfolio,
   type Market,
 } from "../lib/model";
-import { money, num, plainPercent, signedMoney } from "../lib/format";
+import { money, num } from "../lib/format";
 import { portfolioSchema } from "../lib/validation";
-import type { NewsItem } from "../lib/news";
-import {
-  ledgerIssues,
-  migratePortfolio,
-  PORTFOLIO_SCHEMA,
-} from "../lib/trade-history";
+import { ledgerIssues, migratePortfolio } from "../lib/trade-history";
 import { MovementHistory } from "./movement-history";
 import { AssetForm } from "./asset-form";
 const ImportPanel = lazy(() =>
@@ -69,32 +49,25 @@ import { Change } from "./change";
 import { ContributionPreview } from "./contribution-preview";
 import { ContributionPlan } from "./contribution-plan";
 import { PortfolioMap } from "./portfolio-map";
-import { ValidatedForm, FormInput } from "./validated-form";
 import { PerformanceChart } from "./performance-chart";
 import { useCdi } from "./use-cdi";
-import { useMarketHistory } from "./use-market-history";
-import { mergeMarket } from "../lib/market-history";
+import { useMarket } from "./use-market-history";
 import { CurrencySummary } from "./currency-summary";
 import { AssetTable } from "./asset-table";
 import { IncomePanel } from "./income-panel";
 import { StatementPanel } from "./statement-panel";
-import { NewsFilters } from "./news-filters";
+import { NewsSection } from "./news-section";
+import { MethodContent } from "./method-content";
+import { FixedIncomePanel } from "./fixed-income-panel";
+import { Strategy, strategyKey } from "./strategy";
+import { AssetDetail } from "./asset-detail";
+import { demoPortfolio } from "./demo-portfolio";
 import { ThemeToggle } from "./theme-toggle";
 const EvaluationPanel = lazy(() =>
   import("./evaluation-panel").then((m) => ({ default: m.EvaluationPanel })),
 );
-import { evaluationSettings } from "../lib/evaluation";
 import { TransactionForm, FixedForm, IncomeForm } from "./investment-forms";
-const groups = Object.keys(GROUPS) as Group[];
 const blankMarket: Market = { quotes: {}, errors: [], fetchedAt: "" };
-const datetime = (n: number) =>
-  new Date(n * 1000).toLocaleString("pt-BR", {
-    timeZone: "America/Sao_Paulo",
-    day: "2-digit",
-    month: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
 const nav = [
   { id: "overview", label: "Visão geral", icon: LayoutDashboard },
   { id: "portfolio", label: "Minha carteira", icon: Wallet },
@@ -110,135 +83,6 @@ const TABS = [
   { id: "contributions", label: "Aportes", icon: ArrowDownLeft },
   { id: "evaluation", label: "Avaliação", icon: Scale },
 ];
-function Mark({
-  ticker,
-  size = 36,
-  color = ASSETS.find((a) => a.ticker === ticker)?.color ?? "#54735c",
-}: {
-  ticker: string;
-  size?: number;
-  /** Ativos cadastrados por você trazem a própria cor. */
-  color?: string;
-}) {
-  return (
-    <span
-      className="asset-mark"
-      style={{
-        width: size,
-        height: size,
-        background: color + "16",
-        color,
-      }}
-    >
-      {ticker === "BTC" ? (
-        <Bitcoin size={size * 0.55} />
-      ) : ticker === "RF" ? (
-        <Landmark size={18} />
-      ) : (
-        ticker.slice(0, 2)
-      )}
-    </span>
-  );
-}
-function Empty({
-  icon: Icon = Wallet,
-  title,
-  text,
-  action,
-}: {
-  icon?: any;
-  title: string;
-  text: string;
-  action?: React.ReactNode;
-}) {
-  return (
-    <div className="empty">
-      <span className="empty-icon">
-        <Icon size={25} />
-      </span>
-      <h3>{title}</h3>
-      <p>{text}</p>
-      {action}
-    </div>
-  );
-}
-/** Carteira fictícia com compras datadas, pelos preços reais de cada dia quando já
- * carregados, para que a demonstração mostre a curva e os pontos de compra. */
-function demoPortfolio(market: Market): Portfolio {
-  const dayOffset = (days: number) =>
-      new Date(Date.now() - days * 86400000).toISOString().slice(0, 10),
-    start = dayOffset(300),
-    priceOn = (ticker: string, date: string, fallback: number) =>
-      (market.quotes[ticker]?.priceHistory ?? []).findLast(
-        (point) => point.date <= date,
-      )?.close ?? fallback;
-  const positions: [string, number, number][] = [
-    ["WEGE3", 80, 34],
-    ["ITUB4", 150, 29],
-    ["VALE3", 70, 50],
-    ["ALUP11", 80, 25],
-    ["AUPO11", 60, 105],
-    ["SPHQ", 10, 55],
-    ["VEA", 15, 46],
-    ["VNQ", 10, 80],
-    ["IAU", 8, 43],
-    ["VWO", 10, 42],
-    ["BTC", 0.018, 80000],
-    ["ABTC11", 12, 120],
-  ];
-  const monthly: [string, number, number][] = [
-    ["WEGE3", 6, 34],
-    ["SPHQ", 1.5, 55],
-    ["AUPO11", 8, 105],
-    ["BTC", 0.0008, 80000],
-  ];
-  const currencyOf = (ticker: string) =>
-    ASSETS.find((a) => a.ticker === ticker)?.currency ?? "BRL";
-  return {
-    ...EMPTY,
-    schemaVersion: PORTFOLIO_SCHEMA,
-    transactions: positions.map(([ticker, quantity, fallback]) => ({
-      id: crypto.randomUUID(),
-      ticker,
-      kind: "opening",
-      quantity,
-      price: priceOn(ticker, start, fallback),
-      fx: currencyOf(ticker) === "USD" ? null : 1,
-      fees: 0,
-      date: start,
-      note: "Demonstração — posição fictícia",
-    })),
-    tradeHistory: [270, 225, 180, 135, 90, 45].flatMap((days) =>
-      monthly.map(([ticker, quantity, fallback]) => {
-        const date = dayOffset(days),
-          price = priceOn(ticker, date, fallback);
-        return {
-          id: crypto.randomUUID(),
-          ticker,
-          kind: "buy" as const,
-          quantity,
-          price,
-          total: quantity * price,
-          currency: currencyOf(ticker),
-          fx: currencyOf(ticker) === "USD" ? null : 1,
-          fees: 0,
-          date,
-          source: "Demonstração",
-        };
-      }),
-    ),
-    fixedIncome: [
-      {
-        id: crypto.randomUUID(),
-        name: "CDB · exemplo fictício",
-        cost: 18000,
-        value: 19150,
-        date: start,
-        updatedAt: today(),
-      },
-    ],
-  };
-}
 /** O Access pede o login ao recarregar a página: precisa ser um link comum. */
 const SIGN_IN_URL = "/";
 const SIGN_OUT_URL = "/cdn-cgi/access/logout";
@@ -274,12 +118,7 @@ export default function Dashboard() {
     [mobile, setMobile] = useState(false),
     [compact, setCompact] = useState(false),
     [newsTicker, setNewsTicker] = useState("all"),
-    [news, setNews] = useState<NewsItem[]>([]),
-    [pendingImport, setPendingImport] = useState<Portfolio | null>(null),
-    [newsBusy, setNewsBusy] = useState(true),
-    [newsError, setNewsError] = useState(""),
-    [newsTime, setNewsTime] = useState(""),
-    [newsProvider, setNewsProvider] = useState("Google Notícias");
+    [pendingImport, setPendingImport] = useState<Portfolio | null>(null);
   const dialogRef = useRef<HTMLDialogElement>(null),
     lastFocus = useRef<HTMLElement | null>(null),
     marketBusy = useRef(false),
@@ -287,17 +126,11 @@ export default function Dashboard() {
     menuRef = useRef<HTMLButtonElement>(null),
     importRef = useRef<HTMLInputElement>(null),
     extraRef = useRef(""),
-    newsFor = useRef("all");
+    compactRef = useRef(false);
   const p = demo ?? portfolio,
-    marketHistory = useMarketHistory(p),
-    market = useMemo(
-      () => mergeMarket(quotes, marketHistory.histories, marketHistory.ptax),
-      [quotes, marketHistory.histories, marketHistory.ptax],
-    ),
+    { market, loading: historyLoading } = useMarket(p, quotes),
     t = useMemo(() => totals(p, market), [p, market]),
     classPlan = allocationPlan(p, market, budget);
-  const displayMoney = (v: number | null) =>
-    hidden ? "••••••" : v === null ? "Não informado" : money(v);
   const portfolioReady = !!demo || account === "ready";
   const hasPositions =
     p.transactions.some((t) => isTrackedTicker(t.ticker)) ||
@@ -346,6 +179,7 @@ export default function Dashboard() {
   useEffect(() => {
     const query = window.matchMedia("(max-width: 980px)"),
       sync = () => {
+        compactRef.current = query.matches;
         setCompact(query.matches);
         if (!query.matches) setMobile(false);
       };
@@ -393,10 +227,16 @@ export default function Dashboard() {
   useEffect(() => {
     fetch("/api/portfolio")
       .then(async (r) => {
-        const j: any = await r.json();
+        const j: {
+          portfolio: Portfolio;
+          changes?: { ticker: string; before: number; after: number }[];
+          revision: number;
+          name: string;
+          error?: string;
+        } = await r.json();
         if (!r.ok) {
           setAccount(r.status === 401 ? "signin" : "error");
-          if (r.status !== 401) setToast(j.error);
+          if (r.status !== 401) setToast(j.error ?? "");
           return;
         }
         setPortfolio(j.portfolio);
@@ -426,7 +266,7 @@ export default function Dashboard() {
         { signal: AbortSignal.timeout(30000) },
       );
       if (!r.ok) throw Error();
-      const j: any = await r.json();
+      const j: Market = await r.json();
       setQuotes(j);
       setMarketError(
         j.errors.length
@@ -463,56 +303,6 @@ export default function Dashboard() {
     }, 60000);
     return () => clearInterval(timer);
   }, [extraAssets]);
-  const newsVisible = page === "overview" || page === "news";
-  useEffect(() => {
-    // Só consulta nas páginas que mostram notícias.
-    if (!newsVisible) return;
-    let canceled = false;
-    const controller = new AbortController();
-    const load = async () => {
-      setNewsBusy(true);
-      setNewsError("");
-      try {
-        const r = await fetch(
-          "/api/news?ticker=" + encodeURIComponent(newsTicker),
-          { signal: controller.signal },
-        );
-        const j: {
-          items?: NewsItem[];
-          error?: string;
-          updatedAt?: string;
-          provider?: string;
-        } = await r.json();
-        if (!canceled) {
-          setNews(j.items ?? []);
-          setNewsError(j.error ?? "");
-          setNewsTime(j.updatedAt ?? "");
-          setNewsProvider(j.provider ?? "Google Notícias");
-        }
-      } catch {
-        if (!canceled) {
-          setNews([]);
-          setNewsError("Não foi possível conectar às notícias.");
-        }
-      } finally {
-        if (!canceled) setNewsBusy(false);
-      }
-    };
-    if (newsFor.current !== newsTicker) {
-      newsFor.current = newsTicker;
-      setNews([]);
-      setNewsTime("");
-    }
-    load();
-    const id = setInterval(() => {
-      if (!document.hidden) load();
-    }, 300000);
-    return () => {
-      canceled = true;
-      controller.abort();
-      clearInterval(id);
-    };
-  }, [newsTicker, newsVisible]);
   useEffect(() => {
     if (!toast) return;
     const timer = setTimeout(() => setToast(""), 6500);
@@ -521,7 +311,8 @@ export default function Dashboard() {
   useEffect(() => {
     if (modal) {
       lastFocus.current =
-        compact && sidebarRef.current?.contains(document.activeElement)
+        compactRef.current &&
+        sidebarRef.current?.contains(document.activeElement)
           ? menuRef.current
           : (document.activeElement as HTMLElement);
       dialogRef.current?.showModal();
@@ -547,7 +338,7 @@ export default function Dashboard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ portfolio: next, revision }),
       });
-      const j: any = await r.json();
+      const j: { revision: number; error?: string } = await r.json();
       if (!r.ok) throw new Error(j.error);
       setPortfolio(next);
       setRevision(j.revision);
@@ -628,86 +419,6 @@ export default function Dashboard() {
       />
     );
   }
-  function newsBlock(full = false) {
-    return (
-      <section className="news-section">
-        <div className="section-title">
-          <div>
-            <span className="eyebrow">INFORMAÇÃO QUE IMPORTA</span>
-            <h2>No radar dos seus ativos</h2>
-          </div>
-          {!full && (
-            <button className="text-button" onClick={() => navigate("news")}>
-              Todas as notícias <ArrowRight size={16} />
-            </button>
-          )}
-        </div>
-        <NewsFilters value={newsTicker} onChange={setNewsTicker} />
-        {newsError && (
-          <div className="notice warn">
-            <AlertCircle size={16} />
-            {newsError}
-          </div>
-        )}
-        {newsBusy && news.length === 0 ? (
-          <div className="news-grid">
-            {[1, 2, 3].map((x) => (
-              <div className="panel news-card skeleton" key={x}>
-                <span />
-                <span />
-                <span />
-              </div>
-            ))}
-          </div>
-        ) : news.length ? (
-          <div className="news-grid">
-            {news.slice(0, full ? 24 : 3).map((n, i) => (
-              <a
-                key={n.link + i}
-                className="panel news-card"
-                href={n.link}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <div className="news-meta">
-                  <span className="news-ticker">{n.ticker}</span>
-                  <span>
-                    {n.date
-                      ? new Date(n.date).toLocaleDateString("pt-BR", {
-                          day: "2-digit",
-                          month: "short",
-                        })
-                      : ""}
-                  </span>
-                </div>
-                <h3>{n.title}</h3>
-                <div className="news-source">
-                  <span>{n.source || "Google Notícias"}</span>
-                  <ArrowUpRight size={18} />
-                </div>
-              </a>
-            ))}
-          </div>
-        ) : (
-          <Empty
-            icon={Newspaper}
-            title="Notícias indisponíveis no momento"
-            text="O feed será consultado novamente automaticamente."
-          />
-        )}
-        <p className="source-note">
-          {newsProvider} · fontes e datas preservadas · atualização a cada 5 min
-          {newsTime
-            ? " · última consulta " +
-              new Date(newsTime).toLocaleTimeString("pt-BR", {
-                hour: "2-digit",
-                minute: "2-digit",
-              })
-            : ""}
-        </p>
-      </section>
-    );
-  }
   return (
     <div className="app-shell">
       <a className="skip-link" href="#main-content">
@@ -730,14 +441,18 @@ export default function Dashboard() {
         >
           <X size={20} />
         </button>
-        <a className="brand" href="/" aria-label="Atlas início">
+        <button
+          className="brand"
+          aria-label="Atlas, ir para a visão geral"
+          onClick={() => navigate("overview")}
+        >
           <span className="brand-icon">
             <Compass size={27} strokeWidth={1.5} />
           </span>
           <span>
             atlas<span className="brand-period">.</span>
           </span>
-        </a>
+        </button>
         <div className="workspace-label">SEU ESPAÇO FINANCEIRO</div>
         <nav aria-label="Páginas da carteira">
           {nav.map((n) => (
@@ -1084,7 +799,7 @@ export default function Dashboard() {
                     portfolio={p}
                     market={market}
                     rates={cdi.rates}
-                    historyLoading={marketHistory.loading}
+                    historyLoading={historyLoading}
                     cdiError={cdi.cdiError}
                     hidden={hidden}
                     cdiBusy={cdi.cdiBusy}
@@ -1109,89 +824,21 @@ export default function Dashboard() {
                   </div>
                 </div>
                 {table()}
-                {newsBlock()}
+                <NewsSection
+                  ticker={newsTicker}
+                  onTicker={setNewsTicker}
+                  onAll={() => navigate("news")}
+                />
               </>
             )}
             {portfolioReady && page === "portfolio" && (
               <>
                 {table(true)}
-                <section className="panel fixed-panel">
-                  <div className="panel-title">
-                    <div>
-                      <h2>
-                        <Landmark size={18} />
-                        Renda fixa
-                      </h2>
-                      <p>
-                        CDBs e títulos com atualização manual · AUPO11 aparece
-                        entre os ativos cotados.
-                      </p>
-                    </div>
-                    <button
-                      className="button outline"
-                      onClick={() => setModal({ kind: "fixed" })}
-                    >
-                      <Plus size={15} />
-                      Adicionar título
-                    </button>
-                  </div>
-                  {p.fixedIncome.length ? (
-                    <div className="table-wrap">
-                      <table>
-                        <thead>
-                          <tr>
-                            <th>Título</th>
-                            <th>Capital investido</th>
-                            <th>Saldo atual</th>
-                            <th>Atualizado em</th>
-                            <th />
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {p.fixedIncome.map((r) => (
-                            <tr key={r.id}>
-                              <td>
-                                <b>
-                                  {hidden ? "Título de renda fixa" : r.name}
-                                </b>
-                                <small>
-                                  {r.ratePercent
-                                    ? `${r.ratePercent}% do ${r.index ?? "CDI"}`
-                                    : "Atualização manual"}
-                                </small>
-                              </td>
-                              <td>{displayMoney(r.cost)}</td>
-                              <td>
-                                <b>{displayMoney(r.value)}</b>
-                              </td>
-                              <td>
-                                {new Date(
-                                  r.updatedAt + "T12:00:00",
-                                ).toLocaleDateString("pt-BR")}
-                              </td>
-                              <td>
-                                <button
-                                  className="text-button"
-                                  onClick={() =>
-                                    setModal({ kind: "fixed", id: r.id })
-                                  }
-                                >
-                                  Atualizar <ArrowRight size={14} />
-                                </button>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  ) : (
-                    <Empty
-                      icon={Landmark}
-                      title="Cadastre sua renda fixa"
-                      text="Adicione CDBs, Tesouro Direto e outros títulos com o saldo do seu extrato."
-                    />
-                  )}
-                </section>
+                <FixedIncomePanel
+                  portfolio={p}
+                  hidden={hidden}
+                  onEdit={(id) => setModal({ kind: "fixed", id })}
+                />
               </>
             )}
             {portfolioReady && page === "portfolio" && (
@@ -1255,10 +902,18 @@ export default function Dashboard() {
                 onShowValues={() => setHidden(false)}
               />
             )}
-            {page === "news" && newsBlock(true)}
+            {page === "news" && (
+              <NewsSection
+                full
+                ticker={newsTicker}
+                onTicker={setNewsTicker}
+                onAll={() => navigate("news")}
+              />
+            )}
             {portfolioReady && page === "strategy" && (
               <>
                 <Strategy
+                  key={strategyKey(p)}
                   portfolio={p}
                   market={market}
                   save={save}
@@ -1725,438 +1380,10 @@ export default function Dashboard() {
             </>
           )}
           {(modal?.kind === "method" || modal?.kind === "sources") && (
-            <>
-              <span className="eyebrow">TRANSPARÊNCIA</span>
-              <h2 id="modal-title">
-                {modal.kind === "method"
-                  ? "Como orientamos seus aportes"
-                  : "Fontes e atualização"}
-              </h2>
-              <div className="prose">
-                <h3>Suas metas vêm primeiro</h3>
-                <p>
-                  Brasil {p.targets.br}%, renda fixa {p.targets.rf}%, exterior{" "}
-                  {p.targets.etf}% e Bitcoin {p.targets.crypto}%, conforme você
-                  definiu. Metas editáveis. Sem pesos específicos, a compra
-                  mantém a proporção atual dos ativos da classe. Nenhuma divisão
-                  é presumida.
-                </p>
-                <h3>Como o valor é distribuído</h3>
-                <p>
-                  Cada classe tem um nível: posição atual ÷ meta. O aporte vai
-                  primeiro para o nível mais baixo e, ao alcançar o seguinte, as
-                  duas sobem juntas. Assim, as classes que recebem terminam
-                  igualmente perto da meta, e nenhuma venda é sugerida. Nas
-                  ações brasileiras, preço, fundamentos e limites da Avaliação
-                  definem as compras. Nas outras classes, a mesma regra vale
-                  entre os ativos.
-                </p>
-                <p>
-                  As quantidades respeitam as cotas inteiras da B3 e as frações
-                  do exterior e do Bitcoin. O que o arredondamento deixar vai
-                  para quem aceita frações ou para mais uma cota de quem couber.
-                  Volatilidade e tendência são exibidas como informação e não
-                  alteram os valores.
-                </p>
-                <h3>Métricas</h3>
-                <p>
-                  Volatilidade: desvio padrão amostral dos retornos logarítmicos
-                  diários × √252 (√365 para Bitcoin). Tendência: variação em 126
-                  intervalos diários de negociação, ou 183 dias para Bitcoin.
-                  Queda máxima: maior perda de um pico até um fundo no histórico
-                  de até 1 ano. Preços históricos ajustados pelo provedor quando
-                  disponíveis.
-                </p>
-                <h3>Cotações e notícias</h3>
-                <p>
-                  Yahoo Finance: consulta a cada 60 segundos enquanto a aba está
-                  visível. A fonte pode ter atrasos e bloqueios; o horário
-                  exibido é o da cotação, em Brasília. A conexão usa uma
-                  interface não oficial, sem garantia de disponibilidade.
-                  Notícias: Google Notícias via RSS, com Bing Notícias e Yahoo
-                  Finance como alternativas, consultadas a cada 5 minutos, com
-                  links para as matérias. As alternativas podem incluir conteúdo
-                  em inglês.
-                </p>
-                <h3>Câmbio e resultado</h3>
-                <p>
-                  Os ETFs internacionais preservam saldo, custo e dividendos em
-                  dólares; a conversão atual em reais é exibida separadamente.
-                  Sem o câmbio de compra, o custo e o resultado históricos em
-                  reais ficam pendentes. O resultado por ativo é saldo na moeda
-                  de origem menos custo mais proventos registrados. Dividendos
-                  não são adicionados novamente ao patrimônio. Bitcoin pode ter
-                  custo informado em reais. Renda fixa usa o saldo manual do
-                  extrato; custo ausente permanece desconhecido. O resultado das
-                  posições em carteira não inclui vendas, que aparecem à parte
-                  em Resultado realizado. Impostos não são calculados. Cada ETF
-                  conta na classe a que dá exposição: AUPO11 em renda fixa e
-                  ABTC11 em Bitcoin, nas metas, nos resumos e nos filtros. O
-                  ABTC11 segue a estratégia do próprio fundo, então sua variação
-                  pode diferir da do BTC. Valores e rendimentos do extrato
-                  recebido ficam preservados separadamente das cotações atuais.
-                </p>
-                <h3>Limites</h3>
-                <p>
-                  O simulador não avalia fundamentos, valor justo, risco de
-                  crédito, liquidez, tributação nem seu perfil. Não executa
-                  ordens e não garante retorno. Confirme preços e condições na
-                  corretora.
-                </p>
-                <a
-                  href="https://help.yahoo.com/kb/SLN2310.html"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Cobertura e atrasos — Yahoo Finance ↗
-                </a>
-                <a
-                  href="https://www.investor.gov/introduction-investing/getting-started/asset-allocation"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Alocação e reequilíbrio — Investor.gov ↗
-                </a>
-              </div>
-            </>
+            <MethodContent kind={modal.kind} targets={p.targets} />
           )}
         </div>
       </dialog>
     </div>
-  );
-}
-function Strategy({
-  portfolio,
-  market,
-  save,
-  busy,
-  onAddAsset,
-}: {
-  portfolio: Portfolio;
-  market: Market;
-  save: (p: Portfolio) => Promise<boolean>;
-  busy: boolean;
-  onAddAsset: () => void;
-}) {
-  const assets = allAssets(portfolio).filter((a) => !a.archived);
-  const rows = useMemo(
-      () => totals(portfolio, market).rows,
-      [portfolio, market],
-    ),
-    heldOf = (ticker: string) =>
-      rows.find((r) => r.ticker === ticker)?.value ?? 0;
-  const [targets, setTargets] = useState(portfolio.targets),
-    [weights, setWeights] = useState({
-      ...portfolio.weights,
-      ...evaluationSettings(portfolio).baseWeights,
-    }),
-    [dirty, setDirty] = useState(false);
-  useEffect(() => {
-    setTargets(portfolio.targets);
-    setWeights({
-      ...portfolio.weights,
-      ...evaluationSettings(portfolio).baseWeights,
-    });
-    setDirty(false);
-  }, [portfolio]);
-  const sum = Object.values(targets).reduce((a, b) => a + b, 0),
-    targetsValid = Math.abs(sum - 100) < 0.001,
-    weightsValid = groups
-      .filter((g) => g !== "rf")
-      .every((g) =>
-        ASSETS.some((a) => a.group === g && (weights[a.ticker] ?? 1) > 0),
-      ),
-    valid = targetsValid && weightsValid;
-  return (
-    <ValidatedForm
-      busy={busy}
-      onValidSubmit={async (e) => {
-        e.preventDefault();
-        if (valid)
-          await save({
-            ...portfolio,
-            targets,
-            weights,
-            evaluation: {
-              ...evaluationSettings(portfolio),
-              baseWeights: Object.fromEntries(
-                ASSETS.filter((a) => a.group === "br").map((a) => [
-                  a.ticker,
-                  weights[a.ticker] ?? 0,
-                ]),
-              ),
-            },
-          });
-      }}
-    >
-      <section className="panel target-panel">
-        <div className="panel-title">
-          <div>
-            <span className="eyebrow">ALOCAÇÃO DEFINIDA POR VOCÊ</span>
-            <h2>Suas metas de patrimônio</h2>
-            <p>Percentuais por classe. O total deve ser 100%.</p>
-          </div>
-          <span className={"total-pill " + (valid ? "" : "invalid")}>
-            {num(sum)}% / 100%
-          </span>
-        </div>
-        <div className="target-grid">
-          {groups.map((g) => (
-            <label className="target-card" key={g}>
-              <span>
-                <i style={{ background: GROUPS[g].color }} />
-                {GROUPS[g].name}
-              </span>
-              <div>
-                <FormInput
-                  name={"target-" + g}
-                  aria-label={`Meta ${GROUPS[g].name}`}
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="0.1"
-                  required
-                  value={targets[g]}
-                  onChange={(e) => {
-                    setTargets({ ...targets, [g]: Number(e.target.value) });
-                    setDirty(true);
-                  }}
-                />
-                <span>%</span>
-              </div>
-              <small>do patrimônio total</small>
-            </label>
-          ))}
-        </div>
-        <div className="target-strip">
-          {groups.map((g) => (
-            <span
-              key={g}
-              style={{ width: targets[g] + "%", background: GROUPS[g].color }}
-            />
-          ))}
-        </div>
-      </section>
-      <section className="panel weights-panel">
-        <div className="panel-title">
-          <div>
-            <h2>Pesos dentro de cada classe</h2>
-            <p>
-              Sem pesos definidos, a compra mantém a proporção atual da classe.
-              Ao definir um peso, os demais ativos da classe valem 1. Peso 0
-              exclui dos novos aportes. Em renda fixa, a escolha do título é
-              sua.
-            </p>
-          </div>
-          <button type="button" className="button outline" onClick={onAddAsset}>
-            <Plus size={15} />
-            Cadastrar ativo
-          </button>
-        </div>
-        <div className="weight-grid">
-          {assets
-            .filter((a) => a.group !== "rf")
-            .map((a) => {
-              const peers = assets.filter((x) => x.group === a.group),
-                chosen = peers.some((x) => weights[x.ticker] !== undefined),
-                anyHeld = peers.some((x) => heldOf(x.ticker) > 0),
-                weightOf = (ticker: string) =>
-                  chosen
-                    ? (weights[ticker] ?? 1)
-                    : anyHeld
-                      ? heldOf(ticker)
-                      : 1,
-                total = peers.reduce((s, x) => s + weightOf(x.ticker), 0);
-              return (
-                <label className="weight-item" key={a.ticker}>
-                  <Mark ticker={a.ticker} size={30} color={a.color} />
-                  <span>
-                    <b>{a.ticker}</b>
-                    <small>
-                      {total ? num((weightOf(a.ticker) / total) * 100, 1) : 0}%
-                      da classe{chosen ? "" : " hoje"}
-                    </small>
-                  </span>
-                  <FormInput
-                    name={"weight-" + a.ticker}
-                    aria-label={`Peso ${a.ticker}`}
-                    type="number"
-                    min="0"
-                    max="100"
-                    step="0.1"
-                    placeholder={chosen ? "1" : "Atual"}
-                    value={weights[a.ticker] ?? ""}
-                    onChange={(e) => {
-                      const next = { ...weights };
-                      if (e.target.value === "") delete next[a.ticker];
-                      else next[a.ticker] = Number(e.target.value);
-                      setWeights(next);
-                      setDirty(true);
-                    }}
-                  />
-                </label>
-              );
-            })}
-        </div>
-        <div className="save-row">
-          <span className={valid ? "muted" : "negative"}>
-            {valid
-              ? dirty
-                ? "Você tem alterações para salvar."
-                : "Metas alinhadas com sua estratégia."
-              : !targetsValid
-                ? "Ajuste as metas para somar 100%."
-                : "Defina pelo menos um peso positivo em cada classe."}
-          </span>
-          <button
-            className="button primary"
-            disabled={!valid || busy || !dirty}
-          >
-            {busy ? "Salvando…" : "Salvar estratégia"}
-            <Check size={15} />
-          </button>
-        </div>
-      </section>
-    </ValidatedForm>
-  );
-}
-function AssetDetail({
-  ticker,
-  market,
-  position,
-  hidden,
-  onAdd,
-  onSell,
-  onNews,
-}: {
-  ticker: string;
-  market: Market;
-  position: ReturnType<typeof totals>["rows"][number];
-  hidden: boolean;
-  onAdd: () => void;
-  onSell: () => void;
-  onNews: () => void;
-}) {
-  const a = position,
-    q = market.quotes[ticker];
-  return (
-    <>
-      <div className="asset-detail-heading">
-        <Mark ticker={ticker} size={48} color={a.color} />
-        <div>
-          <span className="eyebrow">{a.sector}</span>
-          <h2 id="modal-title">
-            {ticker} <small>{a.name}</small>
-          </h2>
-        </div>
-      </div>
-      <div className="asset-price">
-        {q ? money(q.price, a.currency) : "Sem cotação"}{" "}
-        <Change value={q?.change} />
-      </div>
-      <p>
-        {q
-          ? `Yahoo Finance · ${datetime(q.time)} · ${q.stale ? "sem atualização" : q.outdated ? "cotação antiga" : "pode haver atraso"}`
-          : "Aguardando a fonte de mercado."}
-      </p>
-      {q && q.history.length > 2 && (
-        <div className="detail-chart">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={q.history}>
-              <XAxis dataKey="date" hide />
-              <YAxis domain={["auto", "auto"]} hide />
-              <Tooltip
-                formatter={(v: any) => money(Number(v), a.currency)}
-                labelFormatter={(v) =>
-                  new Date(String(v) + "T12:00:00").toLocaleDateString("pt-BR")
-                }
-              />
-              <Area
-                type="monotone"
-                dataKey="close"
-                stroke="var(--positive)"
-                fill="var(--chart-area)"
-                strokeWidth={2}
-                isAnimationActive={false}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-      )}
-      <div className="detail-metrics">
-        {[
-          ["Volatilidade anual", q?.volatility],
-          ["Tendência 6 meses", q?.momentum],
-          ["Queda máxima · 1 ano", q?.drawdown],
-        ].map(([l, v]) => (
-          <div key={String(l)}>
-            <small>{l}</small>
-            <b>
-              {v !== null && v !== undefined ? plainPercent(Number(v)) : "—"}
-            </b>
-          </div>
-        ))}
-      </div>
-      <div className="notice">
-        <Wallet size={18} />
-        <span>
-          Sua posição: {hidden ? "•••" : num(position.quantity, 8)} · custo
-          médio{" "}
-          {hidden
-            ? "•••"
-            : position.average === null
-              ? "Não informado"
-              : money(position.average, position.averageCurrency)}
-        </span>
-      </div>
-      <div className="detail-financials">
-        <div>
-          <span>Saldo atual</span>
-          <b>
-            {hidden
-              ? "••••••"
-              : position.primaryValue !== null
-                ? money(position.primaryValue, position.primaryCurrency)
-                : "Cotação pendente"}
-          </b>
-        </div>
-        <div>
-          <span>Proventos acumulados</span>
-          <b>
-            {hidden
-              ? "••••••"
-              : position.nativeIncome === null
-                ? "Conversão pendente"
-                : money(position.nativeIncome, position.primaryCurrency)}
-          </b>
-        </div>
-        <div>
-          <span>Resultado com proventos</span>
-          <b>
-            {hidden
-              ? "••••••"
-              : position.result !== null
-                ? signedMoney(position.result, position.primaryCurrency)
-                : "Não disponível"}
-          </b>
-        </div>
-      </div>
-      <div className="dialog-actions">
-        <button className="button outline" onClick={onNews}>
-          <Newspaper size={16} />
-          Notícias
-        </button>
-        {position.quantity > 0 && (
-          <button className="button outline" onClick={onSell}>
-            <ArrowUpRight size={16} />
-            Registrar venda
-          </button>
-        )}
-        <button className="button primary" onClick={onAdd}>
-          <Plus size={16} />
-          Registrar aporte
-        </button>
-      </div>
-    </>
   );
 }
