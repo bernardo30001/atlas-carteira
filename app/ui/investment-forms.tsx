@@ -381,8 +381,13 @@ export function FixedForm({
               type="date"
               max={today()}
               min={existing?.date}
-              defaultValue={existing?.updatedAt ?? today()}
+              defaultValue={today()}
               required
+              hint={
+                existing
+                  ? `Saldo anterior de ${new Date(existing.updatedAt + "T12:00:00").toLocaleDateString("pt-BR")}. Informe a data do novo saldo.`
+                  : undefined
+              }
             />
           </label>
           <label className="field">
