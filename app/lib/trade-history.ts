@@ -63,31 +63,6 @@ export function replayTrades(
   return { quantity, costNative, feesBRL };
 }
 
-/** Keep only the currently open cycle. Old sales without their opening balance
- * precede the supplied acquisition history and cannot create a new position. */
-export function openTradeCycle(events: TradeEvent[]): TradeEvent[] {
-  let quantity = 0;
-  let current: TradeEvent[] = [];
-  for (const event of ordered(events)) {
-    if (event.kind === "buy") {
-      if (quantity === 0) current = [];
-      current.push(event);
-      quantity += event.quantity;
-    } else {
-      if (quantity === 0) continue;
-      if (event.quantity > quantity + 1e-8)
-        throw new Error("Movimentação incompleta para " + event.ticker + ".");
-      current.push(event);
-      quantity = Math.max(0, quantity - event.quantity);
-      if (quantity < 1e-8) {
-        quantity = 0;
-        current = [];
-      }
-    }
-  }
-  return current;
-}
-
 // ------------------------------------------------------------------ fonte única
 
 export type Lot = Transaction & { costNative: number };
@@ -385,55 +360,6 @@ export function purchasesForPoints<T extends { date: string }>(
         ? trades.filter((e) => e.date === point.date)
         : [],
   }));
-}
-
-export function datedCost(
-  events: TradeEvent[],
-  date: string,
-  currency: Currency,
-  fx: number | null,
-): { quantity: number; cost: number | null } {
-  let quantity = 0,
-    cost: number | null = 0;
-  for (const event of ordered(events).filter((e) => e.date <= date)) {
-    if (event.kind === "buy") {
-      const rate = event.fx ?? fx;
-      const native =
-        event.currency === currency
-          ? event.total
-          : rate
-            ? event.currency === "USD"
-              ? event.total * rate
-              : event.total / rate
-            : null;
-      const fee =
-        event.fees === 0
-          ? 0
-          : currency === "BRL"
-            ? event.fees
-            : rate
-              ? event.fees / rate
-              : null;
-      cost =
-        cost === null || native === null || fee === null
-          ? null
-          : cost + native + fee;
-      quantity += event.quantity;
-    } else {
-      if (event.quantity > quantity + 1e-8)
-        throw new Error(
-          "Venda sem saldo suficiente para " + event.ticker + ".",
-        );
-      const factor = quantity ? Math.max(0, 1 - event.quantity / quantity) : 0;
-      quantity = Math.max(0, quantity - event.quantity);
-      if (cost !== null) cost *= factor;
-      if (quantity < 1e-8) {
-        quantity = 0;
-        cost = 0;
-      }
-    }
-  }
-  return { quantity, cost };
 }
 
 // ------------------------------------------------------------------- proventos

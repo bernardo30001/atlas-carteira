@@ -472,22 +472,6 @@ export function positions(portfolio: Portfolio, market: Market) {
         : tx[0]
           ? transactionCurrency(tx[0])
           : primaryCurrency;
-    const averageCost =
-      currencies.size > 1
-        ? primaryCost
-        : sumNullable(
-            tx.map((t) => {
-              const fee =
-                t.fees === 0
-                  ? 0
-                  : averageCurrency === "BRL"
-                    ? t.fees
-                    : t.fx
-                      ? t.fees / t.fx
-                      : null;
-              return fee === null ? null : transactionCost(t) + fee;
-            }),
-          );
     const average = quantity
       ? currencies.size > 1
         ? primaryCost === null

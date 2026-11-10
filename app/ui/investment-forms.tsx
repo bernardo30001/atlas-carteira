@@ -12,7 +12,6 @@ import {
   type Transaction,
   type FixedIncome,
   type Income,
-  type Market,
   type Currency,
 } from "../lib/model";
 export function TransactionForm({
@@ -20,7 +19,6 @@ export function TransactionForm({
   quantity,
   initialKind = "buy",
   portfolio,
-  market,
   busy,
   onSubmit,
   onSell,
@@ -29,7 +27,6 @@ export function TransactionForm({
   quantity?: number;
   initialKind?: "buy" | "sell";
   portfolio: Portfolio;
-  market: Market;
   busy: boolean;
   onSubmit: (t: Transaction) => Promise<void>;
   onSell: (sale: TradeEvent) => Promise<void>;

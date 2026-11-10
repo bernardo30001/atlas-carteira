@@ -2,10 +2,8 @@ import assert from "node:assert/strict";
 import { EMPTY } from "../app/lib/model.ts";
 import {
   replayTrades,
-  openTradeCycle,
   datedTrades,
   purchasesForPoints,
-  datedCost,
 } from "../app/lib/trade-history.ts";
 import { costPerformance } from "../app/lib/cost-performance.ts";
 import { performancePortfolio } from "../app/lib/performance.ts";
@@ -32,12 +30,8 @@ let balance = replayTrades(events);
 near(balance.quantity, 10);
 near(balance.costNative, 108);
 near(replayTrades(events, "2026-10-27").costNative, 60);
-near(datedCost(events, "2026-10-27", "BRL", null).cost, 60);
 const oldBuy = event("buy", 5, 2, "2024-01-01"),
   oldSale = event("sell", 5, 4, "2024-02-01");
-assert.deepEqual(openTradeCycle([oldBuy, oldSale, ...events]), events);
-assert.deepEqual(openTradeCycle([oldSale, ...events]), events);
-assert.deepEqual(openTradeCycle([oldBuy, oldSale]), []);
 assert.throws(() => replayTrades([buy, event("sell", 11, 20, "2026-10-27")]));
 const portfolio = {
   ...EMPTY,

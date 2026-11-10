@@ -85,7 +85,7 @@ assert.ok(
 const excluded = assetPlan({ ...EMPTY, weights: { WEGE3: 0 } }, market, 10000);
 assert.ok(!excluded.some((x) => x.ticker === "WEGE3"));
 assert.equal(allocationPlan(EMPTY, market, 0).length, 0);
-const hist = Array.from({ length: 150 }, (_, i) => ({
+const hist = Array.from({ length: 150 }, () => ({
   date: "2026-01-01",
   close: 100,
 }));

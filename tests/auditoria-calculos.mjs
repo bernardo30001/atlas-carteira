@@ -11,13 +11,9 @@ import {
   today,
   totals,
 } from "../app/lib/model.ts";
-import {
-  brDate,
-  cdiFactor,
-  simulateComposition,
-} from "../app/lib/performance.ts";
+import { brDate, simulateComposition } from "../app/lib/performance.ts";
 import { costPerformance } from "../app/lib/cost-performance.ts";
-import { datedCost, replayTrades } from "../app/lib/trade-history.ts";
+import { replayTrades } from "../app/lib/trade-history.ts";
 import { portfolioSchema } from "../app/lib/validation.ts";
 import { DEFAULT_EVALUATION } from "../app/lib/evaluation-config.ts";
 import {
@@ -47,12 +43,6 @@ test("preço médio: compra parcial e venda reduzem o custo pelo médio", () => 
   near(balance.quantity, 150, "quantidade");
   near(balance.costNative, 2250, "custo");
   near(balance.feesBRL, 7.5, "taxas");
-  near(
-    datedCost(events, "2026-03-02", "BRL", null).cost,
-    2257.5,
-    "datedCost com taxas",
-  );
-  near(datedCost(events, "2026-01-31", "BRL", null).cost, 1005, "antes da 2ª");
 });
 
 test("preço médio: o preço de venda não altera o custo restante", () => {
@@ -76,23 +66,13 @@ test("preço médio: zerar a posição encerra o ciclo", () => {
   near(balance.costNative, 100, "custo");
 });
 
-test("taxas: entram no custo igual em positions, costPerformance e datedCost", () => {
-  // 10 × 10 + 5 de taxa = 105 nos três caminhos.
+test("taxas: entram no custo igual em positions e costPerformance", () => {
+  // 10 × 10 + 5 de taxa = 105 nos dois caminhos.
   const buy = lot("WEGE3", 10, 10, { kind: "buy", fees: 5 });
   const p = portfolio({ transactions: [buy] });
   const m = market(quote("WEGE3", 10));
   near(row(p, m, "WEGE3").primaryCost, 105, "positions");
   near(costPerformance(p, m, "br", 365, NOW).cost, 105, "costPerformance");
-  near(
-    datedCost(
-      [trade("WEGE3", "buy", 10, 10, "2026-01-05", { fees: 5 })],
-      "2026-11-06",
-      "BRL",
-      null,
-    ).cost,
-    105,
-    "datedCost",
-  );
 });
 
 test("desde o preço médio: (saldo − custo + proventos) / custo, ponderado", () => {
