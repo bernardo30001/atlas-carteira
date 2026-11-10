@@ -383,8 +383,8 @@ Executada de novo ao fim da revisão da seção 16, na ordem pedida. As três ú
 | Verificação | Resultado |
 |---|---|
 | `npx tsc --noEmit` | Passa |
-| `npm run lint` | 30 erros e 9 avisos, todos anteriores a estas mudanças. Antes da revisão eram 33 e 17 |
-| `npm test` | 22 de 22 arquivos, incluindo a curva refeita, os três destinos do aporte, a consulta cancelada e o lucro fora do normal na Avaliação |
+| `npm run lint` | 20 erros e 1 aviso, todos anteriores a estas mudanças. Antes da revisão eram 33 e 17 |
+| `npm test` | 23 de 23 arquivos, incluindo a curva refeita, os três destinos do aporte, a consulta cancelada, o lucro fora do normal na Avaliação e o mapa da carteira |
 | `npm run test:api` | Passa, em banco temporário. A carteira de produção continuou na mesma revisão |
 | `npm run build` | Passa |
 | Instalação do zero em cópia limpa do commit (`npm ci`, build e testes) | Passa |
@@ -679,3 +679,51 @@ As linhas de `/api/market`, `/api/news` e `/api/portfolio` incluem chamadas canc
 3. **Pesos do Bitcoin.** Sem pesos, a compra entre BTC e ABTC11 mantém a proporção atual. Dá para definir em Estratégia e metas.
 4. **Botão Sair da conta.** Continua sem teste, porque encerraria a sua sessão.
 5. **GitHub.** A branch não foi enviada. O repositório público segue sem a migração e sem esta revisão até você pedir.
+
+## 17. Limpeza geral e novo visual
+
+Revisão de 10/11/2026, na branch `limpeza-e-design`: leitura do projeto inteiro em busca do que estava quebrado, inconsistente, lento ou sobrando.
+
+### Corrigido
+
+| Achado | Correção |
+|---|---|
+| A instalação local estava quebrada: faltava o binário do `workerd`, apagado da pasta `node_modules` fora do Git, e o build falhava | `npm ci` |
+| 61 componentes de interface, 7 arquivos de apoio e 20 dependências do modelo inicial, sem nenhum uso | Removidos. O CSS gerado ficou idêntico, byte a byte, antes e depois |
+| CSS com regras de telas que não existem mais | 256 regras removidas: `globals.css` caiu de 144 para 121 KB |
+| Painel "Atual × objetivo" repetia os cartões de classe e mostrava os percentuais no modo de privacidade | Removido |
+| Os três modos do gráfico eram calculados a cada atualização de cotação, mesmo com um só na tela | Só o modo em uso é calculado |
+| Notícias consultadas em todas as páginas, com as fontes em fila: uma fonte lenta atrasava tudo em 10 s | Só nas páginas que mostram notícias, com as três fontes ao mesmo tempo e prazo de 6 s |
+| Texto do método do resultado sobre o investido citava modos que não existem mais e a regra antiga de câmbio | Reescrito |
+| Nomes das notícias diferentes das classes ("Ações/ETFs americanos", "ETFs na B3") | Mesmos grupos das metas |
+| Funções e variáveis sem uso, e o backup pendente guardado em `window` | Removidas; o backup pendente fica no estado da tela |
+| Ativos cadastrados perdiam a cor no detalhe e nos pesos | Usam a própria cor |
+| Parte do código fora do padrão do Prettier | Tudo formatado, num commit só de formatação |
+| Testes usavam o `postcss` sem declarar | Declarado |
+
+### Design
+
+A identidade verde continua. O tema é o do nome: um atlas.
+
+- **Mapa da carteira:** substitui a rosca, que repetia os cartões de classe. Cada classe é uma região e cada ativo, um bloco do tamanho do seu peso. A cor mostra a variação do dia ou a classe, e o clique abre o detalhe. `tests/treemap.mjs` confere áreas, limites e sobreposição.
+- **Cartão do patrimônio:** curvas de nível ao fundo e o desenho da evolução do patrimônio.
+- **Títulos:** fonte serifada do sistema, sem baixar nada.
+- **Celular:** barra de atalhos na parte de baixo, com o menu completo em "Mais".
+- **Movimento:** os blocos sobem de leve ao abrir uma página. Quem pede menos movimento no sistema não vê animação.
+
+### Conferência
+
+Todas as telas foram percorridas de novo numa cópia local com a carteira real, numa base temporária apagada no fim, lendo só o texto: 100 combinações do gráfico, 21 cenários de aporte, filtros e Avaliação, sem erro de página, valor quebrado ou rolagem horizontal.
+
+### Para você decidir
+
+1. **Tabelas antigas no banco.** `performance_states` e `performance_points` não são mais usadas. Apagar exige uma migração que remove dados.
+2. **GitHub.** O repositório público segue sem a migração e sem as revisões. Há cinco branches locais.
+3. **Sobras do Sites da OpenAI no computador.** As pastas `.sites-runtime`, `outputs` e `.next` estão fora do Git e podem ser apagadas.
+4. **Data do saldo ao atualizar um título.** O formulário sugere a data antiga. Se o saldo mudar e a data não, a curva conta o rendimento duas vezes.
+5. **Modo "carteira inteira" no cálculo da Avaliação.** A tela não usa mais, mas o código e os testes continuam.
+6. **`globals.css` em camadas.** Ainda tem 5,6 mil linhas, com regras que se sobrepõem. Unificar é trabalhoso e arriscado.
+7. **`dashboard.tsx` com 2,2 mil linhas.** Funciona, mas é difícil de manter. Vale dividir por página.
+8. **Lint.** Restam 20 erros antigos, quase todos de tipagem.
+9. **Ativos cadastrados.** Continuam fora das notícias e da Avaliação, que cobre as 13 ações da lista.
+10. **Site antigo.** Segue no ar e sem as correções.

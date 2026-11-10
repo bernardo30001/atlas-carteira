@@ -11,7 +11,9 @@ Painel privado de investimentos em português, com posições e estratégia vinc
 - Proventos acumulados ou novos pagamentos por ativo, sem duplicar o patrimônio.
 - Extratos de referência preservados com os valores recebidos e observações de reconciliação.
 - S&P 500, Ibovespa, USD/BRL como referências.
-- Tema claro e escuro, que segue o sistema, com a fonte do sistema e sem chamadas ao Google Fonts.
+- Tema claro e escuro, que segue o sistema, só com fontes do sistema e sem chamadas ao Google Fonts. Títulos em fonte serifada.
+- Mapa da carteira: cada classe é uma região e cada ativo, um bloco do tamanho do seu peso, colorido pela variação do dia ou pela classe.
+- No celular, barra de atalhos na parte de baixo da tela.
 - Importar movimentações: relatórios de Negociação e Movimentação da B3, em Excel ou CSV, e extratos mensais da Nomad, em PDF, lidos no navegador. O arquivo não é enviado nem guardado, e nada é gravado antes da sua confirmação. Reimportar não duplica.
 - Dividendos da Nomad ficam pelo valor líquido, com o imposto retido à parte. Os extratos não trazem o câmbio das remessas, que nunca é presumido.
 - Ativos fora da lista padrão, como FIIs, são cadastrados pela interface. FIIs entram na meta Brasil, com cartão próprio.
