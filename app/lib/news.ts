@@ -15,10 +15,36 @@ export const NEWS_CATEGORIES = [
   { key: "bitcoin", name: "Bitcoin" },
 ] as const;
 const quoted = (text: string) => '"' + text + '"';
+/** Ativo cadastrado por você, informado pelo navegador para a busca de notícias. */
+export type NewsAsset = Pick<Asset, "ticker" | "name" | "symbol" | "currency">;
+const NEWS_TICKER = /^[A-Z0-9]{2,12}$/,
+  NEWS_SYMBOL = /^[A-Z0-9.^=-]{1,20}$/;
+/** Confere os dados vindos do navegador. O nome vira só texto de busca, sem aspas. */
+export function customNewsAsset(
+  ticker: string,
+  params: URLSearchParams,
+): NewsAsset | undefined {
+  const symbol = params.get("symbol") ?? "",
+    name = (params.get("name") ?? "")
+      .replace(/["\\<>]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, 100);
+  if (!NEWS_TICKER.test(ticker) || !NEWS_SYMBOL.test(symbol) || !name) return;
+  return {
+    ticker,
+    symbol,
+    name,
+    currency: params.get("currency") === "USD" ? "USD" : "BRL",
+  };
+}
 export function newsSelection(
   key: string,
+  custom?: NewsAsset,
 ): { query: string; symbols: string[]; label: string } | undefined {
-  const asset = ASSETS.find((a) => a.ticker === key);
+  const asset =
+    ASSETS.find((a) => a.ticker === key) ??
+    (custom?.ticker === key ? custom : undefined);
   if (asset) {
     // Company names and tickers are alternatives: requiring every term hid valid stories.
     const query =
@@ -95,8 +121,9 @@ export function parseNews(
   xml: string,
   filter: string,
   provider: string,
+  custom?: NewsAsset,
 ): NewsItem[] {
-  const selection = newsSelection(filter);
+  const selection = newsSelection(filter, custom);
   if (!selection) return [];
   const seen = new Set<string>();
   return [...xml.matchAll(/<item(?:\s[^>]*)?>([\s\S]*?)<\/item>/gi)]
@@ -113,9 +140,11 @@ export function parseNews(
         link: link.startsWith("https://") ? link : "",
         source,
         date: field(x, "pubDate"),
-        ticker: ASSETS.some((a) => a.ticker === filter)
-          ? filter
-          : (ASSETS.find((a) => mentions(title, a))?.ticker ?? selection.label),
+        ticker:
+          ASSETS.some((a) => a.ticker === filter) || custom?.ticker === filter
+            ? filter
+            : (ASSETS.find((a) => mentions(title, a))?.ticker ??
+              selection.label),
       };
     })
     .filter((x) => {

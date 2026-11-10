@@ -47,3 +47,47 @@ assert.deepEqual(parseNews(xml, "invalid", "Fonte"), []);
 console.log(
   "News passed: all categories and assets, alternative name/ticker queries, B3/US separation, Brazilian market, RSS entities, source attribution, duplicate removal and valid links.",
 );
+
+// Ativo cadastrado por você: nome e símbolo vêm do navegador e são conferidos.
+{
+  const { customNewsAsset } = await import("../app/lib/news.ts");
+  const params = (o) => new URLSearchParams(o);
+  const fii = customNewsAsset(
+    "HGLG11",
+    params({ name: 'CSHG "Logística"  <b>', symbol: "HGLG11.SA" }),
+  );
+  assert.deepEqual(fii, {
+    ticker: "HGLG11",
+    symbol: "HGLG11.SA",
+    name: "CSHG Logística b",
+    currency: "BRL",
+  });
+  assert.equal(
+    newsSelection("HGLG11", fii).query,
+    '"HGLG11" OR "CSHG Logística b"',
+  );
+  assert.deepEqual(newsSelection("HGLG11", fii).symbols, ["HGLG11.SA"]);
+  // Sem os dados, ou com dados inválidos, o filtro continua recusado.
+  assert.equal(newsSelection("HGLG11"), undefined);
+  assert.equal(
+    customNewsAsset("HGLG11", params({ symbol: "HGLG11.SA" })),
+    undefined,
+  );
+  assert.equal(
+    customNewsAsset("HGLG11", params({ name: "x", symbol: "a b/../c" })),
+    undefined,
+  );
+  assert.equal(
+    customNewsAsset("../etc", params({ name: "x", symbol: "X" })),
+    undefined,
+  );
+  // O ativo de outro código não vale para este filtro.
+  assert.equal(newsSelection("OUTRO11", fii), undefined);
+  const xml =
+    "<rss><item><title>Fundo anuncia rendimento</title><link>https://exemplo.test/a</link><pubDate>Mon, 02 Mar 2026 10:00:00 GMT</pubDate></item></rss>";
+  assert.equal(parseNews(xml, "HGLG11", "Fonte", fii)[0].ticker, "HGLG11");
+  assert.deepEqual(parseNews(xml, "HGLG11", "Fonte"), []);
+  console.log(
+    "Custom asset news passed: validated name and symbol, refused without them.",
+  );
+}

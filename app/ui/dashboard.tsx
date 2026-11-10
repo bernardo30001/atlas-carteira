@@ -131,6 +131,10 @@ export default function Dashboard() {
     { market, loading: historyLoading } = useMarket(p, quotes),
     t = useMemo(() => totals(p, market), [p, market]),
     classPlan = allocationPlan(p, market, budget);
+  const newsAssets = useMemo(
+    () => (p.customAssets ?? []).filter((a) => !a.archived),
+    [p.customAssets],
+  );
   const portfolioReady = !!demo || account === "ready";
   const hasPositions =
     p.transactions.some((t) => isTrackedTicker(t.ticker)) ||
@@ -826,6 +830,7 @@ export default function Dashboard() {
                 {table()}
                 <NewsSection
                   ticker={newsTicker}
+                  assets={newsAssets}
                   onTicker={setNewsTicker}
                   onAll={() => navigate("news")}
                 />
@@ -906,6 +911,7 @@ export default function Dashboard() {
               <NewsSection
                 full
                 ticker={newsTicker}
+                assets={newsAssets}
                 onTicker={setNewsTicker}
                 onAll={() => navigate("news")}
               />

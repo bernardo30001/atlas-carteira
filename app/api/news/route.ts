@@ -1,17 +1,30 @@
-import { newsSelection, parseNews, type NewsItem } from "../../lib/news";
+import {
+  customNewsAsset,
+  newsSelection,
+  parseNews,
+  type NewsItem,
+} from "../../lib/news";
 const cache = new Map<
   string,
   { time: number; items: NewsItem[]; provider: string }
 >();
 export async function GET(request: Request) {
-  const ticker = new URL(request.url).searchParams.get("ticker") ?? "all",
-    selection = newsSelection(ticker);
+  const params = new URL(request.url).searchParams,
+    ticker = params.get("ticker") ?? "all",
+    // Ativo fora da lista padrão: o navegador informa nome e símbolo.
+    custom = newsSelection(ticker)
+      ? undefined
+      : customNewsAsset(ticker, params),
+    selection = newsSelection(ticker, custom);
   if (!selection)
     return Response.json(
       { error: "Filtro de notícias inválido" },
       { status: 400 },
     );
-  const hit = cache.get(ticker);
+  const cacheKey = custom
+      ? `${ticker}|${custom.symbol}|${custom.name}`
+      : ticker,
+    hit = cache.get(cacheKey);
   if (hit && Date.now() - hit.time < 300000)
     return Response.json({
       ...hit,
@@ -59,10 +72,10 @@ export async function GET(request: Request) {
   for (const attempt of attempts) {
     const answer = await attempt;
     if (!answer) continue;
-    const items = parseNews(answer.xml, ticker, answer.provider);
+    const items = parseNews(answer.xml, ticker, answer.provider, custom);
     if (!items.length) continue;
     const result = { time: Date.now(), items, provider: answer.provider };
-    cache.set(ticker, result);
+    cache.set(cacheKey, result);
     return Response.json({
       ...result,
       filter: ticker,

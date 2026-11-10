@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { AlertCircle, ArrowRight, ArrowUpRight, Newspaper } from "lucide-react";
+import type { Asset } from "../lib/model";
 import type { NewsItem } from "../lib/news";
 import { Empty } from "./mark";
 import { NewsFilters } from "./news-filters";
@@ -16,25 +17,36 @@ type Loaded = {
 export function NewsSection({
   full = false,
   ticker,
+  assets = [],
   onTicker,
   onAll,
 }: {
   full?: boolean;
+  /** Ativos cadastrados por você, para aparecerem no filtro. */
+  assets?: Asset[];
   ticker: string;
   onTicker: (ticker: string) => void;
   onAll: () => void;
 }) {
   const [loaded, setLoaded] = useState<Loaded>();
+  // Valores simples, para a consulta só se repetir quando o ativo mudar de fato.
+  const custom = assets.find((a) => a.ticker === ticker),
+    name = custom?.name,
+    symbol = custom?.symbol,
+    currency = custom?.currency;
   useEffect(() => {
     const controller = new AbortController();
     const load = async () => {
       try {
-        const r = await fetch(
-          "/api/news?ticker=" + encodeURIComponent(ticker),
-          {
-            signal: controller.signal,
-          },
-        );
+        const query = new URLSearchParams({ ticker });
+        if (name && symbol) {
+          query.set("name", name);
+          query.set("symbol", symbol);
+          query.set("currency", currency ?? "BRL");
+        }
+        const r = await fetch("/api/news?" + query, {
+          signal: controller.signal,
+        });
         const j: {
           items?: NewsItem[];
           error?: string;
@@ -67,7 +79,7 @@ export function NewsSection({
       controller.abort();
       clearInterval(id);
     };
-  }, [ticker]);
+  }, [ticker, name, symbol, currency]);
   // Resposta de outro filtro não vale: enquanto a nova não chega, mostra o carregamento.
   const current = loaded?.ticker === ticker ? loaded : undefined,
     news = current?.items ?? [],
@@ -88,7 +100,7 @@ export function NewsSection({
           </button>
         )}
       </div>
-      <NewsFilters value={ticker} onChange={onTicker} />
+      <NewsFilters value={ticker} onChange={onTicker} extra={assets} />
       {newsError && (
         <div className="notice warn">
           <AlertCircle size={16} />
