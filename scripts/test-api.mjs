@@ -33,7 +33,13 @@ if (applied.status !== 0) {
 
 const server = spawn(
   process.execPath,
-  ["node_modules/vinext/dist/cli.js", "dev", "--port", String(port), "--strictPort"],
+  [
+    "node_modules/vinext/dist/cli.js",
+    "dev",
+    "--port",
+    String(port),
+    "--strictPort",
+  ],
   {
     env: { ...process.env, ATLAS_PERSIST_STATE: state },
     stdio: ["ignore", "pipe", "pipe"],
@@ -47,7 +53,8 @@ let exitCode = 1;
 try {
   const deadline = Date.now() + 90000;
   for (;;) {
-    if (server.exitCode !== null) throw new Error("Servidor de teste encerrou.");
+    if (server.exitCode !== null)
+      throw new Error("Servidor de teste encerrou.");
     const ready = await fetch(base + "/api/cdi")
       .then((r) => r.status > 0)
       .catch(() => false);
