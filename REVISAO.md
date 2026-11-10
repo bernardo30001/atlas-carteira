@@ -690,7 +690,7 @@ Revisão de 10/11/2026, na branch `limpeza-e-design`: leitura do projeto inteiro
 |---|---|
 | A instalação local estava quebrada: faltava o binário do `workerd`, apagado da pasta `node_modules` fora do Git, e o build falhava | `npm ci` |
 | 61 componentes de interface, 7 arquivos de apoio e 20 dependências do modelo inicial, sem nenhum uso | Removidos. O CSS gerado ficou idêntico, byte a byte, antes e depois |
-| CSS com regras de telas que não existem mais | 256 regras removidas: `globals.css` caiu de 144 para 121 KB |
+| CSS com regras de telas que não existem mais | 256 regras removidas: `globals.css` caiu de 144 para 122 KB |
 | Painel "Atual × objetivo" repetia os cartões de classe e mostrava os percentuais no modo de privacidade | Removido |
 | Os três modos do gráfico eram calculados a cada atualização de cotação, mesmo com um só na tela | Só o modo em uso é calculado |
 | Notícias consultadas em todas as páginas, com as fontes em fila: uma fonte lenta atrasava tudo em 10 s | Só nas páginas que mostram notícias, com as três fontes ao mesmo tempo e prazo de 6 s |
@@ -722,7 +722,7 @@ Todas as telas foram percorridas de novo numa cópia local com a carteira real, 
 3. **Sobras do Sites da OpenAI no computador.** As pastas `.sites-runtime`, `outputs` e `.next` estão fora do Git e podem ser apagadas.
 4. **Data do saldo ao atualizar um título.** O formulário sugere a data antiga. Se o saldo mudar e a data não, a curva conta o rendimento duas vezes.
 5. **Modo "carteira inteira" no cálculo da Avaliação.** A tela não usa mais, mas o código e os testes continuam.
-6. **`globals.css` em camadas.** Ainda tem 5,6 mil linhas, com regras que se sobrepõem. Unificar é trabalhoso e arriscado.
+6. **`globals.css` em camadas.** Ainda tem 6,5 mil linhas, com regras que se sobrepõem. Unificar é trabalhoso e arriscado.
 7. **`dashboard.tsx` com 2,2 mil linhas.** Funciona, mas é difícil de manter. Vale dividir por página.
 8. **Lint.** Restam 20 erros antigos, quase todos de tipagem.
 9. **Ativos cadastrados.** Continuam fora das notícias e da Avaliação, que cobre as 13 ações da lista.
