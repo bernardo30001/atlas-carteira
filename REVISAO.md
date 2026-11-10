@@ -722,7 +722,7 @@ Em 10/11/2026 você aprovou a publicação e pediu para executar a lista que est
 | Item | Situação |
 |---|---|
 | 1. Tabelas antigas no banco | Apagadas pela migração `drizzle/0003`. Antes, exportei o banco inteiro para um arquivo fora do repositório, na sua pasta de finanças. Depois da migração a carteira seguia na mesma revisão e com o mesmo tamanho |
-| 2. GitHub | **Não enviado.** Depende da sua confirmação, porque o repositório é público |
+| 2. GitHub | Enviado em 10/11/2026, depois da sua confirmação. Antes, varri todas as versões de todos os arquivos e as mensagens de commit atrás de e-mail, endereço do site, domínio do login, chaves e números da carteira real: nada. Os commits locais levavam o nome do computador no autor; passaram a usar a mesma identidade do GitHub que o repositório já tinha, sem mudar conteúdo nem datas, e por isso os identificadores dos commits mudaram. O commit que já estava no GitHub foi mantido no histórico, sem envio forçado |
 | 3. Sobras do Sites da OpenAI | `.sites-runtime` e a `.next` antiga foram para a Lixeira. **`outputs` ficou:** tem backups antigos e arquivos reais da B3, e não é descartável como eu tinha escrito. Continua fora do Git |
 | 4. Data do saldo ao atualizar um título | O formulário sugere a data de hoje e explica o motivo |
 | 5. Modo "carteira inteira" na Avaliação | Removido do cálculo e dos testes |
@@ -736,7 +736,7 @@ Publicado em 10/11/2026, com a migração do banco. Sem login, a página e as ro
 
 ### O que falta
 
-1. **GitHub.** Nada foi enviado. O repositório público segue sem a migração para a Cloudflare e sem as revisões.
+1. **Identificador do banco.** O `wrangler.jsonc` publicado traz o identificador do banco D1, necessário para publicar o site. Não é senha: sem entrar na sua conta Cloudflare ele não dá acesso a nada.
 2. **Site antigo da OpenAI.** Segue no ar e sem as correções, e confunde: foi nele que o erro de Aportes pareceu continuar.
 3. **Pasta `outputs`.** Vale você olhar e guardar o que interessa junto dos outros backups.
 4. **Avaliação de ativos cadastrados.** Fica para quando houver um.
