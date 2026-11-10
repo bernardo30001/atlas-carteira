@@ -2,7 +2,7 @@
 
 **Estado em 06/11/2026:** cálculos e design corrigidos. Importação de Negociação da B3 validada com um arquivo real, localmente. **Decidido: o registro segue por relatórios da B3 e prints da Nomad, sem sincronização automática (seção 13).** Faltam o relatório de Movimentação e os prints. Nada foi publicado: tudo está nesta branch local.
 
-As seções 1 a 7 guardam o diagnóstico aprovado. As referências `arquivo:linha` delas valem no commit de formatação `99edf15`. O que mudou desde então está na seção 10.
+As seções 1 a 7 guardam o diagnóstico aprovado. As referências `arquivo:linha` delas valem no commit de formatação `9b96d32`. O que mudou desde então está na seção 10.
 
 ## 1. Resumo
 
@@ -303,16 +303,16 @@ Todas as 20 divergências foram corrigidas, cada uma com teste antes da correç�
 
 | Mudança | Resolve | Commit |
 |---|---|---|
-| Histórico como fonte única da posição, com migração e aviso de conferência | C1, C2, I1, I2, I8, M1, D1, D2, D7 | `0ac0167` |
-| Preço médio com taxas e custo em dólar preservado | I5, I6, D3 | `fd0e157` |
-| CDI no acompanhamento real e janela de acumulação | I3, M4 | `d907582` |
-| Datas no fuso da bolsa e cotação antiga identificada | I4, M7 | `c6a4799` |
-| Donut e proventos sem estado falso | I7, I10 | `549d79d` |
-| Planejador sem câmbio antigo e com volatilidade neutra | I9, M3 | `9d687fc` |
-| Resultado total com proventos | M2 | `ab6f13b` |
-| Simulação na data de Brasília | M5 | `cf1fa41` |
-| Formatação pt-BR única e metas reais na metodologia | M6, M8 | `05a3661` |
-| Venda manual e resultado realizado à parte | C1, D4 | `c179a57` |
+| Histórico como fonte única da posição, com migração e aviso de conferência | C1, C2, I1, I2, I8, M1, D1, D2, D7 | `6698246` |
+| Preço médio com taxas e custo em dólar preservado | I5, I6, D3 | `1fdf2ba` |
+| CDI no acompanhamento real e janela de acumulação | I3, M4 | `58cdcf0` |
+| Datas no fuso da bolsa e cotação antiga identificada | I4, M7 | `bad27a0` |
+| Donut e proventos sem estado falso | I7, I10 | `89a412e` |
+| Planejador sem câmbio antigo e com volatilidade neutra | I9, M3 | `d7360bd` |
+| Resultado total com proventos | M2 | `08f1f90` |
+| Simulação na data de Brasília | M5 | `653eb24` |
+| Formatação pt-BR única e metas reais na metodologia | M6, M8 | `ce52021` |
+| Venda manual e resultado realizado à parte | C1, D4 | `54a927b` |
 
 ### Design
 
