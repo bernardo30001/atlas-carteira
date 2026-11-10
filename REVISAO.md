@@ -690,7 +690,7 @@ Revisão de 10/11/2026, na branch `limpeza-e-design`: leitura do projeto inteiro
 |---|---|
 | A instalação local estava quebrada: faltava o binário do `workerd`, apagado da pasta `node_modules` fora do Git, e o build falhava | `npm ci` |
 | 61 componentes de interface, 7 arquivos de apoio e 20 dependências do modelo inicial, sem nenhum uso | Removidos. O CSS gerado ficou idêntico, byte a byte, antes e depois |
-| CSS com regras de telas que não existem mais | 256 regras removidas: `globals.css` caiu de 144 para 122 KB |
+| CSS com regras de telas que não existem mais | 256 regras removidas: `globals.css` caiu de 144 para 122 KB (e depois para 95 KB, ver abaixo) |
 | Painel "Atual × objetivo" repetia os cartões de classe e mostrava os percentuais no modo de privacidade | Removido |
 | Os três modos do gráfico eram calculados a cada atualização de cotação, mesmo com um só na tela | Só o modo em uso é calculado |
 | Notícias consultadas em todas as páginas, com as fontes em fila: uma fonte lenta atrasava tudo em 10 s | Só nas páginas que mostram notícias, com as três fontes ao mesmo tempo e prazo de 6 s |
@@ -715,15 +715,30 @@ A identidade verde continua. O tema é o do nome: um atlas.
 
 Todas as telas foram percorridas de novo numa cópia local com a carteira real, numa base temporária apagada no fim, lendo só o texto: 100 combinações do gráfico, 21 cenários de aporte, filtros e Avaliação, sem erro de página, valor quebrado ou rolagem horizontal.
 
-### Para você decidir
+### O que foi feito depois, a seu pedido
 
-1. **Tabelas antigas no banco.** `performance_states` e `performance_points` não são mais usadas. Apagar exige uma migração que remove dados.
-2. **GitHub.** O repositório público segue sem a migração e sem as revisões. Há cinco branches locais.
-3. **Sobras do Sites da OpenAI no computador.** As pastas `.sites-runtime`, `outputs` e `.next` estão fora do Git e podem ser apagadas.
-4. **Data do saldo ao atualizar um título.** O formulário sugere a data antiga. Se o saldo mudar e a data não, a curva conta o rendimento duas vezes.
-5. **Modo "carteira inteira" no cálculo da Avaliação.** A tela não usa mais, mas o código e os testes continuam.
-6. **`globals.css` em camadas.** Ainda tem 6,5 mil linhas, com regras que se sobrepõem. Unificar é trabalhoso e arriscado.
-7. **`dashboard.tsx` com 2,2 mil linhas.** Funciona, mas é difícil de manter. Vale dividir por página.
-8. **Lint.** Restam 20 erros antigos, quase todos de tipagem.
-9. **Ativos cadastrados.** Continuam fora das notícias e da Avaliação, que cobre as 13 ações da lista.
-10. **Site antigo.** Segue no ar e sem as correções.
+Em 10/11/2026 você aprovou a publicação e pediu para executar a lista que estava aqui para decisão.
+
+| Item | Situação |
+|---|---|
+| 1. Tabelas antigas no banco | Apagadas pela migração `drizzle/0003`. Antes, exportei o banco inteiro para um arquivo fora do repositório, na sua pasta de finanças. Depois da migração a carteira seguia na mesma revisão e com o mesmo tamanho |
+| 2. GitHub | **Não enviado.** Depende da sua confirmação, porque o repositório é público |
+| 3. Sobras do Sites da OpenAI | `.sites-runtime` e a `.next` antiga foram para a Lixeira. **`outputs` ficou:** tem backups antigos e arquivos reais da B3, e não é descartável como eu tinha escrito. Continua fora do Git |
+| 4. Data do saldo ao atualizar um título | O formulário sugere a data de hoje e explica o motivo |
+| 5. Modo "carteira inteira" na Avaliação | Removido do cálculo e dos testes |
+| 6. `globals.css` em camadas | 855 declarações que outra regra igual já sobrescrevia foram removidas: de 122 para 95 KB e de 6,5 para 5,1 mil linhas. Conferi o estilo calculado de 101.927 elementos, em todas as páginas, nos dois temas e em duas larguras, antes e depois: nenhuma diferença. Para provar que a conferência enxerga mudanças, alterei uma regra de propósito e ela acusou 458 |
+| 7. `dashboard.tsx` | Dividido: de 2,2 para 1,4 mil linhas, com o detalhe do ativo, a estratégia, a renda fixa, as notícias, o método e a carteira de demonstração em arquivos próprios |
+| 8. Lint | Zero erros e zero avisos |
+| 9. Ativos cadastrados | Entram nas notícias, com filtro próprio. **A Avaliação continua só para as 13 ações da lista:** incluir outros ativos muda as regras de comparação e aumenta as consultas, e hoje você não tem nenhum cadastrado |
+| 10. Site antigo | Só você pode desativar, no painel da OpenAI |
+
+Publicado em 10/11/2026, com a migração do banco. Sem login, a página e as rotas continuam recusadas.
+
+### O que falta
+
+1. **GitHub.** Nada foi enviado. O repositório público segue sem a migração para a Cloudflare e sem as revisões.
+2. **Site antigo da OpenAI.** Segue no ar e sem as correções, e confunde: foi nele que o erro de Aportes pareceu continuar.
+3. **Pasta `outputs`.** Vale você olhar e guardar o que interessa junto dos outros backups.
+4. **Avaliação de ativos cadastrados.** Fica para quando houver um.
+5. **Backup novo.** O último backup em JSON é anterior aos pesos dos ETFs. Vale exportar outro pelo site.
+6. **Itens da seção 16 que seguem abertos:** datas de compra do Bitcoin, câmbio das remessas, pesos do Bitcoin e o teste do botão Sair.
