@@ -132,9 +132,6 @@ body {
   letter-spacing: -0.03em;
   margin: 0.35rem 0 0.9rem;
 }
-.summary-grid .wealth-decoration {
-  display: none;
-}
 .class-cards {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -795,5 +792,300 @@ table.plan-table .plan-opinion {
   .performance-head .performance-modes {
     width: 100%;
     overflow-x: auto;
+  }
+}
+
+/* ------------------------------------------------------------------ segunda passada
+   Um atlas é feito de mapas: títulos com cara de publicação, curvas de nível no cartão
+   do patrimônio e a carteira desenhada como um mapa. */
+:root {
+  --font-display:
+    ui-serif, "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --heat-up: #1f7a5c;
+  --heat-down: #a8443c;
+  --heat-flat: #66736a;
+}
+.page-heading h1,
+.summary-grid .stat-card.wealth .stat-value,
+.performance-result strong {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.page-heading h1 {
+  font-size: clamp(1.7rem, 2.4vw, 2.2rem);
+}
+
+/* Cartão do patrimônio: curvas de nível e a forma do patrimônio ao fundo. */
+.summary-grid .stat-card.wealth {
+  position: relative;
+  overflow: hidden;
+  background:
+    repeating-radial-gradient(
+      circle at 88% -18%,
+      transparent 0 26px,
+      #ffffff0b 26px 27px
+    ),
+    repeating-radial-gradient(
+      circle at 8% 118%,
+      transparent 0 34px,
+      #ffffff08 34px 35px
+    ),
+    linear-gradient(150deg, var(--hero-from), var(--hero-to));
+}
+.summary-grid .stat-card.wealth > :not(svg) {
+  position: relative;
+  z-index: 1;
+}
+.summary-grid .wealth-figures {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, max-content));
+  gap: 0.4rem 1.75rem;
+  margin: 0 0 0.45rem;
+}
+.summary-grid .stat-card.wealth .stat-foot {
+  max-width: 62%;
+  line-height: 1.35;
+}
+.wealth-trend {
+  position: absolute;
+  inset: auto 0 0 0;
+  width: 100%;
+  height: 36%;
+  pointer-events: none;
+  mask-image: linear-gradient(90deg, transparent 8%, #000 70%);
+  -webkit-mask-image: linear-gradient(90deg, transparent 8%, #000 70%);
+}
+.wealth-trend .area {
+  fill: #ffffff10;
+}
+.wealth-trend .line {
+  fill: none;
+  stroke: #ffffff4d;
+  stroke-width: 1.4;
+  vector-effect: non-scaling-stroke;
+}
+
+/* Mapa da carteira */
+.map-panel {
+  padding: 1.15rem 1.25rem 1.1rem;
+}
+.map-panel .panel-title {
+  padding: 0;
+  margin-bottom: 0.65rem;
+  border: 0;
+}
+.map-modes {
+  display: inline-flex;
+  padding: 3px;
+  margin-bottom: 0.7rem;
+  border-radius: 99px;
+  background: var(--surface-3);
+}
+.map-modes button {
+  min-height: 1.9rem;
+  padding: 0.15rem 0.85rem;
+  border: 0;
+  border-radius: 99px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+.map-modes button.active {
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 600;
+  box-shadow: 0 1px 2px var(--shadow);
+}
+.portfolio-map {
+  position: relative;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+.portfolio-map li {
+  position: absolute;
+  padding: 1px;
+}
+.portfolio-map li > button,
+.portfolio-map li > span {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.05rem;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding: 0.25rem 0.45rem;
+  border: 0;
+  border-radius: 5px;
+  color: #fff;
+  font: inherit;
+  line-height: 1.15;
+  text-align: left;
+  overflow: hidden;
+}
+.portfolio-map li > button {
+  cursor: pointer;
+  transition: filter 0.15s;
+}
+.portfolio-map li > button:hover {
+  filter: brightness(1.14);
+}
+.portfolio-map li > button:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: -2px;
+}
+.portfolio-map b {
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+.portfolio-map small {
+  color: inherit;
+  font-size: 0.6875rem;
+  opacity: 0.92;
+}
+.portfolio-map.by-class li > button,
+.portfolio-map.by-class li > span {
+  color: var(--ink);
+}
+.map-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.9rem;
+  margin-top: 0.7rem;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+.map-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.map-legend span i {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+}
+.map-legend b {
+  color: var(--ink);
+  font-weight: 600;
+}
+.map-legend.heat > i {
+  flex: 1;
+  max-width: 8rem;
+  height: 0.4rem;
+  border-radius: 99px;
+  background: linear-gradient(
+    90deg,
+    var(--heat-down),
+    var(--heat-flat),
+    var(--heat-up)
+  );
+}
+.map-legend.heat small {
+  margin-left: auto;
+}
+.map-status {
+  margin: 0;
+  padding: 2.2rem 1rem;
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+/* Movimento: cada bloco sobe de leve ao abrir uma página. */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+  }
+  main .summary-grid .stat-card.wealth,
+  main .class-card,
+  main .overview-grid > *,
+  main > .panel,
+  main .news-card {
+    animation: rise 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
+  }
+  main .class-card:nth-child(1) {
+    animation-delay: 0.04s;
+  }
+  main .class-card:nth-child(2) {
+    animation-delay: 0.08s;
+  }
+  main .class-card:nth-child(3) {
+    animation-delay: 0.12s;
+  }
+  main .class-card:nth-child(4) {
+    animation-delay: 0.16s;
+  }
+  main .overview-grid > * {
+    animation-delay: 0.14s;
+  }
+  .class-card,
+  main .news-card {
+    transition:
+      transform 0.18s,
+      box-shadow 0.18s,
+      border-color 0.18s;
+  }
+  .class-card:hover,
+  main .news-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--line-strong);
+  }
+}
+
+/* Celular: atalhos sempre à mão, na parte de baixo. */
+.tabbar {
+  display: none;
+}
+@media (max-width: 980px) {
+  .tabbar {
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 20;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    padding: 0.3rem 0.35rem calc(0.3rem + env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid var(--line);
+    background: color-mix(in srgb, var(--surface) 86%, transparent);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+  .tabbar button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.1rem;
+    min-height: 3rem;
+    padding: 0.3rem 0;
+    border: 0;
+    border-radius: 0.6rem;
+    background: transparent;
+    color: var(--muted);
+    font-size: 0.6875rem;
+    font-weight: 500;
+  }
+  .tabbar button.active {
+    color: var(--accent);
+    font-weight: 700;
+  }
+  main {
+    padding-bottom: 5.25rem;
+  }
+  .wealth-trend {
+    height: 28%;
+  }
+  .toast {
+    bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));
   }
 }

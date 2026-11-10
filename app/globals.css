@@ -698,19 +698,6 @@ main {
 .wealth .stat-value {
   font-size: 1.625rem;
 }
-.wealth-decoration {
-  width: 8.75rem;
-  height: 8.75rem;
-  position: absolute;
-  right: -1.875rem;
-  bottom: -5.625rem;
-  border-radius: 50%;
-  border: 1px solid #ffffff13;
-  box-shadow:
-    0 0 0 18px #ffffff04,
-    0 0 0 40px #ffffff04,
-    0 0 0 65px #ffffff03;
-}
 .panel {
   background: var(--surface);
   border: 1px solid var(--line);
@@ -764,7 +751,6 @@ main {
   color: var(--muted);
   font-weight: 650;
 }
-.allocation-legend i,
 .target-card > span > i {
   height: 0.375rem;
   width: 0.375rem;
@@ -777,78 +763,6 @@ main {
 }
 .allocation .panel-title h2 {
   font-size: 0.875rem;
-}
-.donut-wrap {
-  padding: 1.25rem 0 1rem;
-  display: flex;
-  justify-content: center;
-}
-.donut {
-  width: 10rem;
-  height: 10rem;
-  border-radius: 50%;
-  position: relative;
-  transform: rotate(-0deg);
-}
-.donut > div {
-  position: absolute;
-  inset: 1.0625rem;
-  background: var(--surface);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-}
-.donut span {
-  font-size: 0.75rem;
-  color: var(--muted);
-  letter-spacing: 1px;
-}
-.donut b {
-  font-family: inherit;
-  font-size: 1.5rem;
-  letter-spacing: -0.5px;
-  font-weight: 750;
-  margin-top: 0.5rem;
-  line-height: 1.3;
-  text-align: center;
-  color: var(--ink);
-}
-.donut small {
-  color: var(--muted);
-  font-size: 0.75rem;
-  margin-top: 0.25rem;
-}
-.allocation-legend {
-  padding: 0 1.5rem 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-.allocation-legend > div {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  font-size: 0.75rem;
-}
-.allocation-legend > div > span {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex: 1;
-  color: var(--muted);
-}
-.allocation-legend b {
-  font-size: 0.75rem;
-  font-weight: 550;
-  color: var(--muted);
-}
-.allocation-legend small {
-  width: 2.625rem;
-  text-align: right;
-  font-size: 0.75rem;
-  color: var(--muted);
 }
 .onboarding {
   padding: 1rem 1.25rem;
@@ -1662,13 +1576,6 @@ input[type="number"]::-webkit-inner-spin-button {
   .wealth .stat-value {
     font-size: 1.875rem;
   }
-  .donut {
-    width: 11.25rem;
-    height: 11.25rem;
-  }
-  .donut-wrap {
-    padding: 1.5rem 0;
-  }
   .panel-title h2 {
     font-size: 1rem;
   }
@@ -1677,12 +1584,6 @@ input[type="number"]::-webkit-inner-spin-button {
   }
   .allocation .panel-title h2 {
     font-size: 0.9375rem;
-  }
-  .allocation-legend {
-    gap: 0.75rem;
-  }
-  .allocation-legend > div {
-    font-size: 0.75rem;
   }
   .market-strip {
     gap: 2.25rem;
@@ -1763,10 +1664,6 @@ input[type="number"]::-webkit-inner-spin-button {
   .allocation .panel-title h2 {
     font-size: 0.875rem;
   }
-  .allocation-legend {
-    padding-left: 1rem;
-    padding-right: 1rem;
-  }
   .period-tabs button {
     padding: 0.25rem 0.5rem;
   }
@@ -1835,13 +1732,6 @@ input[type="number"]::-webkit-inner-spin-button {
   }
   .allocation > .panel-title {
     grid-column: 1/-1;
-  }
-  .allocation .donut-wrap {
-    padding: 1.25rem;
-  }
-  .allocation-legend {
-    justify-content: center;
-    padding-top: 1.25rem;
   }
   .news-grid {
     grid-template-columns: 1fr 1fr;
@@ -2033,25 +1923,6 @@ input[type="number"]::-webkit-inner-spin-button {
   }
   .allocation > .panel-title h2 {
     font-size: 0.875rem;
-  }
-  .donut {
-    width: 9.6875rem;
-    height: 9.6875rem;
-  }
-  .donut b {
-    font-size: 1.25rem;
-  }
-  .allocation-legend {
-    padding: 1.25rem 1rem 1.25rem 0;
-    gap: 1rem;
-  }
-  .allocation-legend > div {
-    gap: 0.5rem;
-    font-size: 0.75rem;
-  }
-  .allocation-legend small {
-    font-size: 0.75rem;
-    width: 2.25rem;
   }
   .onboarding {
     padding: 1rem;
@@ -2359,15 +2230,6 @@ p,
   color: var(--muted);
   font-size: 0.75rem;
 }
-.allocation-legend > div > span {
-  color: var(--muted);
-}
-.allocation-legend small {
-  color: var(--muted);
-}
-.allocation-legend > div {
-  font-size: 0.75rem;
-}
 .source-note,
 .panel-foot {
   color: var(--muted);
@@ -2431,14 +2293,6 @@ td small {
 }
 .profile b {
   font-size: 0.875rem;
-}
-.donut small {
-  font-size: 0.75rem;
-  color: var(--muted);
-}
-.donut span {
-  font-size: 0.75rem;
-  color: var(--muted);
 }
 .onboarding p {
   color: var(--muted);
@@ -2513,12 +2367,6 @@ footer button {
     font-size: 0.75rem;
   }
   .panel-title p {
-    font-size: 0.75rem;
-  }
-  .allocation-legend > div {
-    font-size: 0.75rem;
-  }
-  .allocation-legend small {
     font-size: 0.75rem;
   }
   .onboarding h3 {
@@ -3400,7 +3248,6 @@ main:focus {
 }
 .stat-value,
 .performance-result strong,
-.donut b,
 td b,
 .preview-plan b {
   font-variant-numeric: tabular-nums;
@@ -3714,47 +3561,6 @@ main {
 }
 .allocation .panel-title h2 {
   font-size: 1rem;
-}
-.donut-wrap {
-  padding: 1.25rem 0;
-}
-.donut {
-  width: 11rem;
-  height: 11rem;
-}
-.donut b {
-  font-size: 1.25rem;
-  font-weight: 750;
-  line-height: 1.3;
-  text-align: center;
-  color: var(--ink);
-}
-.donut span,
-.donut small {
-  font-size: 0.8125rem;
-  color: var(--text-secondary);
-  line-height: 1.5;
-}
-.allocation-legend {
-  padding: 0 1.25rem 1.25rem;
-  gap: 1rem;
-}
-.allocation-legend > div {
-  font-size: 0.8125rem;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  align-items: center;
-}
-.allocation-legend > div > span {
-  color: var(--muted);
-  min-width: 8rem;
-}
-.allocation-legend b,
-.allocation-legend small {
-  font-size: 0.75rem;
-  color: var(--muted);
-  white-space: nowrap;
-  width: auto;
 }
 .contribution-preview {
   padding-bottom: 1.25rem;
@@ -5400,7 +5206,6 @@ textarea::placeholder {
 table,
 .stat-value,
 .market-strip,
-.allocation-legend,
 .preview-plan,
 .performance-result,
 .cost-return-summary {
@@ -6650,9 +6455,6 @@ html[data-theme="dark"] .portfolio-table td:first-child {
 .table-wrap caption,
 .stat-foot,
 .source-note,
-.allocation-legend > div > span,
-.allocation-legend b,
-.allocation-legend small,
 .market-strip,
 .market-strip b,
 .market-strip .change,
@@ -6690,15 +6492,6 @@ html[data-theme="dark"] .portfolio-table td:first-child {
   transform: none;
 }
 @media (forced-colors: active) {
-  .donut > div {
-    background: Canvas;
-    color: CanvasText;
-  }
-  .donut b,
-  .donut span,
-  .donut small {
-    color: CanvasText;
-  }
   .purchase-count-badge rect {
     fill: Canvas;
     stroke: CanvasText;

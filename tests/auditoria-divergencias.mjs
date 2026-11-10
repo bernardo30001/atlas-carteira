@@ -193,17 +193,15 @@ test("I6 taxa sem câmbio não apaga o custo em dólar do grupo", () => {
   );
 });
 
-test("I7 donut não mostra patrimônio parcial como total", () => {
-  // Medido na tela: cartão "Aguardando cotações" e donut "R$ 4.000,00" sem VOO.
-  const center = dashboard.slice(
-    dashboard.indexOf('"PATRIMÔNIO"'),
-    dashboard.indexOf("4 classes de ativos"),
-  );
+test("I7 mapa não desenha patrimônio parcial como se fosse o total", () => {
+  // Com cotação pendente, o mapa aguarda em vez de mostrar pesos sobre um total parcial.
+  const source = readFileSync("app/ui/portfolio-map.tsx", "utf8");
   assert.match(
-    center,
-    /missing/,
-    "dashboard.tsx: centro do donut sem proteção",
+    source,
+    /pending = !empty && summary\.missing\.length > 0/,
+    "portfolio-map.tsx: mapa sem proteção para cotação pendente",
   );
+  assert.match(source, /pending \? \(\s*<p className="map-status"/);
 });
 
 test("I8 venda listada antes da compra no mesmo dia é aceita", () => {

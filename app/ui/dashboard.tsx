@@ -52,7 +52,7 @@ import {
   type Portfolio,
   type Market,
 } from "../lib/model";
-import { fixed, money, num, plainPercent, signedMoney } from "../lib/format";
+import { money, num, plainPercent, signedMoney } from "../lib/format";
 import { portfolioSchema } from "../lib/validation";
 import type { NewsItem } from "../lib/news";
 import {
@@ -68,6 +68,7 @@ const ImportPanel = lazy(() =>
 import { Change } from "./change";
 import { ContributionPreview } from "./contribution-preview";
 import { ContributionPlan } from "./contribution-plan";
+import { PortfolioMap } from "./portfolio-map";
 import { ValidatedForm, FormInput } from "./validated-form";
 import { PerformanceChart } from "./performance-chart";
 import { useCdi } from "./use-cdi";
@@ -101,6 +102,13 @@ const nav = [
   { id: "contributions", label: "Aportes", icon: ArrowDownLeft },
   { id: "import", label: "Importar", icon: Upload },
   { id: "news", label: "Notícias", icon: Newspaper },
+];
+/** Atalhos da barra inferior do celular. O restante fica no menu. */
+const TABS = [
+  { id: "overview", label: "Visão", icon: LayoutDashboard },
+  { id: "portfolio", label: "Carteira", icon: Wallet },
+  { id: "contributions", label: "Aportes", icon: ArrowDownLeft },
+  { id: "evaluation", label: "Avaliação", icon: Scale },
 ];
 function Mark({
   ticker,
@@ -602,20 +610,6 @@ export default function Dashboard() {
   const overview = page === "overview";
   const cdi = useCdi();
 
-  const donutSegments = (() => {
-    let offset = 0;
-    return groups
-      .map((g) => {
-        const v =
-          hasPositions && t.value > 0
-            ? (t.byGroup[g] / t.value) * 100
-            : p.targets[g];
-        const start = offset;
-        offset += v;
-        return `${GROUPS[g].color} ${start}% ${offset}%`;
-      })
-      .join(",");
-  })();
   function table(full = false) {
     return (
       <AssetTable
@@ -1097,76 +1091,13 @@ export default function Dashboard() {
                     onRetryCdi={cdi.retryCdi}
                   />
                   <div className="overview-aside">
-                    <section className="panel allocation">
-                      <div className="panel-title">
-                        <div>
-                          <h2>
-                            {hasPositions
-                              ? "Distribuição da carteira"
-                              : "Seu mapa de alocação"}
-                          </h2>
-                          <p>
-                            {hasPositions
-                              ? "Patrimônio atual por classe."
-                              : "Suas metas para começar com direção."}
-                          </p>
-                        </div>
-                        <button
-                          className="icon-button"
-                          aria-label="Editar metas"
-                          onClick={() => navigate("strategy")}
-                        >
-                          <SlidersHorizontal size={17} />
-                        </button>
-                      </div>
-                      <div className="donut-wrap">
-                        <div
-                          className="donut"
-                          style={{
-                            background: `conic-gradient(${t.missing.length ? "var(--surface-4) 0% 100%" : donutSegments})`,
-                          }}
-                        >
-                          <div>
-                            <span>
-                              {hasPositions ? "PATRIMÔNIO" : "META TOTAL"}
-                            </span>
-                            <b>
-                              {!hasPositions
-                                ? "100%"
-                                : t.missing.length
-                                  ? "Aguardando"
-                                  : displayMoney(t.value)}
-                            </b>
-                            <small>
-                              {hasPositions
-                                ? "4 classes de ativos"
-                                : "4 classes de ativos"}
-                            </small>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="allocation-legend">
-                        {groups.map((g) => (
-                          <div key={g}>
-                            <span>
-                              <i style={{ background: GROUPS[g].color }} />
-                              {GROUPS[g].name}
-                            </span>
-                            <b>
-                              {hasPositions && t.value > 0 && !t.missing.length
-                                ? hidden
-                                  ? "•••"
-                                  : fixed((t.byGroup[g] / t.value) * 100, 1)
-                                : p.targets[g]}
-                              %
-                            </b>
-                            <small>
-                              {hasPositions ? `Meta ${p.targets[g]}%` : "Meta"}
-                            </small>
-                          </div>
-                        ))}
-                      </div>
-                    </section>
+                    <PortfolioMap
+                      portfolio={p}
+                      summary={t}
+                      hidden={hidden}
+                      onAsset={(ticker) => setModal({ kind: "asset", ticker })}
+                      onTargets={() => navigate("strategy")}
+                    />
                     <ContributionPreview
                       budget={budget}
                       setBudget={setBudget}
@@ -1429,6 +1360,28 @@ export default function Dashboard() {
             </footer>
           </Suspense>
         </main>
+        <nav className="tabbar" aria-label="Atalhos">
+          {TABS.map(({ id, label, icon: Icon }) => (
+            <button
+              key={id}
+              aria-current={page === id ? "page" : undefined}
+              className={page === id ? "active" : ""}
+              onClick={() => navigate(id)}
+            >
+              <Icon size={20} />
+              {label}
+            </button>
+          ))}
+          <button
+            aria-controls="main-navigation"
+            aria-expanded={mobile}
+            className={TABS.some((tab) => tab.id === page) ? "" : "active"}
+            onClick={() => setMobile(true)}
+          >
+            <Menu size={20} />
+            Mais
+          </button>
+        </nav>
       </div>
       {toast && !modal && (
         <div className="toast" role="status">

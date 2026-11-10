@@ -4,6 +4,7 @@ import { Wallet, Globe2, Coins } from "lucide-react";
 import { useMemo } from "react";
 import { percent, plainPercent, signedMoney, tone } from "../lib/format";
 import { costPerformance } from "../lib/cost-performance";
+import { historyPerformance } from "../lib/history-performance";
 import { realizedResults } from "../lib/trade-history";
 import {
   GROUPS,
@@ -89,6 +90,30 @@ export function CurrencySummary({
       [portfolio, market],
     ),
     today = useMemo(() => dayChange(portfolio, market), [portfolio, market]);
+  // Forma do patrimônio ao longo do tempo, só como desenho de fundo do cartão.
+  const trend = useMemo(() => {
+    const points = historyPerformance(
+      portfolio,
+      market,
+      [],
+      "all",
+      null,
+    ).points;
+    if (points.length < 8) return null;
+    const step = Math.max(1, Math.floor(points.length / 90)),
+      values = points
+        .filter((_, i) => i % step === 0 || i === points.length - 1)
+        .map((point) => point.value),
+      low = Math.min(...values),
+      range = Math.max(...values) - low || 1,
+      line = values
+        .map(
+          (value, i) =>
+            `${((i / (values.length - 1)) * 100).toFixed(2)},${(28 - ((value - low) / range) * 25).toFixed(2)}`,
+        )
+        .join(" L");
+    return { line: "M" + line, area: `M0,30 L${line} L100,30 Z` };
+  }, [portfolio, market]);
   const share = (group: Group) =>
     t.missing.length || !t.value ? null : (t.byGroup[group] / t.value) * 100;
   const figure = (amount: number | undefined, change: number | undefined) =>
@@ -105,6 +130,17 @@ export function CurrencySummary({
     <>
       <div className="summary-grid">
         <section className="stat-card wealth">
+          {trend && !hidden && (
+            <svg
+              className="wealth-trend"
+              viewBox="0 0 100 30"
+              preserveAspectRatio="none"
+              aria-hidden="true"
+            >
+              <path className="area" d={trend.area} />
+              <path className="line" d={trend.line} />
+            </svg>
+          )}
           <div className="stat-label">
             Patrimônio consolidado em reais <Wallet size={16} />
           </div>
@@ -121,7 +157,7 @@ export function CurrencySummary({
                 <dd>{figure(accumulated.result, accumulated.returnPercent)}</dd>
               </div>
               <div>
-                <dt>Hoje, nas posições cotadas</dt>
+                <dt title="Variação de hoje nas posições com cotação">Hoje</dt>
                 <dd>{figure(today?.amount, today?.percent)}</dd>
               </div>
             </dl>
@@ -133,7 +169,6 @@ export function CurrencySummary({
                 ? `Resultado sem ${accumulated.excluded.length} ${accumulated.excluded.length === 1 ? "posição pendente" : "posições pendentes"} · detalhes no gráfico`
                 : "Inclui CDB, Bitcoin e exterior convertido hoje"}
           </div>
-          <div className="wealth-decoration" />
         </section>
         <div className="class-cards">
           <ClassCard

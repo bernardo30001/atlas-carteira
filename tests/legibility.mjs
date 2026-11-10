@@ -82,9 +82,6 @@ function declaration(selector, prop) {
   });
   return found;
 }
-assert.equal(declaration(".donut>div", "background"), "var(--surface)");
-assert.equal(declaration(".donut b", "color"), "var(--ink)");
-assert.equal(declaration(".donut span", "color"), "var(--text-secondary)");
 assert.equal(declaration(".skip-link", "background"), "var(--surface)");
 assert.equal(
   declaration(".purchase-count-badge rect", "fill"),
@@ -129,5 +126,5 @@ for (const width of [375, 720, 1200]) {
 assert.equal(JSON.stringify(points), snapshot);
 assert.deepEqual(purchaseLabelLayout([], 720, 288), []);
 console.log(
-  "Legibility passed: 18 text/background roles in both themes, visible marker colors, themed donut and skip link, opaque purchase-count badges, readable disabled controls and table text, and separate label lanes without altering financial points.",
+  "Legibility passed: 18 text/background roles in both themes, visible marker colors, themed skip link, opaque purchase-count badges, readable disabled controls and table text, and separate label lanes without altering financial points.",
 );
