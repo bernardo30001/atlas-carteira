@@ -33,32 +33,41 @@ export async function GET(request: Request) {
       url: `https://feeds.finance.yahoo.com/rss/2.0/headline?s=${encodeURIComponent(selection.symbols.join(","))}&region=US&lang=en-US`,
     },
   ];
-  for (const { provider, url } of urls) {
-    try {
-      const response = await fetch(url, {
-        headers: {
-          "User-Agent": "Mozilla/5.0",
-          Accept: "application/rss+xml, application/xml, text/xml",
-        },
-        signal: AbortSignal.timeout(10000),
-      });
-      if (!response.ok) throw new Error("HTTP " + response.status);
-      const items = parseNews(await response.text(), ticker, provider);
-      if (!items.length) throw new Error("Nenhuma notícia na resposta");
-      const result = { time: Date.now(), items, provider };
-      cache.set(ticker, result);
-      return Response.json({
-        ...result,
-        filter: ticker,
-        updatedAt: new Date(result.time).toISOString(),
-      });
-    } catch (e) {
-      console.warn(
-        "News provider unavailable",
-        provider,
-        e instanceof Error ? e.message : "Connection failure",
-      );
-    }
+  // As três fontes são consultadas ao mesmo tempo e vale a primeira, na ordem de
+  // preferência, que trouxer notícias. Em fila, uma fonte lenta atrasava tudo em 10 s.
+  const attempts = urls.map(({ provider, url }) =>
+    fetch(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0",
+        Accept: "application/rss+xml, application/xml, text/xml",
+      },
+      signal: AbortSignal.timeout(6000),
+    })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("HTTP " + response.status);
+        return { provider, xml: await response.text() };
+      })
+      .catch((e: unknown) => {
+        console.warn(
+          "News provider unavailable",
+          provider,
+          e instanceof Error ? e.message : "Connection failure",
+        );
+        return null;
+      }),
+  );
+  for (const attempt of attempts) {
+    const answer = await attempt;
+    if (!answer) continue;
+    const items = parseNews(answer.xml, ticker, answer.provider);
+    if (!items.length) continue;
+    const result = { time: Date.now(), items, provider: answer.provider };
+    cache.set(ticker, result);
+    return Response.json({
+      ...result,
+      filter: ticker,
+      updatedAt: new Date(result.time).toISOString(),
+    });
   }
   return Response.json(
     {

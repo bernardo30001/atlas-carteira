@@ -10,17 +10,15 @@ export function NewsFilters({
 }) {
   const asset = ASSETS.find((a) => a.ticker === value),
     category = NEWS_CATEGORIES.find((c) => c.key === value);
+  // Os mesmos grupos das metas: cada ETF fica na classe a que dá exposição.
   const groups = [
     { name: "Ações na B3", assets: ASSETS.filter((a) => a.group === "br") },
+    { name: "Renda fixa", assets: ASSETS.filter((a) => a.group === "rf") },
     {
-      name: "ETFs na B3",
-      assets: ASSETS.filter((a) => a.currency === "BRL" && a.group !== "br"),
+      name: "ETFs no exterior",
+      assets: ASSETS.filter((a) => a.group === "etf"),
     },
-    {
-      name: "Ações/ETFs americanos",
-      assets: ASSETS.filter((a) => a.currency === "USD" && a.ticker !== "BTC"),
-    },
-    { name: "Bitcoin", assets: ASSETS.filter((a) => a.ticker === "BTC") },
+    { name: "Bitcoin", assets: ASSETS.filter((a) => a.group === "crypto") },
   ];
   return (
     <div className="news-filter-panel">

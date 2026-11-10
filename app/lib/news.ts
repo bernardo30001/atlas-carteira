@@ -11,7 +11,7 @@ export const NEWS_CATEGORIES = [
   { key: "all", name: "Todos os ativos" },
   { key: "brazil", name: "Bolsa brasileira" },
   { key: "stocks", name: "Ações na B3" },
-  { key: "us", name: "Ações/ETFs americanos" },
+  { key: "us", name: "ETFs no exterior" },
   { key: "bitcoin", name: "Bitcoin" },
 ] as const;
 const quoted = (text: string) => '"' + text + '"';
