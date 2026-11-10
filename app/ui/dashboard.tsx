@@ -21,7 +21,6 @@ import {
   Upload,
   Info,
   Target,
-  Activity,
   ArrowRight,
   Menu,
   Bitcoin,
@@ -55,6 +54,7 @@ import {
 } from "../lib/model";
 import { fixed, money, num, plainPercent, signedMoney } from "../lib/format";
 import { portfolioSchema } from "../lib/validation";
+import type { NewsItem } from "../lib/news";
 import {
   ledgerIssues,
   migratePortfolio,
@@ -102,16 +102,24 @@ const nav = [
   { id: "import", label: "Importar", icon: Upload },
   { id: "news", label: "Notícias", icon: Newspaper },
 ];
-function Mark({ ticker, size = 36 }: { ticker: string; size?: number }) {
-  const a = ASSETS.find((a) => a.ticker === ticker);
+function Mark({
+  ticker,
+  size = 36,
+  color = ASSETS.find((a) => a.ticker === ticker)?.color ?? "#54735c",
+}: {
+  ticker: string;
+  size?: number;
+  /** Ativos cadastrados por você trazem a própria cor. */
+  color?: string;
+}) {
   return (
     <span
       className="asset-mark"
       style={{
         width: size,
         height: size,
-        background: (a?.color ?? "#6c8579") + "16",
-        color: a?.color ?? "#54735c",
+        background: color + "16",
+        color,
       }}
     >
       {ticker === "BTC" ? (
@@ -258,7 +266,8 @@ export default function Dashboard() {
     [mobile, setMobile] = useState(false),
     [compact, setCompact] = useState(false),
     [newsTicker, setNewsTicker] = useState("all"),
-    [news, setNews] = useState<any[]>([]),
+    [news, setNews] = useState<NewsItem[]>([]),
+    [pendingImport, setPendingImport] = useState<Portfolio | null>(null),
     [newsBusy, setNewsBusy] = useState(true),
     [newsError, setNewsError] = useState(""),
     [newsTime, setNewsTime] = useState(""),
@@ -269,7 +278,8 @@ export default function Dashboard() {
     sidebarRef = useRef<HTMLElement>(null),
     menuRef = useRef<HTMLButtonElement>(null),
     importRef = useRef<HTMLInputElement>(null),
-    extraRef = useRef("");
+    extraRef = useRef(""),
+    newsFor = useRef("all");
   const p = demo ?? portfolio,
     marketHistory = useMarketHistory(p),
     market = useMemo(
@@ -277,8 +287,7 @@ export default function Dashboard() {
       [quotes, marketHistory.histories, marketHistory.ptax],
     ),
     t = useMemo(() => totals(p, market), [p, market]),
-    classPlan = allocationPlan(p, market, budget),
-    fx = market.quotes.USD?.price;
+    classPlan = allocationPlan(p, market, budget);
   const displayMoney = (v: number | null) =>
     hidden ? "••••••" : v === null ? "Não informado" : money(v);
   const portfolioReady = !!demo || account === "ready";
@@ -446,7 +455,10 @@ export default function Dashboard() {
     }, 60000);
     return () => clearInterval(timer);
   }, [extraAssets]);
+  const newsVisible = page === "overview" || page === "news";
   useEffect(() => {
+    // Só consulta nas páginas que mostram notícias.
+    if (!newsVisible) return;
     let canceled = false;
     const controller = new AbortController();
     const load = async () => {
@@ -457,7 +469,12 @@ export default function Dashboard() {
           "/api/news?ticker=" + encodeURIComponent(newsTicker),
           { signal: controller.signal },
         );
-        const j: any = await r.json();
+        const j: {
+          items?: NewsItem[];
+          error?: string;
+          updatedAt?: string;
+          provider?: string;
+        } = await r.json();
         if (!canceled) {
           setNews(j.items ?? []);
           setNewsError(j.error ?? "");
@@ -473,8 +490,11 @@ export default function Dashboard() {
         if (!canceled) setNewsBusy(false);
       }
     };
-    setNews([]);
-    setNewsTime("");
+    if (newsFor.current !== newsTicker) {
+      newsFor.current = newsTicker;
+      setNews([]);
+      setNewsTime("");
+    }
     load();
     const id = setInterval(() => {
       if (!document.hidden) load();
@@ -484,7 +504,7 @@ export default function Dashboard() {
       controller.abort();
       clearInterval(id);
     };
-  }, [newsTicker]);
+  }, [newsTicker, newsVisible]);
   useEffect(() => {
     if (!toast) return;
     const timer = setTimeout(() => setToast(""), 6500);
@@ -571,8 +591,8 @@ export default function Dashboard() {
         !Array.isArray(j.portfolio.fixedIncome)
       )
         throw Error();
-      (window as any).__atlasImport = migratePortfolio(
-        portfolioSchema.parse(j.portfolio),
+      setPendingImport(
+        migratePortfolio(portfolioSchema.parse(j.portfolio) as Portfolio),
       );
       setModal({ kind: "import" });
     } catch {
@@ -1241,39 +1261,6 @@ export default function Dashboard() {
                     />
                   )}
                 </section>
-                <div className="panel allocation-comparison">
-                  <h2>Atual × objetivo</h2>
-                  {groups.map((g) => (
-                    <div className="comparison-row" key={g}>
-                      <span>
-                        <i style={{ background: GROUPS[g].color }} />
-                        {GROUPS[g].name}
-                      </span>
-                      <div className="comparison-track">
-                        <span
-                          style={{
-                            width: `${!t.missing.length && t.value ? (t.byGroup[g] / t.value) * 100 : 0}%`,
-                            background: GROUPS[g].color,
-                          }}
-                        />
-                        <i
-                          style={{ left: p.targets[g] + "%" }}
-                          title={`Meta ${p.targets[g]}%`}
-                        />
-                      </div>
-                      <b>
-                        {!t.missing.length && t.value
-                          ? plainPercent((t.byGroup[g] / t.value) * 100, 1)
-                          : "—"}
-                      </b>
-                      <small>Meta {p.targets[g]}%</small>
-                    </div>
-                  ))}
-                  <p className="source-note">
-                    A marca vertical indica sua meta. Os saldos estrangeiros são
-                    convertidos pelo USD/BRL da fonte.
-                  </p>
-                </div>
               </>
             )}
             {portfolioReady && page === "portfolio" && (
@@ -1497,7 +1484,6 @@ export default function Dashboard() {
               quantity={modal.quantity}
               initialKind={modal.mode}
               portfolio={p}
-              market={market}
               busy={saveBusy}
               onSubmit={async (tx) => {
                 if (await save({ ...p, transactions: [...p.transactions, tx] }))
@@ -1721,11 +1707,9 @@ export default function Dashboard() {
             <>
               <h2 id="modal-title">Restaurar este backup?</h2>
               <p>
-                O arquivo contém{" "}
-                {(window as any).__atlasImport?.transactions?.length ?? 0}{" "}
-                posições e {(window as any).__atlasImport?.incomes?.length ?? 0}{" "}
-                registros de proventos e{" "}
-                {(window as any).__atlasImport?.tradeHistory?.length ?? 0}{" "}
+                O arquivo contém {pendingImport?.transactions.length ?? 0}{" "}
+                posições e {pendingImport?.incomes?.length ?? 0} registros de
+                proventos e {pendingImport?.tradeHistory?.length ?? 0}{" "}
                 movimentações de compra e venda. A restauração substitui a
                 carteira atual; exporte-a antes se quiser preservar seus
                 registros.
@@ -1736,11 +1720,10 @@ export default function Dashboard() {
                 </button>
                 <button
                   className="button primary"
-                  disabled={saveBusy}
+                  disabled={saveBusy || !pendingImport}
                   onClick={async () => {
-                    const next = (window as any).__atlasImport;
-                    if (await save(next)) {
-                      delete (window as any).__atlasImport;
+                    if (pendingImport && (await save(pendingImport))) {
+                      setPendingImport(null);
                       setModal(null);
                     }
                   }}
@@ -2033,7 +2016,7 @@ function Strategy({
                 total = peers.reduce((s, x) => s + weightOf(x.ticker), 0);
               return (
                 <label className="weight-item" key={a.ticker}>
-                  <Mark ticker={a.ticker} size={30} />
+                  <Mark ticker={a.ticker} size={30} color={a.color} />
                   <span>
                     <b>{a.ticker}</b>
                     <small>
@@ -2095,7 +2078,7 @@ function AssetDetail({
 }: {
   ticker: string;
   market: Market;
-  position: any;
+  position: ReturnType<typeof totals>["rows"][number];
   hidden: boolean;
   onAdd: () => void;
   onSell: () => void;
@@ -2106,7 +2089,7 @@ function AssetDetail({
   return (
     <>
       <div className="asset-detail-heading">
-        <Mark ticker={ticker} size={48} />
+        <Mark ticker={ticker} size={48} color={a.color} />
         <div>
           <span className="eyebrow">{a.sector}</span>
           <h2 id="modal-title">
