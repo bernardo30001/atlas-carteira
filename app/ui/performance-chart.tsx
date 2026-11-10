@@ -21,6 +21,7 @@ import {
   type PerformanceScope,
   type BenchmarkKey,
   type CdiRate,
+  type Simulation,
 } from "../lib/performance";
 import type { Portfolio, Market } from "../lib/model";
 import { costPerformance } from "../lib/cost-performance";
@@ -60,6 +61,16 @@ const PERIODS: [number | null, string][] = [
   [365, "1A"],
   [null, "Tudo"],
 ];
+const NO_SIMULATION: Simulation = {
+  points: [],
+  warnings: [],
+  coverage: 0,
+  start: null,
+  end: null,
+  heldCount: 0,
+  excluded: [],
+  unavailable: [],
+};
 const pct = (v: number | undefined) => (v === undefined ? "—" : percent(v));
 const date = (d: string) =>
   new Date(d + "T12:00:00Z").toLocaleDateString("pt-BR");
@@ -99,22 +110,32 @@ export function PerformanceChart({
     () => historyPerformance(portfolio, market, rates, scope, days),
     [portfolio, market, rates, scope, days],
   );
+  // Cada modo só é calculado quando está na tela: os três juntos custavam caro a cada
+  // atualização de cotação.
   const simulation = useMemo(
     () =>
-      simulateComposition(
-        portfolio,
-        market,
-        rates,
-        windowDays,
-        selected,
-        Date.now(),
-        scope,
-      ),
-    [portfolio, market, rates, windowDays, selected, scope],
+      mode === "simulation"
+        ? simulateComposition(
+            portfolio,
+            market,
+            rates,
+            windowDays,
+            selected,
+            Date.now(),
+            scope,
+          )
+        : NO_SIMULATION,
+    [mode, portfolio, market, rates, windowDays, selected, scope],
   );
   const accumulated = useMemo(
-    () => costPerformance(portfolio, market, scope, windowDays),
-    [portfolio, market, scope, windowDays],
+    () =>
+      costPerformance(
+        portfolio,
+        market,
+        scope,
+        mode === "cost" ? windowDays : 1,
+      ),
+    [mode, portfolio, market, scope, windowDays],
   );
   const wealth = mode === "wealth",
     rawPoints =

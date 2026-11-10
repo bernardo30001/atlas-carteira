@@ -112,37 +112,33 @@ export function CostReturnMethod({
     <details className="performance-method">
       <summary>
         <Info size={16} />
-        Como o retroativo é calculado
+        Como este resultado é calculado
       </summary>
       <div>
         {children}
         <p>
-          Rendimento acumulado = (saldo atual − valor investido + proventos
-          registrados) ÷ valor investido. O preço médio já inclui as taxas. O
-          custo usa quantidade × preço médio, ou o valor investido exato do
-          extrato quando informado. O percentual do grupo é ponderado pelo
-          capital investido.
+          Resultado = (saldo atual − valor investido + proventos registrados) ÷
+          valor investido. O preço médio já inclui as taxas. O custo usa
+          quantidade × preço médio, ou o valor investido exato do extrato quando
+          informado. O percentual do grupo é ponderado pelo capital investido.
         </p>
         <p>
-          Ações e ETFs americanos são calculados em dólares; ações da B3,
+          ETFs no exterior são calculados em dólares; Brasil, renda fixa,
           Bitcoin e o consolidado usam reais. O câmbio informado na compra é
-          preservado. Conversões sem câmbio registrado usam a cotação da data
-          avaliada e são identificadas como estimativas.
+          preservado. Sem ele, o custo em reais usa o dólar oficial (PTAX) do
+          dia da operação e fica marcado como estimativa.
         </p>
         <p>
-          Com movimentações importadas, a curva usa as operações documentadas e
-          preserva a posição consolidada. Se o extrato cobre apenas parte da
-          carteira, a parcela sem datas continua estimada pelo custo informado.
-          Vendas parciais abatem o custo pelo preço médio; posições e ciclos já
-          encerrados não entram na carteira atual. O resultado de vendas
-          realizadas não se mistura ao rendimento da posição que permanece em
-          carteira.
+          Vendas parciais abatem o custo pelo preço médio. Posições e ciclos já
+          encerrados não entram na carteira atual, e o lucro das vendas aparece
+          à parte, em Resultado realizado. Posição sem datas de compra entra na
+          curva na data de referência.
         </p>
         <p>
-          Para posições sem movimentações, a curva usa o preço médio informado.
-          Ela pode começar acima ou abaixo de 0%: sua base é o custo registrado,
-          e não o primeiro dia visível. Esse acumulado não equivale a uma
-          rentabilidade anualizada nem ao retorno do período selecionado.
+          A curva pode começar acima ou abaixo de 0%: sua base é o custo
+          registrado, e não o primeiro dia visível. Este número não é uma
+          rentabilidade anualizada. Para comparar com Ibovespa, S&P 500, CDI e
+          Bitcoin a partir da mesma data, use o modo Rentabilidade.
         </p>
         {hidden && data.warnings.length ? (
           <p>Detalhes das posições ficam ocultos no modo de privacidade.</p>
@@ -150,15 +146,9 @@ export function CostReturnMethod({
           data.warnings.map((warning, i) => <p key={i}>{warning}</p>)
         )}
         <p>
-          Os índices de referência continuam disponíveis em Acompanhamento real
-          e Simular histórico, que comparam retornos a partir da mesma data.
           Proventos são somados uma vez ao resultado e não aumentam novamente o
-          saldo em custódia. Vendas ficam em Resultado realizado, e impostos não
-          são calculados.
-        </p>
-        <p>
-          Cotações e histórico: Yahoo Finance. A reconstrução não altera as
-          posições ou as observações já salvas.
+          saldo em custódia. Impostos não são calculados. Cotações e histórico:
+          Yahoo Finance. Câmbio: PTAX do Banco Central.
         </p>
       </div>
     </details>
