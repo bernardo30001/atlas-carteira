@@ -75,7 +75,6 @@ export function ContributionPlan({
         fundamentals,
         0,
         Date.now(),
-        "stocks",
       ).rows.map((r) => [r.ticker, ACTIONS[r.action]]),
     );
   }, [portfolio, market, fundamentals]);

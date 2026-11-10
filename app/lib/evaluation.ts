@@ -1,10 +1,4 @@
-import {
-  ASSETS,
-  totals,
-  allocationPlan,
-  type Market,
-  type Portfolio,
-} from "./model.ts";
+import { ASSETS, totals, type Market, type Portfolio } from "./model.ts";
 import {
   DEFAULT_EVALUATION,
   DEFAULT_SCENARIO,
@@ -24,7 +18,6 @@ export const ACTIONS = {
   unassigned: "Definir peso",
 };
 export type EvaluationAction = keyof typeof ACTIONS;
-export type EvaluationBudgetScope = "stocks" | "portfolio";
 const stocks = ASSETS.filter((a) => a.group === "br"),
   issuer = (ticker: string) => ticker.slice(0, 4);
 export function evaluationSettings(p: Portfolio): EvaluationSettings {
@@ -114,7 +107,6 @@ export function evaluatePortfolio(
   data: FundamentalData | undefined,
   budget: number,
   now = Date.now(),
-  budgetScope: EvaluationBudgetScope = "portfolio",
 ) {
   const settings = evaluationSettings(p),
     base = normalizedWeights(settings.baseWeights),
@@ -137,15 +129,8 @@ export function evaluatePortfolio(
     ),
     portfolioComplete = t.missing.length === 0 && !missingStocks;
   const enteredBudget = Number.isFinite(budget) ? Math.max(0, budget) : 0;
-  const classAmount =
-    budgetScope === "stocks"
-      ? missingStocks
-        ? 0
-        : enteredBudget
-      : portfolioComplete
-        ? (allocationPlan(p, m, enteredBudget).find((g) => g.group === "br")
-            ?.amount ?? 0)
-        : 0;
+  // Todo o valor é das ações. A divisão entre as classes fica em contributionPlan.
+  const classAmount = missingStocks ? 0 : enteredBudget;
   const sectorValues = Object.fromEntries(
     [...new Set(stocks.map((a) => a.sector))].map((sector) => [
       sector,
@@ -449,12 +434,8 @@ export function evaluatePortfolio(
       r.reasons.push(
         "Preço mais de 20% acima da referência escolhida; a qualidade e o crescimento podem justificar um prêmio.",
       );
-    if (r.action === "buy" && classAmount <= 0)
-      r.reasons.push(
-        enteredBudget <= 0
-          ? "Informe um valor de aporte para calcular as compras."
-          : "Compra candidata, mas sem verba para ações no aporte atual: a distribuição entre classes tem prioridade.",
-      );
+    if (r.action === "buy" && enteredBudget <= 0)
+      r.reasons.push("Informe um valor de aporte para calcular as compras.");
     if (!r.baseWeight)
       r.reasons.push(
         "Ativo fora da sua regra base; defina um peso antes de direcionar novas compras.",
@@ -566,10 +547,8 @@ export function evaluatePortfolio(
   }
   const allocationReason = (r: (typeof rows)[number]) => {
     if (enteredBudget <= 0) return "Informe um valor de aporte.";
-    if (missingStocks || (budgetScope === "portfolio" && !portfolioComplete))
+    if (missingStocks)
       return "Aguardando cotações para calcular a distribuição.";
-    if (classAmount <= 0)
-      return "As metas da carteira não destinam verba para ações neste aporte.";
     if (r.executable > 0)
       return "Preço com margem de compra e espaço para aumentar o peso na carteira.";
     if (r.action === "sell" || r.action === "review")
@@ -605,13 +584,8 @@ export function evaluatePortfolio(
     rows: rows.map((r) => ({ ...r, allocationReason: allocationReason(r) })),
     settings,
     base,
-    budgetScope,
     enteredBudget,
     allocated: rows.reduce((s, r) => s + r.executable, 0),
-    otherClasses:
-      budgetScope === "portfolio" && portfolioComplete
-        ? Math.max(0, enteredBudget - classAmount)
-        : 0,
     stockValue: brValue,
     classAmount,
     portfolioValue: t.value,

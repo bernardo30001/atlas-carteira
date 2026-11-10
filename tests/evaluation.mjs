@@ -323,16 +323,6 @@ assert.equal(
   result.rows.reduce((s, r) => s + r.executable, 0),
   0,
 );
-result = evaluatePortfolio(
-  { ...p, targets: { br: 0, rf: 100, etf: 0, crypto: 0 } },
-  market,
-  data,
-  100,
-  now,
-);
-near(result.classAmount, 0);
-assert.equal(row(result).action, "buy");
-near(row(result).executable, 0);
 result = evaluatePortfolio(p, market, data, 1, now);
 assert.ok(result.rows.every((r) => r.quantityToBuy === 0));
 near(result.reserve, 1);
@@ -474,7 +464,7 @@ const dedicated = (
   prices = splitMarket,
   fundamentals = splitData,
   amount = 1000,
-) => evaluatePortfolio(portfolio, prices, fundamentals, amount, now, "stocks");
+) => evaluatePortfolio(portfolio, prices, fundamentals, amount, now);
 result = dedicated();
 near(result.classAmount, 1000);
 near(row(result).amount, 400);
@@ -482,18 +472,6 @@ near(row(result, "ITUB4").amount, 400);
 near(row(result, "WEGE3").amount, 200);
 near(result.allocated + result.reserve, 1000);
 assert.equal(result.rows.length, 13);
-assert.equal(result.otherClasses, 0);
-const whole = evaluatePortfolio(
-  splitPortfolio,
-  splitMarket,
-  splitData,
-  1000,
-  now,
-  "portfolio",
-);
-near(whole.classAmount, 0);
-near(whole.otherClasses, 1000);
-near(whole.allocated, 0);
 for (const amount of [0, 1, 50, 500, 1000, 2500, 9999.99]) {
   const a = dedicated(undefined, undefined, undefined, amount);
   near(a.allocated + a.reserve, amount);
@@ -547,7 +525,7 @@ const foreignMissing = {
     { ...tx("SPHQ", 1, 50), currency: "USD", fx: null },
   ],
 };
-result = evaluatePortfolio(foreignMissing, market, data, 100, now, "stocks");
+result = evaluatePortfolio(foreignMissing, market, data, 100, now);
 assert.equal(result.portfolioComplete, false);
 assert.equal(result.missingStocks, false);
 near(result.classAmount, 100);
@@ -556,7 +534,7 @@ result = dedicated(undefined, undefined, undefined, Number.NaN);
 near(result.classAmount, 0);
 near(result.allocated, 0);
 console.log(
-  "Contribution simulation passed: entire amount for stocks, optional portfolio allocation, proportional distribution across candidates, explicit zero amounts and reasons, cash accounting, whole units, rounding, issuer limits with archived Klabin records ignored, unrelated missing quotes and zero/invalid budgets.",
+  "Contribution simulation passed: entire amount for stocks, proportional distribution across candidates, explicit zero amounts and reasons, cash accounting, whole units, rounding, issuer limits with archived Klabin records ignored, unrelated missing quotes and zero/invalid budgets.",
 );
 // Lucro deprimido (P/L 130): sem referência, em vez de um "preço justo" absurdo que indica redução.
 {

@@ -111,8 +111,7 @@ export function EvaluationPanel({
     };
   }, []);
   const analysis = useMemo(
-    () =>
-      evaluatePortfolio(portfolio, market, data, budget, Date.now(), "stocks"),
+    () => evaluatePortfolio(portfolio, market, data, budget, Date.now()),
     [portfolio, market, data, budget],
   );
   const current = analysis.rows.find((r) => r.ticker === selected)!,

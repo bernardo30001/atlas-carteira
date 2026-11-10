@@ -94,7 +94,7 @@ near(cost.value, 60);
 near(cost.cost, 50);
 near(cost.income, 2);
 assert.ok(
-  evaluatePortfolio(p, m, undefined, 1000, now, "stocks").rows.every(
+  evaluatePortfolio(p, m, undefined, 1000, now).rows.every(
     (r) => r.ticker !== "KLBN11",
   ),
 );
